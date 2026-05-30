@@ -1,0 +1,16 @@
+[package]
+name = "glycoquest"
+version = "0.1.0"
+edition = "2024"
+description = "Prepare and run xQuest searches for DSS-crosslinked glycopeptide-peptide spectra."
+
+[dependencies]
+clap = { version = "4", features = ["derive"] }
+configparser = "1.0"
+
+[lib]
+path = "src/lib.rs"
+
+[[bin]]
+name = "glycoquest"
+path = "src/main.rs"

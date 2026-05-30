@@ -1,3 +1,5 @@
+/target/
+
 *.mzXML
 *.mzxml
 *.mzML
@@ -7,3 +9,8 @@
 /RNxQuest/
 /xQuest/
 /glycan_databases/
+
+
+# Added by cargo
+
+/target
