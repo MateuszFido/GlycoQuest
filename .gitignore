@@ -4,3 +4,6 @@
 *.mzml
 *.raw
 /*.pdf
+/RNxQuest/
+/xQuest/
+/glycan_databases/
