@@ -1,0 +1,6 @@
+*.mzXML
+*.mzxml
+*.mzML
+*.mzml
+*.raw
+/*.pdf
