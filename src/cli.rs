@@ -10,7 +10,7 @@ use clap::Parser;
 pub struct CliParams {
     pub input: PathBuf,
     pub database: Option<PathBuf>,
-    pub glycans: Option<PathBuf>,
+    pub glycans: Option<String>,
     pub xquest_root: Option<PathBuf>,
     pub crosslinker: Option<String>,
     pub ppm_tolerance: Option<f64>,
@@ -26,7 +26,7 @@ pub struct CliParams {
     version,
     about = "Prepare and run xQuest searches for DSS-crosslinked glycopeptide-peptide spectra.",
     arg_required_else_help = false,
-    after_help = "Advanced options (xquest_bin, tolerances, modifications, limits, etc.) live in settings.ini.\n\nExamples:\n  glycoquest input.mzXML --database proteins.fasta --glycans glycans.tsv --xquest-root ./xquest --out job\n  glycoquest input.mzXML --database proteins.fasta --glycans glycans.tsv --out job --dry-run"
+    after_help = "Advanced options (xquest_bin, tolerances, modifications, limits, etc.) live in settings.ini.\n\nExamples:\n  glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 --xquest-root ./xquest --out job\n  glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 --out job --dry-run"
 )]
 struct Args {
     /// mzXML file or directory of MS/MS inputs (xQuest-compatible).
@@ -37,9 +37,9 @@ struct Args {
     #[arg(long, value_name = "FASTA")]
     database: Option<PathBuf>,
 
-    /// Glycan library (CSV or TSV).
-    #[arg(long, value_name = "FILE")]
-    glycans: Option<PathBuf>,
+    /// Bundled glycan database to load (e.g. nglyc309, oglyc78).
+    #[arg(long, value_name = "DATABASE")]
+    glycans: Option<String>,
 
     /// xQuest installation root (contains `xquest.def` templates).
     #[arg(long, value_name = "DIR")]
@@ -113,7 +113,7 @@ fn missing_input_error() -> clap::Error {
          Example:\n  \
          glycoquest data/run.mzXML \\\n    \
            --database proteins.fasta \\\n    \
-           --glycans glycans.tsv \\\n    \
+           --glycans nglyc309 \\\n    \
            --xquest-root ./xquest \\\n    \
            --out results\n\
          \n\
@@ -165,6 +165,20 @@ mod tests {
         ])
         .unwrap();
         assert!(params.dry_run);
+    }
+
+    #[test]
+    fn parses_glycan_database_flag() {
+        let params = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--glycans",
+            "nglyc309",
+            "--config",
+            "settings.ini",
+        ])
+        .unwrap();
+        assert_eq!(params.glycans.as_deref(), Some("nglyc309"));
     }
 
     #[test]

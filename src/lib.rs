@@ -1,10 +1,15 @@
 //! GlycoQuest library: CLI parameter types, settings, and the entry-point runner.
 
 mod cli;
+mod glycan;
 mod input;
 mod settings;
 
 pub use cli::{parse_cli, CliParams};
+pub use glycan::{
+    glycan_data_dir, load_glycan_database, resolve_database, supported_glycan_databases,
+    DiagnosticIon, GlycanEntry, GlycanLibrary, NeutralLoss,
+};
 pub use input::resolve_input;
 pub use settings::{default_settings_path, Settings};
 
@@ -85,10 +90,17 @@ pub fn run(cli: &CliParams) -> i32 {
     }
 }
 
+/// Validated MS input and optional parsed glycan library.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ValidatedInputs {
+    pub files: Vec<std::path::PathBuf>,
+    pub glycan_library: Option<GlycanLibrary>,
+}
+
 /// Run GlycoQuest from a fully merged [`RunConfig`].
 pub fn run_config(config: &RunConfig) -> i32 {
-    let files = match validate_config(config) {
-        Ok(files) => files,
+    let validated = match validate_config(config) {
+        Ok(validated) => validated,
         Err(message) => {
             eprintln!("error: {message}");
             return ExitCode::Validation.into();
@@ -98,7 +110,7 @@ pub fn run_config(config: &RunConfig) -> i32 {
     match config.execution_mode() {
         ExecutionMode::DryRun => {
             eprintln!("dry-run: configuration accepted (no search executed)");
-            print_config_summary(config, &files);
+            print_config_summary(config, &validated);
             ExitCode::Success.into()
         }
         ExecutionMode::Run => {
@@ -106,14 +118,20 @@ pub fn run_config(config: &RunConfig) -> i32 {
                 "run: not implemented yet (input={})",
                 config.cli.input.display()
             );
-            print_config_summary(config, &files);
+            print_config_summary(config, &validated);
             ExitCode::Success.into()
         }
     }
 }
 
-fn validate_config(config: &RunConfig) -> Result<Vec<std::path::PathBuf>, String> {
-    let files = resolve_input(&config.cli.input)?;
+fn validate_config(config: &RunConfig) -> Result<ValidatedInputs, String> {
+    let files= resolve_input(&config.cli.input)?;
+
+    let glycan_library = if let Some(database_id) = &config.cli.glycans {
+        Some(load_glycan_database(database_id)?)
+    } else {
+        None
+    };
 
     if config.execution_mode() == ExecutionMode::Run {
         let missing = required_for_run(config);
@@ -127,14 +145,17 @@ fn validate_config(config: &RunConfig) -> Result<Vec<std::path::PathBuf>, String
             }
             message.push_str(
                 "\nExample:\n  \
-                 glycoquest input.mzXML --database proteins.fasta --glycans glycans.tsv \
+                 glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 \
                  --xquest-root ./xquest --out results",
             );
             return Err(message);
         }
     }
 
-    Ok(files)
+    Ok(ValidatedInputs {
+        files,
+        glycan_library,
+    })
 }
 
 fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
@@ -144,7 +165,7 @@ fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
         missing.push("--database <FASTA>  (protein sequence database)");
     }
     if cli.glycans.is_none() {
-        missing.push("--glycans <FILE>  (glycan library CSV/TSV)");
+        missing.push("--glycans <DATABASE>  (bundled glycan database, e.g. nglyc309, oglyc78)");
     }
     if cli.out.is_none() {
         missing.push("--out <DIR>  (output directory for jobs and results)");
@@ -157,19 +178,34 @@ fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
     missing
 }
 
-fn print_config_summary(config: &RunConfig, files: &[std::path::PathBuf]) {
+fn print_config_summary(config: &RunConfig, validated: &ValidatedInputs) {
     let cli = &config.cli;
     let settings = &config.settings;
     eprintln!("input: {}", cli.input.display());
-    eprintln!("files: {}", files.len());
-    for path in files {
+    eprintln!("MS files: {}", validated.files.len());
+    for path in &validated.files {
         eprintln!("  {}", path.display());
     }
     if let Some(path) = &cli.database {
         eprintln!("database: {}", path.display());
     }
-    if let Some(path) = &cli.glycans {
-        eprintln!("glycans: {}", path.display());
+    if let Some(database_id) = &cli.glycans {
+        eprintln!("glycans: {database_id}");
+    }
+    if let Some(library) = &validated.glycan_library {
+        eprintln!("glycan entries: {} (unique)", library.entries.len());
+        for entry in library.entries.iter().take(3) {
+            eprintln!(
+                "  {}  mass={}  diagnostics={}  losses={}",
+                entry.composition,
+                entry.monoisotopic_mass,
+                entry.diagnostic_ions.len(),
+                entry.neutral_losses.len()
+            );
+        }
+        if library.entries.len() > 3 {
+            eprintln!("  …");
+        }
     }
     if let Some(path) = &cli.xquest_root {
         eprintln!("xquest_root: {}", path.display());
@@ -225,6 +261,21 @@ mod tests {
             settings: Settings::defaults(),
         };
         assert_eq!(run_config(&config), ExitCode::Validation as i32);
+    }
+
+    #[test]
+    fn dry_run_accepts_bundled_glycan_database() {
+        let cli = CliParams {
+            input: temp_mzxml("glycan_dry_run"),
+            glycans: Some("nglyc309".into()),
+            dry_run: true,
+            ..CliParams::default()
+        };
+        let config = RunConfig {
+            cli,
+            settings: Settings::defaults(),
+        };
+        assert_eq!(run_config(&config), ExitCode::Success as i32);
     }
 
     #[test]
