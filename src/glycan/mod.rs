@@ -145,4 +145,31 @@ mod tests {
         assert_eq!(library.entries.len(), 1);
         assert_eq!(library.entries[0].composition, "HexNAc(1)");
     }
+
+    #[test]
+    /// Specific cherry-picked glycans from the nglyc309 database.
+    fn integration_test_nglyc309() {
+        let library = load_glycan_database("nglyc309").unwrap();
+        assert_eq!(library.database_id, "nglyc309");
+        // assert that total number of lines is 309
+        let total_lines = std::fs::read_to_string(glycan_data_dir().join("Nglyc309_Byonic.glyc")).unwrap().lines().count();
+        assert_eq!(total_lines, 309);
+        assert_eq!(library.entries.len(), 288); // should be deduplicated
+
+        let entry = library
+            .entries
+            .iter()
+            .enumerate()
+            .find(|(i, _)| *i == 61)
+            .unwrap()
+            .1;
+            assert_eq!(entry.composition, "HexNAc(4)Hex(4)Fuc(1)NeuGc(1)");
+            assert_eq!(entry.monoisotopic_mass, 1913.677);
+            assert_eq!(entry.diagnostic_ions.len(), 19);
+            assert_eq!(entry.diagnostic_ions[0].mz, 290.087006);
+            assert_eq!(entry.neutral_losses.len(), 6);
+            println!("{:?}", entry.neutral_losses);
+            assert_eq!(entry.neutral_losses[0].label, "-H2O");
+            assert_eq!(entry.neutral_losses[0].delta_da, -18.0106);
+    }
 }

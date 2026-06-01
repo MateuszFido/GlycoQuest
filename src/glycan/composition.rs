@@ -4,15 +4,22 @@ use std::collections::BTreeMap;
 use std::path::Path;
 use std::collections::HashMap;
 
-/// Parsed residue counts keyed by canonical residue name.
+/// Parsed residue counts, keyed by the canonical residue name.
 pub type Composition = BTreeMap<String, u32>;
-/// Residue name → monoisotopic mass (Da).
+/// Mapping of name → monoisotopic mass (Da).
 pub type Masses = HashMap<String, f64>;
 
 /// Map oxonium / alias residue names to canonical names used in `.glyc` files.
 pub(crate) fn canonical_residue(name: &str) -> &str {
     match name {
         "dHex" => "Fuc",
+        "GlcNAc" => "HexNAc",
+        "GalNAc" => "HexNAc",
+        "Glc" => "Hex",
+        "Gal" => "Hex",
+        "Neu5Ac" => "NeuAc",
+        "Neu5Gc" => "NeuGc",
+        "KDO" => "KDN",
         other => other,
     }
 }

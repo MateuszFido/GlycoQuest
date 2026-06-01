@@ -106,7 +106,7 @@ pub(crate) fn derive_ions_and_losses(
 
         if rule.mass_adjustment.abs() > f64::EPSILON {
             let label = neutral_loss_label(&rule.comment, rule.mass_adjustment);
-            push_unique_loss(&mut losses, label, rule.mass_adjustment.abs());
+            push_unique_loss(&mut losses, label, rule.mass_adjustment);
         }
 
         if rule.diagnostic {
@@ -135,9 +135,7 @@ pub(crate) fn derive_ions_and_losses(
 }
 
 fn neutral_loss_label(comment: &str, adjustment: f64) -> String {
-    if comment.starts_with('-') && comment.len() > 1 {
-        comment[1..].to_string()
-    } else if !comment.is_empty() {
+    if !comment.is_empty() {
         comment.to_string()
     } else {
         format!("loss@{:.6}", adjustment.abs())
