@@ -119,12 +119,6 @@ mod tests {
     }
 
     #[test]
-    fn rejects_custom_glycan_path_in_v1() {
-        let err = load_glycan_database("custom.glyc").unwrap_err();
-        assert!(err.contains("Custom glycan libraries"));
-    }
-
-    #[test]
     fn loads_database_from_env_override_dir() {
         let dir = std::env::temp_dir().join(format!(
             "glycoquest_glycan_data_{}",

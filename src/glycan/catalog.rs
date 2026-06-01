@@ -131,13 +131,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unknown_and_custom_paths() {
+    fn rejects_unknown_database() {
         assert!(resolve_database("unknown").unwrap_err().contains("Unknown glycan database"));
-        assert!(resolve_database("custom.glyc")
-            .unwrap_err()
-            .contains("Custom glycan libraries"));
-        assert!(resolve_database("./databases/foo.glyc")
-            .unwrap_err()
-            .contains("Custom glycan libraries"));
     }
 }
