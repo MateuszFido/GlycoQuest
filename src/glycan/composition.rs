@@ -9,17 +9,21 @@ pub type Composition = BTreeMap<String, u32>;
 /// Mapping of name → monoisotopic mass (Da).
 pub type Masses = HashMap<String, f64>;
 
-/// Map oxonium / alias residue names to canonical names used in `.glyc` files.
+/// Map glycan residue aliases to canonical class names (mass-equivalent abbreviations).
 pub(crate) fn canonical_residue(name: &str) -> &str {
     match name {
-        "dHex" => "Fuc",
-        "GlcNAc" => "HexNAc",
-        "GalNAc" => "HexNAc",
-        "Glc" => "Hex",
-        "Gal" => "Hex",
-        "Neu5Ac" => "NeuAc",
-        "Neu5Gc" => "NeuGc",
-        "KDO" => "KDN",
+        "Fuc" | "F" | "fucose" | "dhex" => "dHex",
+        "Man" | "Glc" | "Gal" | "H" | "glc" | "gal" | "hexose" | "glucose" | "galactose"
+        | "mannose" => "Hex",
+        "GlcA" | "GalA" | "IdoA" | "hexuronic" | "hexuronate" => "HexA",
+        "GlcNAc" | "GalNAc" | "N" => "HexNAc",
+        "Neu5Ac" | "A" => "NeuAc",
+        "Neu5Gc" | "G" => "NeuGc",
+        "X" | "xylose" | "xyl" | "rib" | "ribose" | "ara" | "arabinose" | "lyx" | "pentose" => {
+            "Pent"
+        }
+        "Phospho" => "PO3H",
+        "Sulfo" => "SO3H",
         other => other,
     }
 }
@@ -71,12 +75,24 @@ pub fn load_masses(path: &Path) -> Result<Masses, String> {
         return Err(format!("no residues found in {}", path.display()));
     }
 
-    // Oxonium rules refer to dHex; map to the same mass as Fuc when present.
-    if let Some(&fuc_mass) = masses.get("Fuc") {
-        masses.entry("dHex".into()).or_insert(fuc_mass);
-    }
+    normalize_masses(masses)
+}
 
-    Ok(masses)
+fn normalize_masses(raw: Masses) -> Result<Masses, String> {
+    let mut normalized = Masses::new();
+    for (name, mass) in raw {
+        let canonical = canonical_residue(&name).to_string();
+        if let Some(&existing) = normalized.get(&canonical) {
+            if (existing - mass).abs() > 1e-6 {
+                return Err(format!(
+                    "conflicting masses for canonical residue {canonical}: {existing} vs {mass} (from {name})"
+                ));
+            }
+        } else {
+            normalized.insert(canonical, mass);
+        }
+    }
+    Ok(normalized)
 }
 
 pub fn composition_mass(composition: &Composition, masses: &Masses) -> Result<f64, String> {
@@ -227,7 +243,43 @@ mod tests {
         let comp = parse_composition("HexNAc(2)Hex(5)Fuc(1)").unwrap();
         assert_eq!(comp.get("HexNAc"), Some(&2));
         assert_eq!(comp.get("Hex"), Some(&5));
-        assert_eq!(comp.get("Fuc"), Some(&1));
+        assert_eq!(comp.get("dHex"), Some(&1));
+    }
+
+    #[test]
+    fn fuc_and_dhex_are_interchangeable() {
+        let from_fuc = parse_composition("HexNAc(1)Fuc(1)").unwrap();
+        let from_dhex = parse_composition("HexNAc(1)dHex(1)").unwrap();
+        assert_eq!(from_fuc, from_dhex);
+    }
+
+    #[test]
+    fn hex_aliases_merge() {
+        let comp = parse_composition("Man(2)Gal(1)").unwrap();
+        assert_eq!(comp.get("Hex"), Some(&3));
+    }
+
+    #[test]
+    fn modification_aliases_canonicalize() {
+        let phospho = parse_composition("Hex(1)Phospho(1)").unwrap();
+        assert_eq!(phospho.get("PO3H"), Some(&1));
+        let sulfo = parse_composition("HexNAc(1)Sulfo(1)").unwrap();
+        assert_eq!(sulfo.get("SO3H"), Some(&1));
+    }
+
+    #[test]
+    fn rejects_conflicting_masses_for_same_canonical_class() {
+        let path = std::env::temp_dir().join(format!(
+            "glycoquest_residue_conflict_{}.txt",
+            std::process::id()
+        ));
+        let mut file = std::fs::File::create(&path).unwrap();
+        writeln!(file, "Fuc\t146.05791").unwrap();
+        writeln!(file, "dHex\t999.0").unwrap();
+
+        let err = load_masses(&path).unwrap_err();
+        assert!(err.contains("conflicting masses"));
+        let _ = std::fs::remove_file(path);
     }
 
     #[test]

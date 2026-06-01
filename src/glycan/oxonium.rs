@@ -7,7 +7,7 @@ use super::composition::Masses;
 
 pub const PROTON_MASS: f64 = 1.007276;
 
-const CORE_FAMILIES: &[&str] = &["HexNAc", "Hex", "NeuAc", "NeuGc", "Fuc"];
+const CORE_FAMILIES: &[&str] = &["HexNAc", "Hex", "NeuAc", "NeuGc", "dHex"];
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct DiagnosticIon {
@@ -51,7 +51,8 @@ pub(crate) fn load_oxonium_rules(path: &Path) -> Result<Vec<OxoniumRule>, String
             ));
         }
 
-        let residue_requirement = fields[0].trim().to_string();
+        let residue_requirement =
+            composition::canonical_residue(fields[0].trim()).to_string();
         let ion_composition = composition::parse_composition(fields[1].trim()).map_err(|err| {
             format!(
                 "invalid ion composition on oxonium line {} in {}: {err}",
@@ -128,7 +129,7 @@ pub(crate) fn derive_ions_and_losses(
             format!("missing core family residue mass for {family}")
         })?;
         let mz = mass + PROTON_MASS;
-        push_unique_diagnostic(&mut diagnostics, family.to_string(), mz);
+        push_unique_diagnostic(&mut diagnostics, residue.to_string(), mz);
     }
 
     Ok((diagnostics, losses))
@@ -177,7 +178,6 @@ mod tests {
         HashMap::from([
             ("HexNAc".into(), 203.07937),
             ("Hex".into(), 162.05282),
-            ("Fuc".into(), 146.05791),
             ("dHex".into(), 146.05791),
             ("NeuAc".into(), 291.09542),
             ("NeuGc".into(), 307.09033),
