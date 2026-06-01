@@ -48,8 +48,8 @@ library path, xQuest executable or installation path, output directory, mass
 tolerances for diagnostic-ion filtering, and dry-run versus run behavior.
 
 The glycan library should be an explicit CSV or TSV file. Propose columns such
-as `name`, `composition`, `monoisotopic_mass`, `diagnostic_ions`, and
-`neutral_losses`.
+as `name`, `composition`, `monoisotopic_mass`, and `diagnostic_ions` (expanded
+M×N search targets with optional loss labels; see `diagnostic_ion_catalog.txt`).
 
 Define validation rules and error messages for malformed input.
 

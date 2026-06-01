@@ -8,7 +8,7 @@ mod settings;
 pub use cli::{parse_cli, CliParams};
 pub use glycan::{
     glycan_data_dir, load_glycan_database, resolve_database, supported_glycan_databases,
-    DiagnosticIon, GlycanEntry, GlycanLibrary, NeutralLoss,
+    DiagnosticIon, GlycanEntry, GlycanLibrary,
 };
 pub use input::resolve_input;
 pub use settings::{default_settings_path, Settings};
@@ -196,11 +196,10 @@ fn print_config_summary(config: &RunConfig, validated: &ValidatedInputs) {
         eprintln!("glycan entries: {} (unique)", library.entries.len());
         for entry in library.entries.iter().take(3) {
             eprintln!(
-                "  {}  mass={}  diagnostics={}  losses={}",
+                "  {}  mass={}  diagnostics={}",
                 entry.composition,
                 entry.monoisotopic_mass,
-                entry.diagnostic_ions.len(),
-                entry.neutral_losses.len()
+                entry.diagnostic_ions.len()
             );
         }
         if library.entries.len() > 3 {

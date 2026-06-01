@@ -2,17 +2,17 @@
 
 mod catalog;
 mod composition;
-mod oxonium;
+mod diagnostic;
 
 pub use catalog::{glycan_data_dir, resolve_database, supported_glycan_databases};
-pub use oxonium::{DiagnosticIon, NeutralLoss};
+pub use diagnostic::DiagnosticIon;
 pub use composition::{load_masses, parse_composition, read_compositions, composition_mass};
 
 use catalog::{
     ensure_data_files, residue_targets,
     resolve_database as resolve_catalog_entry,
 };
-use oxonium::{derive_ions_and_losses, load_oxonium_rules};
+use diagnostic::{expand_diagnostic_ions, load_diagnostic_catalog};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GlycanEntry {
@@ -20,7 +20,6 @@ pub struct GlycanEntry {
     pub composition: String,
     pub monoisotopic_mass: f64,
     pub diagnostic_ions: Vec<DiagnosticIon>,
-    pub neutral_losses: Vec<NeutralLoss>,
     pub residue_targets: Vec<String>,
 }
 
@@ -36,7 +35,8 @@ pub fn load_glycan_database(database_id: &str) -> Result<GlycanLibrary, String> 
     ensure_data_files(entry)?;
 
     let masses = load_masses(&glycan_data_dir().join("glycan_residues.txt"))?;
-    let oxonium_rules = load_oxonium_rules(&glycan_data_dir().join("oxonium_ion_list.txt"))?;
+    let diagnostic_catalog =
+        load_diagnostic_catalog(&glycan_data_dir().join("diagnostic_ion_catalog.txt"))?;
     let compositions = read_compositions(&glycan_data_dir().join(entry.filename))?;
     let targets = residue_targets(entry);
 
@@ -44,8 +44,7 @@ pub fn load_glycan_database(database_id: &str) -> Result<GlycanLibrary, String> 
     for composition_str in compositions {
         let composition = parse_composition(&composition_str)?;
         let monoisotopic_mass = round_mass(composition_mass(&composition, &masses)?);
-        let (diagnostic_ions, neutral_losses) =
-            derive_ions_and_losses(&composition, &masses, &oxonium_rules)?;
+        let diagnostic_ions = expand_diagnostic_ions(&composition, &diagnostic_catalog);
 
         if diagnostic_ions.is_empty() {
             return Err(format!(
@@ -59,7 +58,6 @@ pub fn load_glycan_database(database_id: &str) -> Result<GlycanLibrary, String> 
             composition: composition_str,
             monoisotopic_mass,
             diagnostic_ions,
-            neutral_losses,
             residue_targets: targets.clone(),
         });
     }
@@ -132,8 +130,8 @@ mod tests {
         )
         .unwrap();
         std::fs::copy(
-            glycan_data_dir().join("oxonium_ion_list.txt"),
-            dir.join("oxonium_ion_list.txt"),
+            glycan_data_dir().join("diagnostic_ion_catalog.txt"),
+            dir.join("diagnostic_ion_catalog.txt"),
         )
         .unwrap();
 
@@ -151,8 +149,10 @@ mod tests {
     fn integration_test_nglyc309() {
         let library = load_glycan_database("nglyc309").unwrap();
         assert_eq!(library.database_id, "nglyc309");
-        // assert that total number of lines is 309
-        let total_lines = std::fs::read_to_string(glycan_data_dir().join("Nglyc309_Byonic.glyc")).unwrap().lines().count();
+        let total_lines = std::fs::read_to_string(glycan_data_dir().join("Nglyc309_Byonic.glyc"))
+            .unwrap()
+            .lines()
+            .count();
         assert_eq!(total_lines, 309);
         assert_eq!(library.entries.len(), 288); // should be deduplicated
 
@@ -163,13 +163,20 @@ mod tests {
             .find(|(i, _)| *i == 61)
             .unwrap()
             .1;
-            assert_eq!(entry.composition, "HexNAc(4)Hex(4)Fuc(1)NeuGc(1)");
-            assert_eq!(entry.monoisotopic_mass, 1913.677);
-            assert_eq!(entry.diagnostic_ions.len(), 19);
-            assert_eq!(entry.diagnostic_ions[0].mz, 290.087006);
-            assert_eq!(entry.neutral_losses.len(), 6);
-            println!("{:?}", entry.neutral_losses);
-            assert_eq!(entry.neutral_losses[0].label, "-H2O");
-            assert_eq!(entry.neutral_losses[0].delta_da, -18.0106);
+        assert_eq!(entry.composition, "HexNAc(4)Hex(4)Fuc(1)NeuGc(1)");
+        assert_eq!(entry.monoisotopic_mass, 1913.677);
+        assert!(entry.diagnostic_ions.len() > 50);
+        let neu_gc_h2o = entry
+            .diagnostic_ions
+            .iter()
+            .find(|ion| ion.family == "NeuGc" && ion.loss_label == "-H2O")
+            .expect("NeuGc -H2O variant");
+        assert!((neu_gc_h2o.mz - 290.087006).abs() < 0.001);
+        let neu_gc_2h2o = entry
+            .diagnostic_ions
+            .iter()
+            .find(|ion| ion.family == "NeuGc" && ion.loss_label == "-2H2O")
+            .expect("NeuGc -2H2O variant");
+        assert!((neu_gc_2h2o.mz - 272.076406).abs() < 0.001);
     }
 }

@@ -107,7 +107,7 @@ pub fn ensure_data_files(entry: &DatabaseEntry) -> Result<(), String> {
     for path in [
         glycan_data_dir().join(entry.filename),
         glycan_data_dir().join("glycan_residues.txt"),
-        glycan_data_dir().join("oxonium_ion_list.txt")
+        glycan_data_dir().join("diagnostic_ion_catalog.txt")
     ] {
         if !path.is_file() {
             return Err(format!(

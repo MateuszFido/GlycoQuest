@@ -1,0 +1,65 @@
+# family	mz	label	composition
+# Core single-residue oxonium ions (neutral-loss variants come from N x M below)
+HexNAc	204.086646	HexNAc	HexNAc(1)
+Hex	163.060096	Hex	Hex(1)
+dHex	147.065186	dHex	dHex(1)
+NeuAc	292.102696	NeuAc	NeuAc(1)
+NeuGc	308.097606	NeuGc	NeuGc(1)
+# HexNAc B-type fragments
+HexNAc	84.044400	HexNAc - C2H8O4
+HexNAc	126.055000	HexNAc - C2H6O3
+HexNAc	138.055000	HexNAc - CH6O3
+HexNAc	144.065500	HexNAc - C2H4O2
+# Hex B-type fragments
+Hex	85.028400	Hex - C2H6O3
+Hex	97.028400	Hex - CH6O3
+# Phosphorylated hexose oxonium (explicit m/z)
+Phospho	243.026400	Man-P	Hex(1)Phospho(1)
+Phospho	405.079800	Man2-P	Hex(2)Phospho(1)
+# Acetylated sialic acids
+Acetyl	334.113000	NeuAc[Ac]	NeuAc(1)Acetyl(1)
+Acetyl	350.103000	NeuGc[Ac]	NeuGc(1)Acetyl(1)
+# Oligomer oxonium ions from composition
+Hex	325.112916	Hex2	Hex(2)
+HexNAc	366.139466	HexNAc-Hex	HexNAc(1)Hex(1)
+HexNAc	407.166016	HexNAc2	HexNAc(2)
+HexNAc	528.192286	HexNAc-Hex2	HexNAc(1)Hex(2)
+NeuAc	454.155516	Hex-NeuAc	Hex(1)NeuAc(1)
+NeuGc	470.150426	Hex-NeuGc	Hex(1)NeuGc(1)
+NeuAc	495.182066	HexNAc-NeuAc	HexNAc(1)NeuAc(1)
+NeuGc	511.176976	HexNAc-NeuGc	HexNAc(1)NeuGc(1)
+HexNAc	569.218836	HexNAc2-Hex	HexNAc(2)Hex(1)
+NeuAc	657.234886	HexNAc-Hex-NeuAc	HexNAc(1)Hex(1)NeuAc(1)
+NeuGc	673.229796	HexNAc-Hex-NeuGc	HexNAc(1)Hex(1)NeuGc(1)
+HexNAc	690.245106	HexNAc-Hex3	HexNAc(1)Hex(3)
+HexNAc	731.271656	diLacNAc	HexNAc(2)Hex(2)
+NeuAc	819.287706	HexNAc-Hex2-NeuAc	HexNAc(1)Hex(2)NeuAc(1)
+NeuGc	835.282616	HexNAc-Hex2-NeuGc	HexNAc(1)Hex(2)NeuGc(1)
+NeuAc	860.314256	HexNAc2-Hex-NeuAc	HexNAc(2)Hex(1)NeuAc(1)
+NeuGc	876.309166	HexNAc2-Hex-NeuGc	HexNAc(2)Hex(1)NeuGc(1)
+HexNAc	893.324476	HexNAc2-Hex3	HexNAc(2)Hex(3)
+NeuAc	948.330306	HexNAc-Hex-NeuAc2	HexNAc(1)Hex(1)NeuAc(2)
+NeuGc	964.325100	HexNAc-Hex-NeuGc2	HexNAc(1)Hex(1)NeuGc(2)
+NeuAc	1022.367076	HexNAc2-Hex2-NeuAc	HexNAc(2)Hex(2)NeuAc(1)
+NeuGc	1038.361986	HexNAc2-Hex2-NeuGc	HexNAc(2)Hex(2)NeuGc(1)
+# Fucose / Lewis structures
+dHex	350.144556	HexNAc-dHex	HexNAc(1)dHex(1)
+dHex	512.197376	LeX/A	HexNAc(1)Hex(1)dHex(1)
+dHex	553.223926	HexNAc2-dHex	HexNAc(2)dHex(1)
+dHex	674.250196	HexNAc-Hex2-dHex	HexNAc(1)Hex(2)dHex(1)
+dHex	803.292800	sLeX/A
+NeuGc	819.290800	HexNAc-Hex-dHex-NeuGc	HexNAc(1)Hex(1)dHex(1)NeuGc(1)
+dHex	877.329600	diLacNAc-Fuc	HexNAc(2)Hex(2)dHex(1)
+# Acetylated composite ions
+Acetyl	537.192700	HexNAc-NeuAc[Ac]	HexNAc(1)Hex(1)NeuAc(1)Acetyl(1)
+Acetyl	553.187500	HexNAc-NeuGc[Ac]	HexNAc(1)Hex(1)NeuGc(1)Acetyl(1)
+# Sulfo (composition-gated when present in glycan library)
+Sulfo	299.090000	HexNAc-Sulfo	HexNAc(1)Sulfo(1)
+Sulfo	528.192000	HexNAc-Hex-Sulfo	HexNAc(1)Hex(1)Sulfo(1)
+Sulfo	731.272000	HexNAc2-Hex2-Sulfo	HexNAc(2)Hex(2)Sulfo(1)
+
+# neutral_losses
+# delta_da	label
+0	
+-18.010600	-H2O
+-36.021200	-2H2O

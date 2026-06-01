@@ -71,30 +71,34 @@ pseudo-residue letters.
 Glycan library CSV/TSV schema:
 
 ```text
-name,composition,monoisotopic_mass,diagnostic_ions,neutral_losses,residue_targets
-HexNAc1,HexNAc(1),203.079373,HexNAc@204.0867,H2O@18.010565,N
-NeuAc1HexNAc1,NeuAc(1)HexNAc(1),494.174789,NeuAc@274.0921;NeuAc@292.1027,H2O@18.010565;NeuAc@291.0954,N;S;T
+name,composition,monoisotopic_mass,diagnostic_ions,residue_targets
+HexNAc1,HexNAc(1),203.079373,HexNAc@204.0867;HexNAc@186.0760[-H2O];HexNAc@168.0654[-2H2O],N
+NeuAc1HexNAc1,NeuAc(1)HexNAc(1),494.174789,NeuAc@292.1027;NeuAc@274.0921[-H2O],N;S;T
 ```
+
+Each `diagnostic_ions` entry is an expanded search target (`family@mz` with optional
+`[-loss_label]`). Neutral-loss deltas are applied at load time from the global
+loss table in `diagnostic_ion_catalog.txt` (M base templates × N losses).
 
 Validation errors should be specific: missing required column, duplicate `name`, non-numeric mass/ion, non-positive mass, empty diagnostic ions, unreadable file, or unsupported delimiter. Empty diagnostic ions are invalid unless the user explicitly opts in, because V1 must not silently skip diagnostic filtering.
 
 Bundled seed data should live under `glycan_databases/fragpipe/` as raw upstream
 references. The starter inputs are FragPipe's Byonic-style
 `Nglyc309_Byonic.glyc` and `Oglyc78_Byonic.glyc`, plus `glycan_residues.txt`
-for residue masses and `oxonium_ion_list.txt` for diagnostic-ion definitions.
-These `.glyc` files are composition-only lists such as
+for residue masses and `diagnostic_ion_catalog.txt` for diagnostic-ion templates
+and neutral-loss deltas. These `.glyc` files are composition-only lists such as
 `HexNAc(2)Hex(5)Fuc(1)`. The GlycoQuest converter should parse residue counts,
 sum monoisotopic masses from `glycan_residues.txt`, assign default residue
 targets from the source list type (`N` for N-glycan, `S;T` for O-glycan unless
-overridden), and derive candidate diagnostic ions from `oxonium_ion_list.txt`.
+overridden), and expand per-glycan search ions from the catalog (M × N).
 The converter should report parsed row counts rather than trusting counts
 embedded in filenames.
 
 GlycoQuest should include this FragPipe-to-GlycoQuest conversion as an
 in-built converter used during the package build or data-install step, with an
 explicit CLI path for regeneration. V1 should not require a checked-in generated
-TSV to be hand-maintained when the raw upstream `.glyc`, residue, and oxonium
-files are present.
+TSV to be hand-maintained when the raw upstream `.glyc`, residue, and diagnostic
+catalog files are present.
 
 Outputs:
 
