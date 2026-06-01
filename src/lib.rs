@@ -1,9 +1,11 @@
 //! GlycoQuest library: CLI parameter types, settings, and the entry-point runner.
 
 mod cli;
+mod input;
 mod settings;
 
 pub use cli::{parse_cli, CliParams};
+pub use input::resolve_input;
 pub use settings::{default_settings_path, Settings};
 
 /// Whether to validate only or execute a full search.
@@ -72,8 +74,6 @@ impl RunConfig {
     }
 }
 
-const RAW_VENDOR_EXTENSIONS: &[&str] = &["raw", "wiff", "d", "baf", "tdf"];
-
 /// Run GlycoQuest from parsed CLI parameters (loads `settings.ini` automatically).
 pub fn run(cli: &CliParams) -> i32 {
     match RunConfig::load(cli.clone()) {
@@ -87,15 +87,18 @@ pub fn run(cli: &CliParams) -> i32 {
 
 /// Run GlycoQuest from a fully merged [`RunConfig`].
 pub fn run_config(config: &RunConfig) -> i32 {
-    if let Err(message) = validate_config(config) {
-        eprintln!("error: {message}");
-        return ExitCode::Validation.into();
-    }
+    let files = match validate_config(config) {
+        Ok(files) => files,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::Validation.into();
+        }
+    };
 
     match config.execution_mode() {
         ExecutionMode::DryRun => {
             eprintln!("dry-run: configuration accepted (no search executed)");
-            print_config_summary(config);
+            print_config_summary(config, &files);
             ExitCode::Success.into()
         }
         ExecutionMode::Run => {
@@ -103,19 +106,14 @@ pub fn run_config(config: &RunConfig) -> i32 {
                 "run: not implemented yet (input={})",
                 config.cli.input.display()
             );
-            print_config_summary(config);
+            print_config_summary(config, &files);
             ExitCode::Success.into()
         }
     }
 }
 
-fn validate_config(config: &RunConfig) -> Result<(), String> {
-    if is_raw_vendor_input(&config.cli.input) {
-        return Err(format!(
-            "Unsupported raw vendor input: {}. Convert to mzXML before running GlycoQuest.",
-            config.cli.input.display()
-        ));
-    }
+fn validate_config(config: &RunConfig) -> Result<Vec<std::path::PathBuf>, String> {
+    let files = resolve_input(&config.cli.input)?;
 
     if config.execution_mode() == ExecutionMode::Run {
         let missing = required_for_run(config);
@@ -136,7 +134,7 @@ fn validate_config(config: &RunConfig) -> Result<(), String> {
         }
     }
 
-    Ok(())
+    Ok(files)
 }
 
 fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
@@ -159,20 +157,14 @@ fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
     missing
 }
 
-fn is_raw_vendor_input(path: &std::path::Path) -> bool {
-    path.extension()
-        .and_then(|ext| ext.to_str())
-        .map(|ext| {
-            let lower = ext.to_ascii_lowercase();
-            RAW_VENDOR_EXTENSIONS.contains(&lower.as_str())
-        })
-        .unwrap_or(false)
-}
-
-fn print_config_summary(config: &RunConfig) {
+fn print_config_summary(config: &RunConfig, files: &[std::path::PathBuf]) {
     let cli = &config.cli;
     let settings = &config.settings;
     eprintln!("input: {}", cli.input.display());
+    eprintln!("files: {}", files.len());
+    for path in files {
+        eprintln!("  {}", path.display());
+    }
     if let Some(path) = &cli.database {
         eprintln!("database: {}", path.display());
     }
@@ -198,12 +190,34 @@ fn print_config_summary(config: &RunConfig) {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::fs;
     use std::path::PathBuf;
+    use std::sync::atomic::{AtomicU64, Ordering};
+
+    static TEMP_COUNTER: AtomicU64 = AtomicU64::new(0);
+
+    fn temp_mzxml(name: &str) -> PathBuf {
+        let id = TEMP_COUNTER.fetch_add(1, Ordering::Relaxed);
+        let path = std::env::temp_dir().join(format!(
+            "glycoquest_lib_test_{}_{}_{}.mzXML",
+            std::process::id(),
+            name,
+            id
+        ));
+        fs::write(&path, b"").unwrap();
+        path
+    }
 
     #[test]
     fn rejects_raw_vendor_input() {
+        let raw_path = std::env::temp_dir().join(format!(
+            "glycoquest_lib_test_{}_sample.raw",
+            std::process::id()
+        ));
+        fs::write(&raw_path, b"").unwrap();
+
         let cli = CliParams {
-            input: PathBuf::from("sample.raw"),
+            input: raw_path,
             ..CliParams::default()
         };
         let config = RunConfig {
@@ -216,7 +230,7 @@ mod tests {
     #[test]
     fn dry_run_accepts_mzxml_without_required_run_fields() {
         let cli = CliParams {
-            input: PathBuf::from("input.mzXML"),
+            input: temp_mzxml("dry_run"),
             dry_run: true,
             ..CliParams::default()
         };
@@ -230,7 +244,7 @@ mod tests {
     #[test]
     fn run_mode_requires_database() {
         let cli = CliParams {
-            input: PathBuf::from("input.mzXML"),
+            input: temp_mzxml("run_mode"),
             dry_run: false,
             ..CliParams::default()
         };

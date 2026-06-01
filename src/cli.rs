@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use clap::error::ErrorKind;
 use clap::Parser;
 
-/// Parsed GlycoQuest CLI parameters (independent of how they were supplied).
+/// Parsed GlycoQuest CLI parameters 
 #[derive(Debug, Clone, Default, PartialEq)]
 pub struct CliParams {
     pub input: PathBuf,
@@ -16,7 +16,7 @@ pub struct CliParams {
     pub ppm_tolerance: Option<f64>,
     pub out: Option<PathBuf>,
     pub config: Option<PathBuf>,
-    /// When true, validate configuration only (default: run a search).
+    /// When true, validate configuration only 
     pub dry_run: bool,
 }
 
