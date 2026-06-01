@@ -5,19 +5,38 @@ use std::path::PathBuf;
 use clap::error::ErrorKind;
 use clap::Parser;
 
-/// Parsed GlycoQuest CLI parameters 
-#[derive(Debug, Clone, Default, PartialEq)]
+/// Default bundled glycan database id ([`parse_cli`]).
+pub const DEFAULT_GLYCANS: &str = "nglyc309";
+
+/// Parsed GlycoQuest CLI parameters
+#[derive(Debug, Clone, PartialEq)]
 pub struct CliParams {
     pub input: PathBuf,
-    pub database: Option<PathBuf>,
-    pub glycans: Option<String>,
-    pub xquest_root: Option<PathBuf>,
+    pub database: PathBuf,
+    pub glycans: String,
+    pub xquest_root: PathBuf,
     pub crosslinker: Option<String>,
     pub ppm_tolerance: Option<f64>,
-    pub out: Option<PathBuf>,
+    pub out: PathBuf,
     pub config: Option<PathBuf>,
-    /// When true, validate configuration only 
+    /// When true, validate configuration only
     pub dry_run: bool,
+}
+
+impl Default for CliParams {
+    fn default() -> Self {
+        Self {
+            input: PathBuf::from("."),
+            database: PathBuf::from("proteins.fasta"),
+            glycans: DEFAULT_GLYCANS.into(),
+            xquest_root: PathBuf::from("."),
+            crosslinker: None,
+            ppm_tolerance: None,
+            out: PathBuf::from("."),
+            config: None,
+            dry_run: false,
+        }
+    }
 }
 
 #[derive(Parser, Debug)]
@@ -26,24 +45,24 @@ pub struct CliParams {
     version,
     about = "Prepare and run xQuest searches for DSS-crosslinked glycopeptide-peptide spectra.",
     arg_required_else_help = false,
-    after_help = "Advanced options (xquest_bin, tolerances, modifications, limits, etc.) live in settings.ini.\n\nExamples:\n  glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 --xquest-root ./xquest --out job\n  glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 --out job --dry-run"
+    after_help = "Advanced options (xquest_bin, tolerances, modifications, limits, etc.) live in settings.ini.\n\nExamples:\n  glycoquest input.mzXML --database proteins.fasta\n  glycoquest input.mzXML --database proteins.fasta --out job --dry-run"
 )]
 struct Args {
-    /// mzXML file or directory of MS/MS inputs (xQuest-compatible).
+    /// mzXML file(s) or directory (xQuest-compatible).
     #[arg(value_name = "INPUT")]
     input: Option<PathBuf>,
 
     /// Protein sequence database (FASTA).
-    #[arg(long, value_name = "FASTA")]
-    database: Option<PathBuf>,
+    #[arg(long, required = true, value_name = "FASTA")]
+    database: PathBuf,
 
     /// Bundled glycan database to load (e.g. nglyc309, oglyc78).
-    #[arg(long, value_name = "DATABASE")]
-    glycans: Option<String>,
+    #[arg(long, value_name = "DATABASE", default_value = DEFAULT_GLYCANS)]
+    glycans: String,
 
     /// xQuest installation root (contains `xquest.def` templates).
-    #[arg(long, value_name = "DIR")]
-    xquest_root: Option<PathBuf>,
+    #[arg(long, value_name = "DIR", default_value = ".")]
+    xquest_root: PathBuf,
 
     /// Crosslinker chemistry name (e.g. dss). Overrides settings.ini [crosslinker] name.
     #[arg(long, value_name = "NAME")]
@@ -54,8 +73,8 @@ struct Args {
     ppm_tolerance: Option<f64>,
 
     /// Output directory for generated jobs and results.
-    #[arg(long, value_name = "DIR")]
-    out: Option<PathBuf>,
+    #[arg(long, value_name = "DIR", default_value = ".")]
+    out: PathBuf,
 
     /// Path to settings.ini (default: ./settings.ini).
     #[arg(long, value_name = "FILE", default_value = "settings.ini")]
@@ -111,11 +130,7 @@ fn missing_input_error() -> clap::Error {
          as the first (positional) argument.\n\
          \n\
          Example:\n  \
-         glycoquest data/run.mzXML \\\n    \
-           --database proteins.fasta \\\n    \
-           --glycans nglyc309 \\\n    \
-           --xquest-root ./xquest \\\n    \
-           --out results\n\
+         glycoquest data/run.mzXML --database proteins.fasta\n\
          \n\
          Run `glycoquest --help` for all options.",
     )
@@ -147,7 +162,7 @@ mod tests {
 
     #[test]
     fn missing_input_error_is_explicit() {
-        let err = parse_cli(["glycoquest"]).unwrap_err();
+        let err = parse_cli(["glycoquest", "--database", "proteins.fasta"]).unwrap_err();
         let msg = err.to_string();
         assert!(msg.contains("missing required argument: INPUT"));
         assert!(msg.contains("mzXML"));
@@ -155,10 +170,18 @@ mod tests {
     }
 
     #[test]
+    fn missing_database_error() {
+        let err = parse_cli(["glycoquest", "input.mzXML"]).unwrap_err();
+        assert!(err.to_string().contains("--database"));
+    }
+
+    #[test]
     fn parses_dry_run_flag() {
         let params = parse_cli([
             "glycoquest",
             "input.mzXML",
+            "--database",
+            "proteins.fasta",
             "--dry-run",
             "--config",
             "settings.ini",
@@ -172,13 +195,31 @@ mod tests {
         let params = parse_cli([
             "glycoquest",
             "input.mzXML",
+            "--database",
+            "proteins.fasta",
             "--glycans",
-            "nglyc309",
+            "oglyc78",
             "--config",
             "settings.ini",
         ])
         .unwrap();
-        assert_eq!(params.glycans.as_deref(), Some("nglyc309"));
+        assert_eq!(params.glycans, "oglyc78");
+    }
+
+    #[test]
+    fn applies_defaults_for_glycans_out_and_xquest_root() {
+        let params = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--database",
+            "proteins.fasta",
+        ])
+        .unwrap();
+        assert_eq!(params.input, PathBuf::from("input.mzXML"));
+        assert_eq!(params.database, PathBuf::from("proteins.fasta"));
+        assert_eq!(params.glycans, DEFAULT_GLYCANS);
+        assert_eq!(params.out, PathBuf::from("."));
+        assert_eq!(params.xquest_root, PathBuf::from("."));
     }
 
     #[test]
@@ -193,9 +234,6 @@ mod tests {
         ])
         .unwrap();
         assert_eq!(params.input, PathBuf::from("input.mzXML"));
-        assert_eq!(
-            params.database.as_deref(),
-            Some(std::path::Path::new("proteins.fasta"))
-        );
+        assert_eq!(params.database, PathBuf::from("proteins.fasta"));
     }
 }

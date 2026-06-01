@@ -125,57 +125,13 @@ pub fn run_config(config: &RunConfig) -> i32 {
 }
 
 fn validate_config(config: &RunConfig) -> Result<ValidatedInputs, String> {
-    let files= resolve_input(&config.cli.input)?;
-
-    let glycan_library = if let Some(database_id) = &config.cli.glycans {
-        Some(load_glycan_database(database_id)?)
-    } else {
-        None
-    };
-
-    if config.execution_mode() == ExecutionMode::Run {
-        let missing = required_for_run(config);
-        if !missing.is_empty() {
-            let mut message =
-                String::from("cannot run search; the following required arguments are missing:\n");
-            for line in missing {
-                message.push_str("  - ");
-                message.push_str(line);
-                message.push('\n');
-            }
-            message.push_str(
-                "\nExample:\n  \
-                 glycoquest input.mzXML --database proteins.fasta --glycans nglyc309 \
-                 --xquest-root ./xquest --out results",
-            );
-            return Err(message);
-        }
-    }
+    let files = resolve_input(&config.cli.input)?;
+    let glycan_library = Some(load_glycan_database(&config.cli.glycans)?);
 
     Ok(ValidatedInputs {
         files,
         glycan_library,
     })
-}
-
-fn required_for_run(config: &RunConfig) -> Vec<&'static str> {
-    let cli = &config.cli;
-    let mut missing = Vec::new();
-    if cli.database.is_none() {
-        missing.push("--database <FASTA>  (protein sequence database)");
-    }
-    if cli.glycans.is_none() {
-        missing.push("--glycans <DATABASE>  (bundled glycan database, e.g. nglyc309, oglyc78)");
-    }
-    if cli.out.is_none() {
-        missing.push("--out <DIR>  (output directory for jobs and results)");
-    }
-    if cli.xquest_root.is_none() && config.settings.xquest_bin.is_none() {
-        missing.push(
-            "--xquest-root <DIR>  (xQuest install root), or set xquest_bin in settings.ini",
-        );
-    }
-    missing
 }
 
 fn print_config_summary(config: &RunConfig, validated: &ValidatedInputs) {
@@ -186,12 +142,8 @@ fn print_config_summary(config: &RunConfig, validated: &ValidatedInputs) {
     for path in &validated.files {
         eprintln!("  {}", path.display());
     }
-    if let Some(path) = &cli.database {
-        eprintln!("database: {}", path.display());
-    }
-    if let Some(database_id) = &cli.glycans {
-        eprintln!("glycans: {database_id}");
-    }
+    eprintln!("database: {}", cli.database.display());
+    eprintln!("glycans: {}", cli.glycans);
     if let Some(library) = &validated.glycan_library {
         eprintln!("glycan entries: {} (unique)", library.entries.len());
         for entry in library.entries.iter().take(3) {
@@ -206,15 +158,11 @@ fn print_config_summary(config: &RunConfig, validated: &ValidatedInputs) {
             eprintln!("  …");
         }
     }
-    if let Some(path) = &cli.xquest_root {
-        eprintln!("xquest_root: {}", path.display());
-    }
+    eprintln!("xquest_root: {}", cli.xquest_root.display());
     if let Some(path) = &settings.xquest_bin {
         eprintln!("xquest_bin (settings): {}", path.display());
     }
-    if let Some(path) = &cli.out {
-        eprintln!("out: {}", path.display());
-    }
+    eprintln!("out: {}", cli.out.display());
     eprintln!("crosslinker: {}", settings.crosslinker_name);
     eprintln!(
         "diagnostic_tolerance_ppm: {}",
@@ -266,7 +214,7 @@ mod tests {
     fn dry_run_accepts_bundled_glycan_database() {
         let cli = CliParams {
             input: temp_mzxml("glycan_dry_run"),
-            glycans: Some("nglyc309".into()),
+            glycans: "nglyc309".into(),
             dry_run: true,
             ..CliParams::default()
         };
@@ -278,7 +226,7 @@ mod tests {
     }
 
     #[test]
-    fn dry_run_accepts_mzxml_without_required_run_fields() {
+    fn dry_run_accepts_minimal_cli_params() {
         let cli = CliParams {
             input: temp_mzxml("dry_run"),
             dry_run: true,
@@ -289,20 +237,6 @@ mod tests {
             settings: Settings::defaults(),
         };
         assert_eq!(run_config(&config), ExitCode::Success as i32);
-    }
-
-    #[test]
-    fn run_mode_requires_database() {
-        let cli = CliParams {
-            input: temp_mzxml("run_mode"),
-            dry_run: false,
-            ..CliParams::default()
-        };
-        let config = RunConfig {
-            cli,
-            settings: Settings::defaults(),
-        };
-        assert_eq!(run_config(&config), ExitCode::Validation as i32);
     }
 
     #[test]
