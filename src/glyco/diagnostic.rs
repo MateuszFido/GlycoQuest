@@ -259,7 +259,7 @@ mod tests {
 
     #[test]
     fn loads_bundled_catalog() {
-        let path = crate::glycan::glycan_data_dir().join("diagnostic_ion_catalog.txt");
+        let path = crate::glyco::glycan_data_dir().join("diagnostic_ion_catalog.txt");
         let catalog = load_diagnostic_catalog(&path).expect("bundled catalog");
         assert!(!catalog.templates.is_empty());
         assert_eq!(catalog.losses.len(), 3);

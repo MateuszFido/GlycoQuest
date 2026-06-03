@@ -1,17 +1,15 @@
 //! GlycoQuest library: CLI parameter types, settings, and the entry-point runner.
 
 mod cli;
-mod glycan;
-mod input;
-mod settings;
+mod glyco;
 
 pub use cli::{parse_cli, CliParams};
-pub use glycan::{
+pub use glyco::{
     glycan_data_dir, load_glycan_database, resolve_database, supported_glycan_databases,
     DiagnosticIon, GlycanEntry, GlycanLibrary,
 };
-pub use input::resolve_input;
-pub use settings::{default_settings_path, Settings};
+pub use cli::input::resolve_input;
+pub use cli::settings::{default_settings_path, Settings};
 
 /// Whether to validate only or execute a full search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

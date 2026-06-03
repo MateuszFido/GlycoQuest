@@ -1,5 +1,7 @@
 //! Command-line parsing for the `glycoquest` binary.
 
+pub mod input;
+pub mod settings;
 use std::path::PathBuf;
 
 use clap::error::ErrorKind;
