@@ -6,7 +6,10 @@ mod diagnostic;
 
 pub use catalog::{glycan_data_dir, resolve_database, supported_glycan_databases};
 pub use diagnostic::DiagnosticIon;
-pub use composition::{load_masses, parse_composition, read_compositions, composition_mass};
+pub use composition::{
+    composition_mass, contains_family, load_masses, parse_composition, read_compositions,
+    Composition,
+};
 
 use catalog::{
     ensure_data_files, residue_targets,
