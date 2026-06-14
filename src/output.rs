@@ -1,6 +1,16 @@
-//! Output directory preparation.
+//! Output directory preparation and run plan artifacts.
+
+pub mod layout;
+
+mod plan;
 
 use std::path::Path;
+
+pub use layout::{
+    cleanup_temp_artifacts, derive_project_slug, resolve_project_out_dir, ProjectLayout,
+    DEFAULT_OUT_BASE,
+};
+pub use plan::{build_run_plan_document, write_plan_json, RunPlanDocument};
 
 /// Create the output directory if missing, or verify it is a writable directory.
 pub fn ensure_output_dir(path: &Path) -> Result<(), String> {

@@ -78,9 +78,11 @@ fn round_mass(value: f64) -> f64 {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
 
     #[test]
     fn loads_bundled_nglyc309_database() {
+        let _lock = env_test_lock();
         let library = load_glycan_database("nglyc309").expect("bundled nglyc309");
         assert_eq!(library.database_id, "nglyc309");
         assert!(!library.entries.is_empty());
@@ -93,6 +95,7 @@ mod tests {
 
     #[test]
     fn loads_bundled_oglyc78_database() {
+        let _lock = env_test_lock();
         let library = load_glycan_database("oglyc78").expect("bundled oglyc78");
         assert_eq!(library.database_id, "oglyc78");
         assert_eq!(library.entries.len(), 78);
@@ -104,6 +107,7 @@ mod tests {
 
     #[test]
     fn hexnac_mass_matches_residue_table() {
+        let _lock = env_test_lock();
         let library = load_glycan_database("nglyc309").unwrap();
         let entry = library
             .entries
@@ -121,35 +125,68 @@ mod tests {
 
     #[test]
     fn loads_database_from_env_override_dir() {
+        let _lock = env_test_lock();
+
+        let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("databases");
         let dir = std::env::temp_dir().join(format!(
-            "glycoquest_glycan_data_{}",
-            std::process::id()
+            "glycoquest_glycan_data_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
         std::fs::write(dir.join("Nglyc309_Byonic.glyc"), "HexNAc(1)\n").unwrap();
         std::fs::copy(
-            glycan_data_dir().join("glycan_residues.txt"),
+            manifest_dir.join("glycan_residues.txt"),
             dir.join("glycan_residues.txt"),
         )
         .unwrap();
         std::fs::copy(
-            glycan_data_dir().join("diagnostic_ion_catalog.txt"),
+            manifest_dir.join("diagnostic_ion_catalog.txt"),
             dir.join("diagnostic_ion_catalog.txt"),
         )
         .unwrap();
 
-        unsafe { std::env::set_var("GLYCOQUEST_GLYCAN_DATA_DIR", &dir) };
+        let _guard = EnvVarGuard::set("GLYCOQUEST_GLYCAN_DATA_DIR", dir.to_string_lossy().as_ref());
         let library = load_glycan_database("nglyc309").unwrap();
-        unsafe { std::env::remove_var("GLYCOQUEST_GLYCAN_DATA_DIR") };
-        let _ = std::fs::remove_dir_all(dir);
+        let _ = std::fs::remove_dir_all(&dir);
 
         assert_eq!(library.entries.len(), 1);
         assert_eq!(library.entries[0].composition, "HexNAc(1)");
     }
 
+    fn env_test_lock() -> std::sync::MutexGuard<'static, ()> {
+        static LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
+        LOCK.lock().unwrap_or_else(|err| err.into_inner())
+    }
+
+    struct EnvVarGuard {
+        key: &'static str,
+        previous: Option<std::ffi::OsString>,
+    }
+
+    impl EnvVarGuard {
+        fn set(key: &'static str, value: &str) -> Self {
+            let previous = std::env::var_os(key);
+            unsafe { std::env::set_var(key, value) };
+            Self { key, previous }
+        }
+    }
+
+    impl Drop for EnvVarGuard {
+        fn drop(&mut self) {
+            match &self.previous {
+                Some(value) => unsafe { std::env::set_var(self.key, value) },
+                None => unsafe { std::env::remove_var(self.key) },
+            }
+        }
+    }
+
     #[test]
-    /// Specific cherry-picked glycans from the nglyc309 database.
     fn integration_test_nglyc309() {
+        let _lock = env_test_lock();
         let library = load_glycan_database("nglyc309").unwrap();
         assert_eq!(library.database_id, "nglyc309");
         let total_lines = std::fs::read_to_string(glycan_data_dir().join("Nglyc309_Byonic.glyc"))

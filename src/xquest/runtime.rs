@@ -1,4 +1,4 @@
-//! xQuest runtime discovery and validation.
+//! xQuest executable discovery and validation.
 
 use std::path::{Path, PathBuf};
 
@@ -12,12 +12,16 @@ pub struct XQuestRuntime {
 
 /// Resolve the xQuest executable from settings or `--xquest-root`.
 pub fn resolve_runtime(xquest_root: &Path, settings: &Settings) -> Result<XQuestRuntime, String> {
-    if let Some(bin) = &settings.xquest_bin {
-        return validate_executable(bin, xquest_root);
+    if let Some(bin) = settings.xquest_bin.as_ref().filter(|path| !path.as_os_str().is_empty()) {
+        let path = if bin.is_absolute() {
+            bin.clone()
+        } else {
+            xquest_root.join(bin)
+        };
+        return validate_executable(&path, xquest_root);
     }
 
-    let candidates = candidate_paths(xquest_root);
-    for candidate in candidates {
+    for candidate in candidate_paths(xquest_root) {
         if candidate.is_file() {
             return validate_executable(&candidate, xquest_root);
         }
@@ -26,13 +30,15 @@ pub fn resolve_runtime(xquest_root: &Path, settings: &Settings) -> Result<XQuest
     Err(format!(
         "xQuest executable not found under {} \
          (set xquest_bin in settings.ini or pass --xquest-root); \
-         checked: xquest, bin/xquest, xquest/xquest",
+         checked: bin/xquest.pl, bin/runXquest.pl, xquest, bin/xquest",
         xquest_root.display()
     ))
 }
 
 fn candidate_paths(root: &Path) -> Vec<PathBuf> {
     vec![
+        root.join("bin").join("xquest.pl"),
+        root.join("bin").join("runXquest.pl"),
         root.join("xquest"),
         root.join("bin").join("xquest"),
         root.join("xquest").join("xquest"),
@@ -98,6 +104,23 @@ mod tests {
             xquest_bin: Some(bin.clone()),
             ..Settings::defaults()
         };
+        let runtime = resolve_runtime(&root, &settings).unwrap();
+        assert_eq!(runtime.executable, bin);
+    }
+
+    #[test]
+    fn resolves_xquest_pl_under_bin() {
+        let root = temp_xquest_root("bin_pl");
+        fs::create_dir_all(root.join("bin")).unwrap();
+        let bin = root.join("bin/xquest.pl");
+        fs::write(&bin, b"#!/usr/bin/env perl\n").unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            fs::set_permissions(&bin, fs::Permissions::from_mode(0o755)).unwrap();
+        }
+
+        let settings = Settings::defaults();
         let runtime = resolve_runtime(&root, &settings).unwrap();
         assert_eq!(runtime.executable, bin);
     }

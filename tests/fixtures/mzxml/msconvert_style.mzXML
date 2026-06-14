@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mzXML xmlns="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1 http://sashimi.sourceforge.net/schema_revision/mzXML_3.1/mzXML_3.1.xsd" version="3.1">
+<msRun>
+<scan num="42"
+      scanType="Full"
+      centroided="1"
+      msLevel="2"
+      peaksCount="2"
+      polarity="+"
+      retentionTime="PT1200S"
+      msInstrumentID="1">
+<precursorMz precursorCharge="2">800.0</precursorMz>
+<peaks compressionType="zlib"
+       compressedLen="30"
+       precision="64"
+       byteOrder="network"
+       contentType="m/z-int">eJxzyGw6Zi8ixObQ78AAAg5FByC0J5hiAAB3cQVn</peaks>
+</scan>
+</msRun>
+</mzXML>

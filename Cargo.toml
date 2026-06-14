@@ -5,8 +5,10 @@ edition = "2024"
 description = "Prepare and run xQuest searches for DSS-crosslinked glycopeptide-peptide spectra."
 
 [dependencies]
+base64 = "0.22"
 clap = { version = "4", features = ["derive"] }
 configparser = "1.0"
+flate2 = "1.1"
 
 [lib]
 path = "src/lib.rs"

@@ -2,7 +2,7 @@
 
 ## 1. Scope and Non-Goals
 
-GlycoQuest V1 is a standalone Rust CLI package that prepares and runs xQuest searches for DSS-crosslinked glycopeptide-peptide spectra. It accepts xQuest-compatible MS/MS input, a FASTA database, and an explicit glycan CSV/TSV library. It filters spectra for glycan diagnostic ions, annotates neutral losses, then filters for the expected DSS light/heavy isotopic pair pattern, prunes per-spectrum glycan candidates, writes inspectable xQuest job folders, optionally runs xQuest, and consolidates xQuest XML results with GlycoQuest-specific annotations and post-filters.
+GlycoQuest V1 is a standalone Rust CLI package that prepares and runs xQuest searches for crosslinked glycopeptide-peptide spectra (DSS by default; DMTMM and custom chemistries via settings). It accepts xQuest-compatible MS/MS input, a FASTA database, and a bundled or explicit glycan library. It filters spectra for glycan diagnostic ions, annotates neutral losses, optionally filters for DSS light/heavy isotopic pairs when `crosslinker.label=light-heavy`, prunes per-spectrum glycan candidates, writes inspectable xQuest job folders, optionally runs xQuest, and consolidates xQuest XML results with GlycoQuest-specific annotations and post-filters.
 
 V1 does not include LCMSpector web or desktop integration, raw vendor conversion, automatic glycan database discovery, a database, a service, or a web UI. It must fail clearly for raw vendor formats and require explicit conversion to xQuest-compatible mzXML. V1 must not claim FDR/q-value support until an xQuest/xProphet path is explicitly validated for this glycan-filtered search mode.
 
@@ -51,20 +51,18 @@ glycoquest search \
   --dry-run
 ```
 
-Run mode uses the same inputs with `--run`. Required inputs are `--msms`, `--fasta`, `--glycans`, `--xquest-bin` or `--xquest-root`, `--out`, diagnostic-ion tolerance, crosslinker label mode, and dry-run/run behavior. Useful options include `--xlink-sites K:K,K:Z,Z:Z`, `--nterm-xlinkable`, `--fixed-carbamidomethyl-cys`, `--variable-oxidation`, `--glycan-targets N,S,T`, `--crosslinker dss`, `--crosslinker-label light-heavy`, `--crosslinker-shift-da 12.075321`, `--isotope-pair-ms1-tolerance-ppm`, `--isotope-pair-rt-tolerance-min`, `--diagnostic-tolerance-ppm`, `--neutral-loss-tolerance-da`, `--max-jobs`, `--max-pruned-spectra`, `--max-total-job-spectrum-comparisons`, `--min-score`, and `--max-precursor-error-ppm`.
+Run mode omits `--dry-run`. Crosslinker presets: `--crosslinker dss` (default, light/heavy isotope prefilter required) and `--crosslinker dmtmm` (zero-length Lys–Asp/Glu linkage, no isotope prefilter). Advanced crosslinker fields live in `settings.ini` under `[crosslinker]`: `label` (`light-heavy`, `light-only`, `none`), `shift_da`, `xlinkermw`, and `xlink_sites`.
 
 Exit codes: `0` success, `1` validation/config error, `2` no spectra pass filters, `3` xQuest execution failure, `4` result extraction failure.
 
 Raw vendor files such as `.raw`, `.wiff`, `.d`, `.baf`, and `.tdf` fail with: `Unsupported raw vendor input: <path>. Convert explicitly to mzXML before running GlycoQuest V1.`
 
-Real-data validation inputs live under `glycoquest/` for development. The
-human urinary hCG run should use the msconvert-produced mzXML at
-`real_data/msconvert/260521_LU02_disoic_hCG_01.mzXML`. The matching FASTA is
-`rcsb_pdb_1HRP.fasta`, containing hCG sequence, deglycosylation enzymes, and
-common contaminants. These are integration fixtures for local development, not
-small unit-test fixtures. FASTA validation should run before xQuest job
-generation and report malformed headers, empty sequences, and reserved
-pseudo-residue letters.
+Real-data validation inputs live under `data/` for development. The human urinary
+hCG run uses the msconvert-produced mzXML at
+`data/260521_LU02_disoic_hCG_01.mzXML`. The matching FASTA is
+`data/rcsb_pdb_1HRP_no_contams.fasta` (or the fuller `data/rcsb_pdb_1HRP.fasta`).
+These are integration fixtures for local development, not small unit-test
+fixtures.
 
 ## 4. File Formats
 
@@ -104,7 +102,7 @@ Outputs:
 
 - `plan.json`: normalized inputs, options, generated jobs, and xQuest commands.
 - `filtered_spectra.tsv`: retained spectra with matched diagnostic ions, neutral losses, and candidate glycans.
-- `isotope_pairs.tsv`: diagnostic-positive spectra that also pass the DSS light/heavy isotope-pair prefilter.
+- `isotope_pairs.tsv`: diagnostic-positive spectra that pass the DSS light/heavy isotope-pair prefilter when enabled (`label=light-heavy`); header-only when isotope prefilter is disabled.
 - `rejected_spectra.tsv`: spectra rejected by diagnostic or DSS isotope-pair filters.
 - `glycan_pruning.tsv`: spectrum-to-glycan candidate table.
 - `prefiltered_mzxml/`: reduced mzXML files generated from the supplied full mzXML and used as xQuest inputs.
@@ -117,7 +115,9 @@ Validate inputs and xQuest executables, parse the glycan library, reject raw ven
 
 Prune glycans per spectrum by diagnostic families. If a spectrum has only HexNAc evidence, keep all glycans containing HexNAc. If it has only NeuAc evidence, keep all glycans containing NeuAc. If it has HexNAc and NeuAc evidence together, keep glycans containing both families. This is spectrum-local pruning; different spectra may keep different subsets of the glycan library.
 
-After glycan-evidence filtering, run a second file-side prefilter for the expected DSS light/heavy isotopic pairing. V1 should default to a 50/50 light/heavy DSS population and require a partner spectrum separated by the configured DSS isotope shift, within MS1 and retention-time tolerances. This prefilter prunes spectra only; it does not change the glycan library because only the crosslinker population is labeled. The retained pairs should be most useful when the DSS-linked peptides include lysine or protein N-terminus sites, but V1 should express that through the configured xQuest crosslink sites rather than hard-coded peptide inference.
+After glycan-evidence filtering, optionally run a file-side prefilter for DSS light/heavy isotopic pairing when `crosslinker.label=light-heavy`. The default DSS workflow requires a partner spectrum separated by the configured isotope shift (`shift_da`, default 12.075321 Da), within MS1 and retention-time tolerances. When `label=none` (DMTMM preset) or `label=light-only`, diagnostic-positive spectra pass through without an isotope partner requirement; `isotope_pairs.tsv` remains empty and xQuest jobs use single-scan matchlists with `isotopeshift 0`.
+
+Unlabeled crosslinkers such as DMTMM use the bundled preset `--crosslinker dmtmm`: `label=none`, `shift_da=0`, `xlinkermw=-18.0109` (net water loss), and `xlink_sites=K:E,K:D`. These values must be validated against the local patched xQuest runtime before production use.
 
 The full mzXML should be supplied to GlycoQuest for real-data runs. Creating
 small, xQuest-sized mzXML inputs is the job of the diagnostic and DSS
@@ -125,7 +125,7 @@ prefiltering step, not a manual prerequisite. The real hCG mzXML should remain
 available for integration testing so the prefilter is exercised against actual
 scan density, precursor charge metadata, and noise.
 
-Generate regular xQuest light/heavy job inputs for retained DSS isotope pairs. Matchlist rows should use the local xQuest `compare_peaks3.pl` layout: id, precursor m/z, charge, input1, input2, `light`, `heavy`, scan pair, RT pair, and m/z pair. Dry-run writes all files and commands. Run mode executes the visible xQuest commands and logs stdout/stderr. Result extraction flattens xQuest XML and adds glycan evidence, candidate glycan names, isotope-pair evidence, mass evidence, precursor-charge evidence, sequon evidence, and post-filter status.
+Generate xQuest job inputs for retained spectra. When isotope prefilter is enabled, matchlist rows use the paired layout (light scan, heavy scan, m/z pair). When disabled, rows list individual scans. Dry-run writes all files, `plan.json`, and commands. Run mode executes `run.sh` per job and logs to `logs/`. Result extraction flattens xQuest XML and applies GlycoQuest post-filters; isotope-pair evidence is required only for `light-heavy` mode.
 
 Post-xQuest filtering has hard and soft requirements. Hard requirements are DSS crosslinker evidence through the xQuest hit, glycan mass residual compatibility, a configured glycan residue present in the matched peptide sequence, and diagnostic-ion evidence in the originating spectrum. Soft scoring features are precursor charge verified from the MS1 isotopic envelope, glycosylation sequon presence, mass error, and diagnostic-ion count. Precursor charge must be scientifically reasonable when present: tryptic peptide-peptide hits are commonly +2/+3, while glycopeptide-peptide and glycopeptide-glycopeptide crosslinks are expected to skew higher, often +4 to +6, with +2 to +7 treated as possible.
 
@@ -133,7 +133,7 @@ Post-xQuest filtering has hard and soft requirements. Hard requirements are DSS 
 
 Use xQuest DSS crosslinking rather than RNxQuest RNA monolink mode. Default settings are `xkinkerID DSS`, `crosslinkername DSS`, `xlinkermw 138.0680796`, `isotopeshift 12.075321`, `cp_isotopediff 12.075321`, `printisotopicscanpairs 1`, and `xlinktypes 0011` for intraprotein and interprotein peptide-peptide crosslinks. Default sites are `K:K`. If enabled, N-termini use `ntermxlinkable 1` plus `Z` pairs such as `K:K,K:Z,Z:Z`, pending integration verification.
 
-The crosslinker and labeling mode should stay configurable for future variants, but V1 should default to `--crosslinker dss --crosslinker-label light-heavy` and a regular xQuest light/heavy distribution. A `light-only` mode can remain a later/debug option; it is not the V1 search default.
+The crosslinker and labeling mode stay configurable. V1 defaults to `--crosslinker dss` with `label=light-heavy`. `label=none` skips isotope prefilter for zero-length crosslinkers (DMTMM). `label=light-only` skips isotope prefilter but writes xQuest light-only pair settings.
 
 GlycoQuest V1 should run against the patched `V2.1.6` runtime or an external xQuest installation that is explicitly validated to have equivalent variable-modification behavior. At startup, GlycoQuest should verify that the selected xQuest tree has the expected pseudo-residue variable-mod support before generating glycan jobs.
 
@@ -172,6 +172,6 @@ Unit tests should cover glycan library parsing, FragPipe glycan conversion, vali
 - One glycan/loss variant per xQuest job is scientifically clear but can create many jobs. Resource limits and dry-run summaries are required before execution.
 - N-terminus crosslink support through `Z` must be verified with generated jobs.
 - Glycan residue targets are chemistry assumptions and must stay configurable.
-- DSS light/heavy isotope pairing is file-side prefiltering before xQuest execution; the exact tolerance defaults should be verified against local instrument behavior.
+- DSS light/heavy isotope pairing is required only when `crosslinker.label=light-heavy`; tolerance defaults should be verified against local instrument behavior.
 - False-discovery handling remains an open question; V1 should not report FDR/q-values until xProphet use is designed and validated for GlycoQuest output.
 - mzXML parsing should be intentionally narrow in V1. mzML support should wait until xQuest input handling is locally verified.

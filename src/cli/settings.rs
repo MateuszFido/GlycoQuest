@@ -17,6 +17,7 @@ pub struct Settings {
     pub crosslinker_name: String,
     pub crosslinker_label: String,
     pub crosslinker_shift_da: f64,
+    pub xlinkermw: f64,
     pub xlink_sites: String,
     pub nterm_xlinkable: bool,
     pub fixed_carbamidomethyl_cys: bool,
@@ -42,6 +43,7 @@ impl Settings {
             crosslinker_name: "dss".into(),
             crosslinker_label: "light-heavy".into(),
             crosslinker_shift_da: 12.075321,
+            xlinkermw: 138.0680796,
             xlink_sites: "K:K".into(),
             nterm_xlinkable: false,
             fixed_carbamidomethyl_cys: true,
@@ -100,6 +102,7 @@ impl Settings {
             s.crosslinker_label = v;
         }
         s.crosslinker_shift_da = get_f64(ini, "crosslinker", "shift_da", s.crosslinker_shift_da);
+        s.xlinkermw = get_f64(ini, "crosslinker", "xlinkermw", s.xlinkermw);
         if let Some(v) = non_empty_string(ini.get("crosslinker", "xlink_sites")) {
             s.xlink_sites = v;
         }

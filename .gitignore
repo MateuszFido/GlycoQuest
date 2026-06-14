@@ -1,7 +1,11 @@
-/target/
+/out/
+/glycoquest_*_out/
+/glycoquest_*_input/
 
 *.mzXML
 *.mzxml
+!tests/fixtures/mzxml/*.mzXML
+!tests/fixtures/mzxml/*.mzxml
 *.mzML
 *.mzml
 *.raw

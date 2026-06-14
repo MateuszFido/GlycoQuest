@@ -9,6 +9,7 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use crate::cli::settings::Settings;
+use crate::crosslinker::CrosslinkerProfile;
 use crate::glyco::GlycanLibrary;
 use crate::mzxml::{self, Ms2Scan};
 
@@ -80,6 +81,7 @@ pub fn run_prefilter(
     files: &[PathBuf],
     library: &GlycanLibrary,
     settings: &Settings,
+    crosslinker: &CrosslinkerProfile,
 ) -> Result<PrefilterResult, String> {
     let mut rejected = Vec::new();
     let mut diagnostic_positive = Vec::new();
@@ -113,48 +115,31 @@ pub fn run_prefilter(
         }
     }
 
-    let scan_refs: Vec<ScanRef> = diagnostic_positive
-        .iter()
-        .map(|entry| ScanRef {
-            source_file: entry.source_file.clone(),
-            scan: entry.scan.clone(),
-        })
-        .collect();
-
-    let isotope_outcomes = isotope::match_isotope_pairs(&scan_refs, settings);
-
     let mut isotope_pairs = Vec::new();
     let mut filtered = Vec::new();
     let mut pruning = Vec::new();
 
-    for outcome in isotope_outcomes {
-        match outcome {
-            IsotopePairOutcome::Paired(pair) => {
-                stats.isotope_pairs += 1;
-                isotope_pairs.push(pair.clone());
-
-                if let Some(light) =
-                    find_entry(&diagnostic_positive, &pair.light_file, pair.light_scan)
-                {
-                    append_filtered_and_pruning(&mut filtered, &mut pruning, light, library)?;
-                }
-                if let Some(heavy) =
-                    find_entry(&diagnostic_positive, &pair.heavy_file, pair.heavy_scan)
-                {
-                    append_filtered_and_pruning(&mut filtered, &mut pruning, heavy, library)?;
-                }
-            }
-            IsotopePairOutcome::Unpaired(scan_ref) => {
-                rejected.push(RejectedSpectrum {
-                    source_file: scan_ref.source_file,
-                    scan_number: scan_ref.scan.scan_number,
-                    reason: RejectReason::NoIsotopePair,
-                });
-            }
-        }
+    if crosslinker.requires_isotope_pair_prefilter() {
+        apply_isotope_pair_filter(
+            &diagnostic_positive,
+            settings,
+            &mut isotope_pairs,
+            &mut filtered,
+            &mut pruning,
+            &mut rejected,
+            &mut stats,
+            library,
+        )?;
+    } else {
+        pass_diagnostic_positive(
+            &diagnostic_positive,
+            &mut filtered,
+            &mut pruning,
+            library,
+        )?;
+        stats.filtered_scans = filtered.len();
     }
 
-    stats.filtered_scans = filtered.len();
     stats.rejected = rejected.len();
 
     if settings.max_pruned_spectra > 0 && stats.filtered_scans > settings.max_pruned_spectra as usize
@@ -172,6 +157,67 @@ pub fn run_prefilter(
         pruning,
         stats,
     })
+}
+
+fn apply_isotope_pair_filter(
+    diagnostic_positive: &[ScanWithMatch],
+    settings: &Settings,
+    isotope_pairs: &mut Vec<IsotopePair>,
+    filtered: &mut Vec<FilteredSpectrum>,
+    pruning: &mut Vec<GlycanPruningRow>,
+    rejected: &mut Vec<RejectedSpectrum>,
+    stats: &mut PrefilterStats,
+    library: &GlycanLibrary,
+) -> Result<(), String> {
+    let scan_refs: Vec<ScanRef> = diagnostic_positive
+        .iter()
+        .map(|entry| ScanRef {
+            source_file: entry.source_file.clone(),
+            scan: entry.scan.clone(),
+        })
+        .collect();
+
+    for outcome in isotope::match_isotope_pairs(&scan_refs, settings) {
+        match outcome {
+            IsotopePairOutcome::Paired(pair) => {
+                stats.isotope_pairs += 1;
+                isotope_pairs.push(pair.clone());
+
+                if let Some(light) =
+                    find_entry(diagnostic_positive, &pair.light_file, pair.light_scan)
+                {
+                    append_filtered_and_pruning(filtered, pruning, light, library)?;
+                }
+                if let Some(heavy) =
+                    find_entry(diagnostic_positive, &pair.heavy_file, pair.heavy_scan)
+                {
+                    append_filtered_and_pruning(filtered, pruning, heavy, library)?;
+                }
+            }
+            IsotopePairOutcome::Unpaired(scan_ref) => {
+                rejected.push(RejectedSpectrum {
+                    source_file: scan_ref.source_file,
+                    scan_number: scan_ref.scan.scan_number,
+                    reason: RejectReason::NoIsotopePair,
+                });
+            }
+        }
+    }
+
+    stats.filtered_scans = filtered.len();
+    Ok(())
+}
+
+fn pass_diagnostic_positive(
+    diagnostic_positive: &[ScanWithMatch],
+    filtered: &mut Vec<FilteredSpectrum>,
+    pruning: &mut Vec<GlycanPruningRow>,
+    library: &GlycanLibrary,
+) -> Result<(), String> {
+    for entry in diagnostic_positive {
+        append_filtered_and_pruning(filtered, pruning, entry, library)?;
+    }
+    Ok(())
 }
 
 struct ScanWithMatch {
@@ -342,8 +388,17 @@ fn tsv_writer(path: &Path) -> Result<BufWriter<File>, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::crosslinker::CrosslinkerProfile;
     use crate::glyco::load_glycan_database;
     use std::fs;
+
+    fn dss_profile() -> CrosslinkerProfile {
+        CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap()
+    }
+
+    fn unlabeled_profile() -> CrosslinkerProfile {
+        CrosslinkerProfile::resolve(&Settings::defaults(), Some("dmtmm")).unwrap()
+    }
 
     fn fixture(name: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -356,7 +411,7 @@ mod tests {
         let library = load_glycan_database("nglyc309").unwrap();
         let settings = Settings::defaults();
         let files = vec![fixture("dss_pair.mzXML")];
-        let result = run_prefilter(&files, &library, &settings).unwrap();
+        let result = run_prefilter(&files, &library, &settings, &dss_profile()).unwrap();
         assert_eq!(result.stats.diagnostic_positive, 2);
         assert_eq!(result.stats.isotope_pairs, 1);
         assert_eq!(result.filtered.len(), 2);
@@ -368,7 +423,7 @@ mod tests {
         let library = load_glycan_database("nglyc309").unwrap();
         let settings = Settings::defaults();
         let files = vec![fixture("no_diagnostic.mzXML")];
-        let result = run_prefilter(&files, &library, &settings).unwrap();
+        let result = run_prefilter(&files, &library, &settings, &dss_profile()).unwrap();
         assert!(result.filtered.is_empty());
         assert_eq!(result.rejected.len(), 1);
         assert!(matches!(
@@ -378,11 +433,24 @@ mod tests {
     }
 
     #[test]
+    fn unlabeled_crosslinker_passes_single_diagnostic_scan() {
+        let library = load_glycan_database("nglyc309").unwrap();
+        let settings = Settings::defaults();
+        let files = vec![fixture("hexnac_positive.mzXML")];
+        let result =
+            run_prefilter(&files, &library, &settings, &unlabeled_profile()).unwrap();
+        assert_eq!(result.stats.diagnostic_positive, 1);
+        assert_eq!(result.stats.isotope_pairs, 0);
+        assert_eq!(result.filtered.len(), 1);
+        assert!(result.isotope_pairs.is_empty());
+    }
+
+    #[test]
     fn writes_all_tsv_outputs() {
         let library = load_glycan_database("nglyc309").unwrap();
         let settings = Settings::defaults();
         let files = vec![fixture("dss_pair.mzXML")];
-        let result = run_prefilter(&files, &library, &settings).unwrap();
+        let result = run_prefilter(&files, &library, &settings, &dss_profile()).unwrap();
 
         let out = std::env::temp_dir().join(format!(
             "glycoquest_prefilter_out_{}",

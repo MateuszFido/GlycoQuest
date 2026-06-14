@@ -1,14 +1,18 @@
 //! GlycoQuest library: CLI parameter types, settings, and the entry-point runner.
 
 mod cli;
+mod crosslinker;
 mod fasta;
 mod glyco;
+mod jobs;
 mod mzxml;
 mod output;
 mod prefilter;
+mod results;
 mod xquest;
 
 pub use cli::{parse_cli, CliParams};
+pub use crosslinker::CrosslinkerProfile;
 pub use fasta::{FastaDatabase, validate_fasta};
 pub use glyco::{
     glycan_data_dir, load_glycan_database, resolve_database, supported_glycan_databases,
@@ -16,7 +20,7 @@ pub use glyco::{
 };
 pub use cli::input::resolve_input;
 pub use cli::settings::{default_settings_path, Settings};
-pub use mzxml::{Ms2Scan, parse_scans};
+pub use mzxml::{Ms2Scan, parse_scans, write_prefiltered_mzxml};
 pub use prefilter::{PrefilterResult, PrunedGlycan, run_prefilter, write_outputs};
 pub use xquest::{resolve_runtime, XQuestRuntime};
 
@@ -49,6 +53,7 @@ impl From<ExitCode> for i32 {
 pub struct RunConfig {
     pub cli: CliParams,
     pub settings: Settings,
+    pub crosslinker: CrosslinkerProfile,
 }
 
 impl RunConfig {
@@ -70,11 +75,30 @@ impl RunConfig {
         if let Some(ppm) = cli.ppm_tolerance {
             settings.diagnostic_tolerance_ppm = ppm;
         }
-        if let Some(name) = &cli.crosslinker {
-            settings.crosslinker_name = name.clone();
+
+        let resolved_out = output::resolve_project_out_dir(&cli.out, &cli.input, &cli.database)?;
+        let mut cli = cli;
+        cli.out = resolved_out;
+
+        let crosslinker = CrosslinkerProfile::resolve(
+            &settings,
+            cli.crosslinker.as_deref(),
+        )?;
+
+        if crosslinker.label == crate::crosslinker::CrosslinkerLabel::None
+            && settings.crosslinker_shift_da.abs() > f64::EPSILON
+        {
+            eprintln!(
+                "warning: crosslinker shift_da={} is ignored for isotope prefilter when label=none",
+                settings.crosslinker_shift_da
+            );
         }
 
-        Ok(Self { cli, settings })
+        Ok(Self {
+            cli,
+            settings,
+            crosslinker,
+        })
     }
 
     pub fn execution_mode(&self) -> ExecutionMode {
@@ -104,7 +128,7 @@ pub struct ValidatedInputs {
     pub fasta: FastaDatabase,
     pub glycan_library: GlycanLibrary,
     pub xquest: XQuestRuntime,
-    pub out_dir: std::path::PathBuf,
+    pub layout: output::ProjectLayout,
 }
 
 /// Outcome of a single readiness check.
@@ -154,42 +178,205 @@ pub fn run_config(config: &RunConfig) -> i32 {
 
     match config.execution_mode() {
         ExecutionMode::DryRun => dry_run(config, &validated),
-        ExecutionMode::Run => {
-            eprintln!(
-                "run: not implemented yet (input={})",
-                config.cli.input.display()
-            );
-            ExitCode::Success.into()
-        }
+        ExecutionMode::Run => run_search(config, &validated),
     }
 }
 
 fn dry_run(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
-    let result = match run_prefilter(
+    match execute_pipeline(config, validated, false) {
+        Ok(prefilter) => {
+            if prefilter.filtered.is_empty() {
+                ExitCode::NoSpectra.into()
+            } else {
+                ExitCode::Success.into()
+            }
+        }
+        Err(code) => code.into(),
+    }
+}
+
+fn run_search(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
+    let prefilter = match execute_pipeline(config, validated, true) {
+        Ok(prefilter) => prefilter,
+        Err(code) => return code.into(),
+    };
+
+    if prefilter.filtered.is_empty() {
+        return ExitCode::NoSpectra.into();
+    }
+
+    let layout = &validated.layout;
+    let jobs_root = layout.jobs_dir();
+    let logs_dir = layout.logs_dir();
+    if let Err(message) = std::fs::create_dir_all(&logs_dir) {
+        eprintln!("error: cannot create logs directory: {message}");
+        return ExitCode::XquestExecution.into();
+    }
+
+    let entries = match std::fs::read_dir(&jobs_root) {
+        Ok(entries) => entries,
+        Err(err) => {
+            eprintln!("error: cannot read jobs directory: {err}");
+            return ExitCode::XquestExecution.into();
+        }
+    };
+
+    let mut job_scripts: Vec<_> = entries
+        .flatten()
+        .filter_map(|entry| {
+            let run_script = entry.path().join("run.sh");
+            run_script.is_file().then_some((entry, run_script))
+        })
+        .collect();
+    job_scripts.sort_by_key(|(entry, _)| entry.file_name());
+
+    let total_jobs = job_scripts.len();
+    for (index, (entry, run_script)) in job_scripts.into_iter().enumerate() {
+        eprintln!(
+            "run: job {}/{} executing {}",
+            index + 1,
+            total_jobs,
+            run_script.display()
+        );
+        let log_path = logs_dir.join(format!(
+            "{}.log",
+            entry.file_name().to_string_lossy()
+        ));
+        let output = std::process::Command::new("sh")
+            .arg("run.sh")
+            .current_dir(entry.path())
+            .output();
+        match output {
+            Ok(output) => {
+                let mut log = output.stdout;
+                log.extend_from_slice(&output.stderr);
+                let _ = std::fs::write(&log_path, log);
+                if !output.status.success() {
+                    eprintln!(
+                        "error: xQuest job failed ({}) — see {}",
+                        entry.path().display(),
+                        log_path.display()
+                    );
+                    return ExitCode::XquestExecution.into();
+                }
+            }
+            Err(err) => {
+                eprintln!("error: failed to launch {}: {err}", run_script.display());
+                return ExitCode::XquestExecution.into();
+            }
+        }
+    }
+
+    match results::consolidate_results(
+        layout,
+        &config.settings,
+        &config.crosslinker,
+        &prefilter,
+    ) {
+        Ok(()) => {
+            output::cleanup_temp_artifacts(layout);
+            ExitCode::Success.into()
+        }
+        Err(message) => {
+            eprintln!("error: {message}");
+            ExitCode::ResultExtraction.into()
+        }
+    }
+}
+
+fn execute_pipeline(
+    config: &RunConfig,
+    validated: &ValidatedInputs,
+    _run_jobs: bool,
+) -> Result<PrefilterResult, ExitCode> {
+    let layout = &validated.layout;
+    let prefilter = match run_prefilter(
         &validated.files,
         &validated.glycan_library,
         &config.settings,
+        &config.crosslinker,
     ) {
         Ok(result) => result,
         Err(message) => {
             eprintln!("error: {message}");
-            return ExitCode::Validation.into();
+            return Err(ExitCode::Validation);
         }
     };
 
-    if let Err(message) = write_outputs(&validated.out_dir, &result) {
+    if let Err(message) = write_outputs(layout.root.as_path(), &prefilter) {
         eprintln!("error: {message}");
-        return ExitCode::Validation.into();
+        return Err(ExitCode::Validation);
     }
 
-    eprintln!("dry-run: prefilter complete (no search executed)");
-    print_prefilter_summary(&result);
+    print_prefilter_summary(&prefilter);
 
-    if result.filtered.is_empty() {
-        ExitCode::NoSpectra.into()
-    } else {
-        ExitCode::Success.into()
+    if prefilter.filtered.is_empty() {
+        eprintln!("dry-run: no spectra retained after prefilter");
+        return Ok(prefilter);
     }
+
+    let pruned_paths = match write_prefiltered_mzxml(layout.spectra_dir().as_path(), &prefilter.filtered) {
+        Ok(paths) => paths,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return Err(ExitCode::Validation);
+        }
+    };
+
+    let job_plan = match jobs::JobPlan::build(
+        &prefilter,
+        &validated.glycan_library,
+        &config.settings,
+        &config.crosslinker,
+    ) {
+        Ok(plan) => plan,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return Err(ExitCode::Validation);
+        }
+    };
+
+    let generated = match xquest::generate_jobs(
+        layout,
+        &job_plan,
+        &prefilter,
+        &pruned_paths,
+        &config.crosslinker,
+        &config.settings,
+        &validated.fasta,
+        &validated.xquest,
+    ) {
+        Ok(jobs) => jobs,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return Err(ExitCode::Validation);
+        }
+    };
+
+    let plan_doc = output::build_run_plan_document(
+        &config.crosslinker,
+        &prefilter,
+        &job_plan,
+        pruned_paths,
+        generated,
+    );
+    if let Err(message) = output::write_plan_json(layout.root.as_path(), &plan_doc) {
+        eprintln!("error: {message}");
+        return Err(ExitCode::Validation);
+    }
+
+    eprintln!(
+        "plan: {} jobs, {} estimated comparisons, isotope_prefilter={}",
+        plan_doc.job_count,
+        plan_doc.total_comparisons,
+        plan_doc.isotope_prefilter_enabled
+    );
+
+    if config.execution_mode() == ExecutionMode::DryRun {
+        eprintln!("dry-run: job folders and plan.json written (xQuest not executed)");
+    }
+
+    Ok(prefilter)
 }
 
 fn assess_config(config: &RunConfig) -> ConfigAssessment {
@@ -312,7 +499,7 @@ impl ConfigAssessment {
             fasta: self.fasta.expect("checked"),
             glycan_library: self.glycan_library.expect("checked"),
             xquest: self.xquest.expect("checked"),
-            out_dir: config.cli.out.clone(),
+            layout: output::ProjectLayout::new(config.cli.out.clone()),
         })
     }
 }
@@ -332,6 +519,7 @@ fn print_readiness_report(assessment: &ConfigAssessment) {
 fn format_config_summary(config: &RunConfig, assessment: &ConfigAssessment) -> Vec<String> {
     let cli = &config.cli;
     let settings = &config.settings;
+    let crosslinker = &config.crosslinker;
     let mut lines = vec![
         format!("input: {}", cli.input.display()),
         format!(
@@ -390,7 +578,19 @@ fn format_config_summary(config: &RunConfig, assessment: &ConfigAssessment) -> V
         lines.push(format!("xquest_bin (settings): {}", path.display()));
     }
     lines.push(format!("out: {}", cli.out.display()));
-    lines.push(format!("crosslinker: {}", settings.crosslinker_name));
+    lines.push(format!("spectra: {}/spectra", cli.out.display()));
+    lines.push(format!("tmp: {}/tmp", cli.out.display()));
+    lines.push(format!("crosslinker: {}", crosslinker.name));
+    lines.push(format!("crosslinker_label: {}", crosslinker.label.as_str()));
+    lines.push(format!(
+        "isotope_prefilter: {}",
+        if crosslinker.requires_isotope_pair_prefilter() {
+            "enabled"
+        } else {
+            "disabled"
+        }
+    ));
+    lines.push(format!("crosslinker_shift_da: {}", crosslinker.shift_da));
     lines.push(format!(
         "diagnostic_tolerance_ppm: {}",
         settings.diagnostic_tolerance_ppm
@@ -537,6 +737,7 @@ mod tests {
                 ..CliParams::default()
             },
             settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
         }
     }
 
@@ -562,12 +763,13 @@ mod tests {
         let config = RunConfig {
             cli,
             settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
         };
         assert_eq!(run_config(&config), ExitCode::Validation as i32);
     }
 
     #[test]
-    fn dry_run_writes_tsvs_for_dss_pair_fixture() {
+    fn dry_run_writes_pipeline_outputs_for_dss_pair_fixture() {
         let out = temp_dir("dry_run_out");
         fs::create_dir_all(&out).unwrap();
         let config = test_config(fixture_mzxml("dss_pair.mzXML"), out.clone(), true);
@@ -576,6 +778,50 @@ mod tests {
         assert!(out.join("isotope_pairs.tsv").is_file());
         assert!(out.join("rejected_spectra.tsv").is_file());
         assert!(out.join("glycan_pruning.tsv").is_file());
+        assert!(out.join("plan.json").is_file());
+        assert!(out.join("spectra").is_dir());
+        assert!(out.join("tmp/jobs").is_dir());
+        let _ = fs::remove_dir_all(out);
+    }
+
+    #[test]
+    fn dry_run_dmtmm_writes_jobs_without_isotope_pairs() {
+        let out = temp_dir("dmtmm_out");
+        fs::create_dir_all(&out).unwrap();
+        let xquest_root = temp_dir("dmtmm_xquest");
+        write_xquest(&xquest_root);
+        let fasta = out.join("proteins.fasta");
+        write_fasta(&fasta);
+        let config = RunConfig {
+            cli: CliParams {
+                input: fixture_mzxml("hexnac_positive.mzXML"),
+                database: fasta,
+                glycans: "nglyc309".into(),
+                crosslinker: Some("dmtmm".into()),
+                xquest_root,
+                out: out.clone(),
+                dry_run: true,
+                ..CliParams::default()
+            },
+            settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dmtmm"))
+                .unwrap(),
+        };
+        assert_eq!(run_config(&config), ExitCode::Success as i32);
+        let plan = fs::read_to_string(out.join("plan.json")).unwrap();
+        assert!(plan.contains("\"isotope_prefilter_enabled\": false"));
+        assert!(plan.contains("\"isotope_pairs\": 0"));
+        let jobs_dir = fs::read_dir(out.join("tmp/jobs"))
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        let xquest_def = fs::read_to_string(jobs_dir.join("xquest.def")).unwrap();
+        assert!(xquest_def.contains("isotopeshift 0.0000000"));
+        assert!(xquest_def.contains("AArequired K:E,K:D"));
+        let matchlist = fs::read_to_string(jobs_dir.join("glycoquest_matched.txt")).unwrap();
+        assert!(matchlist.contains("\tlight\tlight\t"));
         let _ = fs::remove_dir_all(out);
     }
 
@@ -605,6 +851,7 @@ mod tests {
                 ..CliParams::default()
             },
             settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
         };
         assert_eq!(run_config(&config), ExitCode::Validation as i32);
         let _ = fs::remove_dir_all(out);
@@ -626,6 +873,7 @@ mod tests {
                 ..CliParams::default()
             },
             settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
         };
 
         let assessment = assess_config(&config);
@@ -651,5 +899,51 @@ mod tests {
         };
         let config = RunConfig::load(cli).unwrap();
         assert_eq!(config.settings.diagnostic_tolerance_ppm, 15.0);
+    }
+
+    #[test]
+    fn optional_hcg_dry_run_integration() {
+        let mzxml = match std::env::var("GLYCOQUEST_HCG_MZXML") {
+            Ok(path) => PathBuf::from(path),
+            Err(_) => return,
+        };
+        let fasta = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("data/rcsb_pdb_1HRP_no_contams.fasta");
+        if !mzxml.is_file() || !fasta.is_file() {
+            return;
+        }
+        let xquest_root = std::env::var("GLYCOQUEST_XQUEST_ROOT")
+            .map(PathBuf::from)
+            .unwrap_or_else(|_| {
+                PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("xQuest/V2.1.6/xquest")
+            });
+        if !xquest_root.is_dir() {
+            return;
+        }
+        let out = temp_dir("hcg_integration");
+        let _ = fs::create_dir_all(&out);
+        let config = RunConfig {
+            cli: CliParams {
+                input: mzxml,
+                database: fasta,
+                xquest_root,
+                out: out.clone(),
+                dry_run: true,
+                ..CliParams::default()
+            },
+            settings: Settings::defaults(),
+            crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
+        };
+        assert_eq!(run_config(&config), ExitCode::Success as i32);
+        let plan = fs::read_to_string(out.join("plan.json")).unwrap();
+        assert!(plan.contains("\"scans_total\""));
+        let _ = fs::remove_dir_all(out);
+    }
+
+    #[test]
+    fn optional_xquest_integration_skipped_without_env() {
+        if std::env::var("GLYCOQUEST_XQUEST_ROOT").is_err() {
+            return;
+        }
     }
 }

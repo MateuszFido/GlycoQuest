@@ -34,7 +34,7 @@ impl Default for CliParams {
             xquest_root: PathBuf::from("."),
             crosslinker: None,
             ppm_tolerance: None,
-            out: PathBuf::from("."),
+            out: PathBuf::from(crate::output::DEFAULT_OUT_BASE),
             config: None,
             dry_run: false,
         }
@@ -74,8 +74,8 @@ struct Args {
     #[arg(long, value_name = "PPM")]
     ppm_tolerance: Option<f64>,
 
-    /// Output directory for generated jobs and results.
-    #[arg(long, value_name = "DIR", default_value = ".")]
+    /// Output base directory. Default `out` creates `out/<project>/` from the first input file.
+    #[arg(long, value_name = "DIR", default_value = crate::output::DEFAULT_OUT_BASE)]
     out: PathBuf,
 
     /// Path to settings.ini (default: ./settings.ini).
@@ -220,7 +220,7 @@ mod tests {
         assert_eq!(params.input, PathBuf::from("input.mzXML"));
         assert_eq!(params.database, PathBuf::from("proteins.fasta"));
         assert_eq!(params.glycans, DEFAULT_GLYCANS);
-        assert_eq!(params.out, PathBuf::from("."));
+        assert_eq!(params.out, PathBuf::from(crate::output::DEFAULT_OUT_BASE));
         assert_eq!(params.xquest_root, PathBuf::from("."));
     }
 

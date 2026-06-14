@@ -5,7 +5,7 @@ fn main() {
     let params = match parse_cli(std::env::args()) {
         Ok(params) => params,
         Err(err) => {
-            err.print().expect("failed to write clap error");
+            err.print().expect("failed to write error");
             process::exit(err.exit_code());
         }
     };

@@ -86,6 +86,10 @@ pub fn validate_fasta(path: &Path) -> Result<FastaDatabase, String> {
         return Err(format!("FASTA database contains no entries: {}", path.display()));
     }
 
+    let path = path
+        .canonicalize()
+        .unwrap_or_else(|_| path.to_path_buf());
+
     Ok(FastaDatabase {
         path: path.to_path_buf(),
         entries,

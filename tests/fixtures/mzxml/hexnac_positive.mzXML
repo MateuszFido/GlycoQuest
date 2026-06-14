@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mzXML xmlns="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://sashimi.sourceforge.net/schema_revision/mzXML_3.1 http://sashimi.sourceforge.net/schema_revision/mzXML_3.1/mzXML_3.1.xsd" version="3.1">
+<msRun>
+<scan num="1" msLevel="2" retTime="20.0">
+<precursorMz>800.0</precursorMz>
+<precursorCharge>2</precursorCharge>
+<peaks>204.0867 1000.0 300.0 50.0</peaks>
+</scan>
+</msRun>
+</mzXML>
