@@ -39,6 +39,11 @@ impl ProjectLayout {
     pub fn results_dir(&self) -> PathBuf {
         self.root.join("results")
     }
+
+    /// Interactive CLMS viewer bundle (`viewer.json` + static assets).
+    pub fn viewer_dir(&self) -> PathBuf {
+        self.results_dir().join("viewer")
+    }
 }
 
 /// Resolve the project output root.
@@ -113,7 +118,13 @@ fn sanitize_slug(raw: &str) -> String {
 }
 
 /// Remove ephemeral `tmp/` after a successful run.
+///
+/// Set `GLYCOQUEST_KEEP_TMP=1` to retain the xQuest job folders, logs, and
+/// per-job result XML for debugging.
 pub fn cleanup_temp_artifacts(layout: &ProjectLayout) {
+    if std::env::var_os("GLYCOQUEST_KEEP_TMP").is_some() {
+        return;
+    }
     if layout.tmp_dir().is_dir() {
         let _ = std::fs::remove_dir_all(layout.tmp_dir());
     }
