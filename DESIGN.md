@@ -108,6 +108,33 @@ Outputs:
 - `prefiltered_mzxml/`: reduced mzXML files generated from the supplied full mzXML and used as xQuest inputs.
 - `jobs/<job_id>/xquest.def`, `xmm.def`, `glycoquest_matchlist.txt`, symlinked mzXML, and `run.sh`.
 - `results/glycoquest_xquest.csv`: flattened xQuest hits with GlycoQuest annotations.
+  Each hit carries its glycan (`glycan_name`, `glycan_composition`, `glycan_mass`,
+  `loss_label`), attachment residue and peptide (`glyco_residue`, `glyco_peptide`),
+  originating scan and diagnostic evidence (`source_file`, `scan`,
+  `matched_families`, `matched_ion_count`), and post-filter outcome (`hard_status`,
+  `soft_score`, `postfilter_status`). Hits are de-duplicated across per-glycan jobs,
+  keeping the highest-scoring copy, and sorted by soft score.
+- `results/xiview.csv`: passing crosslinks in the xiVIEW CSV layout
+  (`Protein1,PepPos1,PepSeq1,LinkPos1,AbsPos1,Protein2,PepPos2,PepSeq2,LinkPos2,AbsPos2,Score,…`).
+  Peptides are resolved from xQuest pseudo-residues via the job manifest and located in
+  the FASTA to compute 1-based peptide start (`PepPos*`) and absolute cross-link residue
+  (`AbsPos* = PepPos + LinkPos - 1`) positions; glycan annotations are appended as trailing
+  columns. Loads directly at xiview.org for the 2D network view.
+- `results/report.html`: self-contained QC/glycan report (inline CSS + SVG, no network or
+  JavaScript) covering the prefilter funnel, post-filter outcome breakdown, xQuest score and
+  precursor-error distributions, glycan and glycosylation-site distributions, and a hits table.
+- `results/viewer/`: interactive crosslink viewer bundle (`viewer.json` schema version 1,
+  `database.fasta`, static `index.html` + JS/CSS). Coordinated views: QC charts, residue-resolution
+  network, per-protein sequence map with glycan sites, and approximate MS/MS mirror plots from
+  reduced `spectra/` mzXML. Built from the MIT `viewer/` TypeScript package.
+
+The glycan library input (`--glycans`) accepts either a bundled database id
+(`nglyc309`, `oglyc78`) or a path to a user-provided CSV/TSV file matching the
+schema above. A custom O-glycan library with `residue_targets` `S;T` drives the
+xQuest `variable_mod` onto Ser/Thr rather than Asn. `--resume` re-consolidates
+existing job XML without prefilter/manifest state and therefore produces reduced
+annotation (glycan reconstructed from the job id; diagnostic/sequon soft features
+skipped).
 
 ## 5. Workflow
 
