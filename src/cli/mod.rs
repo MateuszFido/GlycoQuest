@@ -19,10 +19,14 @@ pub struct CliParams {
     pub xquest_root: PathBuf,
     pub crosslinker: Option<String>,
     pub ppm_tolerance: Option<f64>,
+    /// Number of xQuest jobs to run concurrently (overrides settings.ini; 0 = one per CPU core).
+    pub jobs: Option<u32>,
     pub out: PathBuf,
     pub config: Option<PathBuf>,
     /// When true, validate configuration only
     pub dry_run: bool,
+    /// Resume xQuest jobs in an existing project output directory, skipping jobs with results.
+    pub resume: bool,
 }
 
 impl Default for CliParams {
@@ -34,9 +38,11 @@ impl Default for CliParams {
             xquest_root: PathBuf::from("."),
             crosslinker: None,
             ppm_tolerance: None,
+            jobs: None,
             out: PathBuf::from(crate::output::DEFAULT_OUT_BASE),
             config: None,
             dry_run: false,
+            resume: false,
         }
     }
 }
@@ -58,8 +64,9 @@ struct Args {
     #[arg(long, required = true, value_name = "FASTA")]
     database: PathBuf,
 
-    /// Bundled glycan database to load (e.g. nglyc309, oglyc78).
-    #[arg(long, value_name = "DATABASE", default_value = DEFAULT_GLYCANS)]
+    /// Glycan library: a bundled database id (e.g. nglyc309, oglyc78) or a path to a
+    /// CSV/TSV file (columns: name,composition,monoisotopic_mass,diagnostic_ions,residue_targets).
+    #[arg(long, value_name = "DATABASE|FILE", default_value = DEFAULT_GLYCANS)]
     glycans: String,
 
     /// xQuest installation root (contains `xquest.def` templates).
@@ -74,6 +81,11 @@ struct Args {
     #[arg(long, value_name = "PPM")]
     ppm_tolerance: Option<f64>,
 
+    /// Number of xQuest jobs to run concurrently. Overrides settings.ini [execution] job_parallelism.
+    /// 0 = one per available CPU core.
+    #[arg(long, short = 'j', value_name = "N")]
+    jobs: Option<u32>,
+
     /// Output base directory. Default `out` creates `out/<project>/` from the first input file.
     #[arg(long, value_name = "DIR", default_value = crate::output::DEFAULT_OUT_BASE)]
     out: PathBuf,
@@ -83,8 +95,12 @@ struct Args {
     config: PathBuf,
 
     /// Validate inputs and print a summary without running xQuest.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "resume")]
     dry_run: bool,
+
+    /// Resume pending xQuest jobs in an existing --out project directory.
+    #[arg(long, conflicts_with = "dry_run")]
+    resume: bool,
 }
 
 /// Parse `std::env::args()` (skipping the program name) into [`CliParams`].
@@ -110,9 +126,11 @@ where
         xquest_root: args.xquest_root,
         crosslinker: args.crosslinker,
         ppm_tolerance: args.ppm_tolerance,
+        jobs: args.jobs,
         out: args.out,
         config: Some(args.config),
         dry_run: args.dry_run,
+        resume: args.resume,
     })
 }
 
@@ -222,6 +240,38 @@ mod tests {
         assert_eq!(params.glycans, DEFAULT_GLYCANS);
         assert_eq!(params.out, PathBuf::from(crate::output::DEFAULT_OUT_BASE));
         assert_eq!(params.xquest_root, PathBuf::from("."));
+    }
+
+    #[test]
+    fn parses_jobs_flag() {
+        let params = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--database",
+            "proteins.fasta",
+            "--jobs",
+            "8",
+        ])
+        .unwrap();
+        assert_eq!(params.jobs, Some(8));
+
+        let short = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--database",
+            "proteins.fasta",
+            "-j",
+            "4",
+        ])
+        .unwrap();
+        assert_eq!(short.jobs, Some(4));
+    }
+
+    #[test]
+    fn jobs_flag_defaults_to_none() {
+        let params = parse_cli(["glycoquest", "input.mzXML", "--database", "proteins.fasta"])
+            .unwrap();
+        assert_eq!(params.jobs, None);
     }
 
     #[test]

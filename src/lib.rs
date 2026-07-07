@@ -15,8 +15,8 @@ pub use cli::{parse_cli, CliParams};
 pub use crosslinker::CrosslinkerProfile;
 pub use fasta::{FastaDatabase, validate_fasta};
 pub use glyco::{
-    glycan_data_dir, load_glycan_database, resolve_database, supported_glycan_databases,
-    DiagnosticIon, GlycanEntry, GlycanLibrary,
+    glycan_data_dir, load_glycan_database, load_glycan_library_file, load_glycans,
+    resolve_database, supported_glycan_databases, DiagnosticIon, GlycanEntry, GlycanLibrary,
 };
 pub use cli::input::resolve_input;
 pub use cli::settings::{default_settings_path, Settings};
@@ -29,6 +29,7 @@ pub use xquest::{resolve_runtime, XQuestRuntime};
 pub enum ExecutionMode {
     DryRun,
     Run,
+    Resume,
 }
 
 /// Exit codes
@@ -76,6 +77,10 @@ impl RunConfig {
             settings.diagnostic_tolerance_ppm = ppm;
         }
 
+        if let Some(jobs) = cli.jobs {
+            settings.job_parallelism = jobs;
+        }
+
         let resolved_out = output::resolve_project_out_dir(&cli.out, &cli.input, &cli.database)?;
         let mut cli = cli;
         cli.out = resolved_out;
@@ -102,7 +107,9 @@ impl RunConfig {
     }
 
     pub fn execution_mode(&self) -> ExecutionMode {
-        if self.cli.dry_run {
+        if self.cli.resume {
+            ExecutionMode::Resume
+        } else if self.cli.dry_run {
             ExecutionMode::DryRun
         } else {
             ExecutionMode::Run
@@ -179,13 +186,20 @@ pub fn run_config(config: &RunConfig) -> i32 {
     match config.execution_mode() {
         ExecutionMode::DryRun => dry_run(config, &validated),
         ExecutionMode::Run => run_search(config, &validated),
+        ExecutionMode::Resume => resume_search(config, &validated),
     }
+}
+
+/// Artifacts produced by the prefilter + job-generation pipeline.
+struct PipelineArtifacts {
+    prefilter: PrefilterResult,
+    manifest: crate::jobs::JobManifest,
 }
 
 fn dry_run(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
     match execute_pipeline(config, validated, false) {
-        Ok(prefilter) => {
-            if prefilter.filtered.is_empty() {
+        Ok(artifacts) => {
+            if artifacts.prefilter.filtered.is_empty() {
                 ExitCode::NoSpectra.into()
             } else {
                 ExitCode::Success.into()
@@ -196,10 +210,11 @@ fn dry_run(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
 }
 
 fn run_search(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
-    let prefilter = match execute_pipeline(config, validated, true) {
-        Ok(prefilter) => prefilter,
+    let artifacts = match execute_pipeline(config, validated, true) {
+        Ok(artifacts) => artifacts,
         Err(code) => return code.into(),
     };
+    let prefilter = &artifacts.prefilter;
 
     if prefilter.filtered.is_empty() {
         return ExitCode::NoSpectra.into();
@@ -208,72 +223,61 @@ fn run_search(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
     let layout = &validated.layout;
     let jobs_root = layout.jobs_dir();
     let logs_dir = layout.logs_dir();
-    if let Err(message) = std::fs::create_dir_all(&logs_dir) {
-        eprintln!("error: cannot create logs directory: {message}");
-        return ExitCode::XquestExecution.into();
-    }
 
-    let entries = match std::fs::read_dir(&jobs_root) {
-        Ok(entries) => entries,
-        Err(err) => {
-            eprintln!("error: cannot read jobs directory: {err}");
+    let job_records = match xquest::execute_jobs(
+        &jobs_root,
+        &logs_dir,
+        false,
+        config.settings.job_parallelism as usize,
+    ) {
+        Ok(records) => records,
+        Err(message) => {
+            eprintln!("error: {message}");
             return ExitCode::XquestExecution.into();
         }
     };
 
-    let mut job_scripts: Vec<_> = entries
-        .flatten()
-        .filter_map(|entry| {
-            let run_script = entry.path().join("run.sh");
-            run_script.is_file().then_some((entry, run_script))
-        })
-        .collect();
-    job_scripts.sort_by_key(|(entry, _)| entry.file_name());
+    xquest::log_job_summary(&job_records);
 
-    let total_jobs = job_scripts.len();
-    for (index, (entry, run_script)) in job_scripts.into_iter().enumerate() {
-        eprintln!(
-            "run: job {}/{} executing {}",
-            index + 1,
-            total_jobs,
-            run_script.display()
-        );
-        let log_path = logs_dir.join(format!(
-            "{}.log",
-            entry.file_name().to_string_lossy()
-        ));
-        let output = std::process::Command::new("sh")
-            .arg("run.sh")
-            .current_dir(entry.path())
-            .output();
-        match output {
-            Ok(output) => {
-                let mut log = output.stdout;
-                log.extend_from_slice(&output.stderr);
-                let _ = std::fs::write(&log_path, log);
-                if !output.status.success() {
-                    eprintln!(
-                        "error: xQuest job failed ({}) — see {}",
-                        entry.path().display(),
-                        log_path.display()
-                    );
-                    return ExitCode::XquestExecution.into();
-                }
-            }
-            Err(err) => {
-                eprintln!("error: failed to launch {}: {err}", run_script.display());
-                return ExitCode::XquestExecution.into();
-            }
-        }
+    let results_dir = layout.results_dir();
+    std::fs::create_dir_all(&results_dir).ok();
+    let failed_jobs_path = results_dir.join("failed_jobs.tsv");
+    if let Err(message) = results::write_failed_jobs_tsv(&failed_jobs_path, &job_records) {
+        eprintln!("warning: could not write {}: {message}", failed_jobs_path.display());
     }
 
+    let report_ctx = build_report_context(config, layout, false);
     match results::consolidate_results(
         layout,
         &config.settings,
         &config.crosslinker,
-        &prefilter,
+        prefilter,
+        Some(&artifacts.manifest),
+        &validated.fasta,
+        &report_ctx,
     ) {
-        Ok(()) => {
+        Ok(summary) => {
+            if summary.hits == 0 {
+                if job_records.iter().any(|record| record.success) {
+                    eprintln!(
+                        "run: wrote empty results/glycoquest_xquest.csv (no crosslink hits in {} successful jobs)",
+                        job_records.iter().filter(|record| record.success).count()
+                    );
+                } else if job_records.is_empty() {
+                    eprintln!("run: wrote empty results/glycoquest_xquest.csv (no jobs executed)");
+                } else {
+                    eprintln!(
+                        "run: wrote empty results/glycoquest_xquest.csv (all {} jobs failed — see results/failed_jobs.tsv)",
+                        job_records.len()
+                    );
+                }
+            } else {
+                eprintln!(
+                    "run: wrote {} hits from {} result file(s) to results/glycoquest_xquest.csv",
+                    summary.hits, summary.result_xmls
+                );
+            }
+            log_visualization_artifacts(&summary);
             output::cleanup_temp_artifacts(layout);
             ExitCode::Success.into()
         }
@@ -284,11 +288,116 @@ fn run_search(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
     }
 }
 
+fn resume_search(config: &RunConfig, validated: &ValidatedInputs) -> i32 {
+    let layout = &validated.layout;
+    let jobs_root = layout.jobs_dir();
+    if !jobs_root.is_dir() {
+        eprintln!(
+            "error: no jobs directory at {} — run a full search or dry-run first",
+            jobs_root.display()
+        );
+        return ExitCode::Validation.into();
+    }
+
+    let logs_dir = layout.logs_dir();
+    let job_records = match xquest::execute_jobs(
+        &jobs_root,
+        &logs_dir,
+        true,
+        config.settings.job_parallelism as usize,
+    ) {
+        Ok(records) => records,
+        Err(message) => {
+            eprintln!("error: {message}");
+            return ExitCode::XquestExecution.into();
+        }
+    };
+
+    xquest::log_job_summary(&job_records);
+
+    let results_dir = layout.results_dir();
+    std::fs::create_dir_all(&results_dir).ok();
+    let failed_jobs_path = results_dir.join("failed_jobs.tsv");
+    if let Err(message) = results::write_failed_jobs_tsv(&failed_jobs_path, &job_records) {
+        eprintln!("warning: could not write {}: {message}", failed_jobs_path.display());
+    }
+
+    let prefilter = PrefilterResult {
+        filtered: vec![],
+        isotope_pairs: vec![],
+        rejected: vec![],
+        pruning: vec![],
+        stats: Default::default(),
+    };
+
+    let report_ctx = build_report_context(config, layout, true);
+    match results::consolidate_results(
+        layout,
+        &config.settings,
+        &config.crosslinker,
+        &prefilter,
+        None,
+        &validated.fasta,
+        &report_ctx,
+    ) {
+        Ok(summary) => {
+            if summary.hits == 0 {
+                eprintln!(
+                    "run: wrote empty results/glycoquest_xquest.csv (no crosslink hits in {} result files)",
+                    summary.result_xmls
+                );
+            } else {
+                eprintln!(
+                    "run: wrote {} hits from {} result file(s) to results/glycoquest_xquest.csv",
+                    summary.hits, summary.result_xmls
+                );
+            }
+            log_visualization_artifacts(&summary);
+            output::cleanup_temp_artifacts(layout);
+            ExitCode::Success.into()
+        }
+        Err(message) => {
+            eprintln!("error: {message}");
+            ExitCode::ResultExtraction.into()
+        }
+    }
+}
+
+/// Assemble the metadata rendered in the HTML QC report header.
+fn build_report_context(
+    config: &RunConfig,
+    layout: &output::ProjectLayout,
+    resume: bool,
+) -> results::ReportContext {
+    let project = layout
+        .root
+        .file_name()
+        .and_then(|s| s.to_str())
+        .map(str::to_string)
+        .unwrap_or_else(|| layout.root.display().to_string());
+    results::ReportContext::new(
+        project,
+        config.cli.input.display().to_string(),
+        &config.crosslinker,
+        config.cli.glycans.clone(),
+        resume,
+    )
+}
+
+/// Report the xiVIEW CSV / HTML report artifacts written alongside the main CSV.
+fn log_visualization_artifacts(summary: &results::ConsolidationSummary) {
+        eprintln!(
+        "run: wrote results/xiview.csv ({} passing crosslink(s), {} with resolved absolute positions), \
+         results/report.html, and results/viewer/ ({} crosslink(s) in viewer.json)",
+        summary.xiview_rows, summary.xiview_mapped, summary.viewer_crosslinks
+    );
+}
+
 fn execute_pipeline(
     config: &RunConfig,
     validated: &ValidatedInputs,
     _run_jobs: bool,
-) -> Result<PrefilterResult, ExitCode> {
+) -> Result<PipelineArtifacts, ExitCode> {
     let layout = &validated.layout;
     let prefilter = match run_prefilter(
         &validated.files,
@@ -312,7 +421,10 @@ fn execute_pipeline(
 
     if prefilter.filtered.is_empty() {
         eprintln!("dry-run: no spectra retained after prefilter");
-        return Ok(prefilter);
+        return Ok(PipelineArtifacts {
+            prefilter,
+            manifest: crate::jobs::JobManifest::default(),
+        });
     }
 
     let pruned_paths = match write_prefiltered_mzxml(layout.spectra_dir().as_path(), &prefilter.filtered) {
@@ -353,12 +465,14 @@ fn execute_pipeline(
         }
     };
 
+    let manifest = generated.manifest.clone();
+
     let plan_doc = output::build_run_plan_document(
         &config.crosslinker,
         &prefilter,
         &job_plan,
         pruned_paths,
-        generated,
+        generated.jobs,
     );
     if let Err(message) = output::write_plan_json(layout.root.as_path(), &plan_doc) {
         eprintln!("error: {message}");
@@ -376,7 +490,7 @@ fn execute_pipeline(
         eprintln!("dry-run: job folders and plan.json written (xQuest not executed)");
     }
 
-    Ok(prefilter)
+    Ok(PipelineArtifacts { prefilter, manifest })
 }
 
 fn assess_config(config: &RunConfig) -> ConfigAssessment {
@@ -420,7 +534,7 @@ fn assess_config(config: &RunConfig) -> ConfigAssessment {
         }
     };
 
-    let glycan_library = match load_glycan_database(&config.cli.glycans) {
+    let glycan_library = match load_glycans(&config.cli.glycans) {
         Ok(library) => {
             checks.push(ReadinessCheck {
                 label: "Glycan library",
@@ -594,6 +708,14 @@ fn format_config_summary(config: &RunConfig, assessment: &ConfigAssessment) -> V
     lines.push(format!(
         "diagnostic_tolerance_ppm: {}",
         settings.diagnostic_tolerance_ppm
+    ));
+    lines.push(format!(
+        "job_parallelism: {}",
+        if settings.job_parallelism == 0 {
+            "auto (all cores)".to_string()
+        } else {
+            settings.job_parallelism.to_string()
+        }
     ));
 
     lines
@@ -899,6 +1021,16 @@ mod tests {
         };
         let config = RunConfig::load(cli).unwrap();
         assert_eq!(config.settings.diagnostic_tolerance_ppm, 15.0);
+    }
+
+    #[test]
+    fn cli_jobs_overrides_settings() {
+        let cli = CliParams {
+            jobs: Some(3),
+            ..CliParams::default()
+        };
+        let config = RunConfig::load(cli).unwrap();
+        assert_eq!(config.settings.job_parallelism, 3);
     }
 
     #[test]

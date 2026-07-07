@@ -28,6 +28,8 @@ pub struct Settings {
     pub max_total_job_spectrum_comparisons: u64,
     pub min_score: f64,
     pub max_precursor_error_ppm: f64,
+    /// Number of xQuest jobs to run concurrently (0 = one per available CPU core).
+    pub job_parallelism: u32,
 }
 
 impl Settings {
@@ -54,6 +56,7 @@ impl Settings {
             max_total_job_spectrum_comparisons: 0,
             min_score: 0.0,
             max_precursor_error_ppm: 20.0,
+            job_parallelism: 0,
         }
     }
 
@@ -129,6 +132,8 @@ impl Settings {
         s.max_precursor_error_ppm =
             get_f64(ini, "limits", "max_precursor_error_ppm", s.max_precursor_error_ppm);
 
+        s.job_parallelism = get_u32(ini, "execution", "job_parallelism", s.job_parallelism);
+
         s
     }
 }
@@ -191,5 +196,21 @@ label = light-heavy
         let settings = Settings::from_ini(&ini);
         assert_eq!(settings.crosslinker_name, "dss");
         assert_eq!(settings.crosslinker_label, "light-heavy");
+    }
+
+    #[test]
+    fn job_parallelism_defaults_to_zero_and_parses_from_ini() {
+        assert_eq!(Settings::defaults().job_parallelism, 0);
+
+        let mut ini = Ini::new();
+        ini.read(
+            r#"
+[execution]
+job_parallelism = 6
+"#
+            .into(),
+        )
+        .unwrap();
+        assert_eq!(Settings::from_ini(&ini).job_parallelism, 6);
     }
 }
