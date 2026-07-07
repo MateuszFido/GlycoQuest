@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>GlycoQuest Crosslink Viewer</title>
+    <script type="module" crossorigin src="./viewer.js"></script>
+    <link rel="stylesheet" crossorigin href="./viewer.css">
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      // ES module fetch() cannot load viewer.json from file:// in most browsers.
+      if (location.protocol === 'file:') {
+        document.getElementById('app').innerHTML =
+          '<div style="max-width:42rem;margin:2rem auto;padding:1.25rem;font:14px/1.5 system-ui,sans-serif;color:#e2e8f0;background:#1e293b;border-radius:8px">' +
+          '<h1 style="margin:0 0 0.75rem;font-size:1.1rem">GlycoQuest viewer needs a local web server</h1>' +
+          '<p style="margin:0 0 0.75rem;color:#94a3b8">Opening <code>index.html</code> directly blocks loading <code>viewer.json</code>.</p>' +
+          '<pre style="margin:0;padding:0.75rem;background:#0f172a;border-radius:6px;overflow:auto">cd results/viewer\npython3 -m http.server 8080\n# open http://localhost:8080</pre>' +
+          '<p style="margin:0.75rem 0 0;color:#94a3b8">Or run <code>./serve-viewer.sh</code> in this folder.</p></div>';
+      }
+    </script>
+  </body>
+</html>
