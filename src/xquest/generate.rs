@@ -1,13 +1,14 @@
 //! Write xQuest job directories under `jobs/`.
 
 use std::fs;
-use std::io::Write;
 use std::path::{Path, PathBuf};
 
 use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::fasta::FastaDatabase;
-use crate::jobs::{JobPlan, PlannedJob};
+use crate::jobs::{
+    build_varmod_plan, JobManifest, JobManifestEntry, JobPlan, PlannedJob, VarModPlan,
+};
 use crate::prefilter::PrefilterResult;
 use crate::xquest::defs::write_job_defs;
 use crate::xquest::matchlist::{build_matchlist, isotopepairs_path, specxml_filename, write_matchlist};
@@ -22,6 +23,14 @@ pub struct GeneratedJob {
     pub command: String,
 }
 
+/// The generated job folders plus a manifest recording each job's glycan for
+/// result annotation.
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct GeneratedJobs {
+    pub jobs: Vec<GeneratedJob>,
+    pub manifest: JobManifest,
+}
+
 pub fn generate_jobs(
     layout: &crate::output::ProjectLayout,
     plan: &JobPlan,
@@ -31,17 +40,20 @@ pub fn generate_jobs(
     settings: &Settings,
     fasta: &FastaDatabase,
     runtime: &XQuestRuntime,
-) -> Result<Vec<GeneratedJob>, String> {
+) -> Result<GeneratedJobs, String> {
     let jobs_root = layout.jobs_dir();
     fs::create_dir_all(&jobs_root).map_err(|err| err.to_string())?;
     fs::create_dir_all(layout.logs_dir()).map_err(|err| err.to_string())?;
     fs::create_dir_all(layout.tmp_dir()).map_err(|err| err.to_string())?;
 
     let mut generated = Vec::new();
+    let mut manifest = JobManifest::default();
     for job in &plan.jobs {
+        let varmod = build_varmod_plan(&job.variant, settings)?;
         generated.push(write_job(
             &jobs_root,
             job,
+            &varmod,
             prefilter,
             pruned_mzxml_paths,
             crosslinker,
@@ -49,13 +61,28 @@ pub fn generate_jobs(
             fasta,
             runtime,
         )?);
+        manifest.entries.push(JobManifestEntry {
+            job_id: job.job_id.clone(),
+            variant: job.variant.clone(),
+            varmod_plan: varmod,
+            source_file: job
+                .spectrum_keys
+                .first()
+                .map(|key| key.source_file.clone())
+                .unwrap_or_default(),
+            spectrum_keys: job.spectrum_keys.clone(),
+        });
     }
-    Ok(generated)
+    Ok(GeneratedJobs {
+        jobs: generated,
+        manifest,
+    })
 }
 
 fn write_job(
     jobs_root: &Path,
     job: &PlannedJob,
+    varmod: &VarModPlan,
     prefilter: &PrefilterResult,
     pruned_mzxml_paths: &[PathBuf],
     crosslinker: &CrosslinkerProfile,
@@ -73,7 +100,7 @@ fn write_job(
         &runtime.root,
         crosslinker,
         settings,
-        &job.variant,
+        varmod,
         &fasta.path,
     )?;
 
@@ -84,10 +111,20 @@ fn write_job(
             pruned.display()
         )
     })?;
-    let mzxml_link = job_dir.join("input.mzXML");
+    // Persist the real spectrum filename inside the job directory so it flows
+    // through xQuest into the result XML instead of an opaque "input.mzXML".
+    let mzxml_name = pruned_abs
+        .file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .ok_or_else(|| format!("invalid pruned mzXML path: {}", pruned_abs.display()))?;
+    let mzxml_stem = pruned_abs
+        .file_stem()
+        .map(|stem| stem.to_string_lossy().into_owned())
+        .unwrap_or_else(|| mzxml_name.clone());
+    let mzxml_link = job_dir.join(&mzxml_name);
     symlink_or_copy(&pruned_abs, &mzxml_link)?;
 
-    let rows = build_matchlist(job, prefilter, &PathBuf::from("input.mzXML"), crosslinker)?;
+    let rows = build_matchlist(job, prefilter, &mzxml_stem, crosslinker)?;
     let matchlist_path = job_dir.join("glycoquest_matched.txt");
     write_matchlist(&matchlist_path, &rows)?;
 
@@ -100,10 +137,11 @@ fn write_job(
     let def_path = job_dir.join("xquest.def");
     let run_script = job_dir.join("run.sh");
     let command = format!(
-        "compare_peaks3.pl -match {matchlist} -def {def} -dir . -resultdir results -genxml input.mzXML -cpforce && \
+        "compare_peaks3.pl -match {matchlist} -def {def} -dir . -resultdir results -genxml {mzxml} -cpforce && \
          xquest.pl -def {def} -xquestdir {xquest_root} -list {isotopepairs} -resdir results -dir . -specxml {specxml} -nidx",
         matchlist = matchlist_path.display(),
         def = def_path.display(),
+        mzxml = mzxml_name,
         xquest_root = xquest_root.display(),
         isotopepairs = isotopepairs.display(),
         specxml = specxml,
@@ -116,13 +154,14 @@ fn write_job(
     );
     let script = format!(
         "#!/bin/sh\nset -euo pipefail\nexport XQUEST_DIR=\"{xquest_root}\"\nexport PERL5LIB=\"{perl5lib}\"\n\
-         \"{compare_peaks}\" -match glycoquest_matched.txt -def xquest.def -dir . -resultdir results -genxml input.mzXML -cpforce\n\
+         \"{compare_peaks}\" -match glycoquest_matched.txt -def xquest.def -dir . -resultdir results -genxml \"{mzxml}\" -cpforce\n\
          if [ ! -s glycoquest_matched_isotopepairs.txt ]; then echo \"compare_peaks produced no spectra\" >&2; exit 1; fi\n\
          if [ ! -d results/db ]; then NIDX=-nidx; else NIDX=; fi\n\
          \"{xquest_exe}\" -def xquest.def -xquestdir \"$XQUEST_DIR\" -masstab \"$XQUEST_DIR/deffiles/mass_table.def\" -list glycoquest_matched_isotopepairs.txt -resdir results -dir . -specxml {specxml} $NIDX\n",
         xquest_root = xquest_root.display(),
         perl5lib = perl5lib,
         compare_peaks = compare_peaks.display(),
+        mzxml = mzxml_name,
         xquest_exe = xquest_exe.display(),
         specxml = specxml,
     );

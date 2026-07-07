@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::cli::settings::Settings;
 use crate::crosslinker::{CrosslinkerLabel, CrosslinkerProfile};
-use crate::jobs::GlycanVariant;
+use crate::jobs::VarModPlan;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct JobDefs {
@@ -18,10 +18,10 @@ pub fn write_job_defs(
     xquest_root: &Path,
     crosslinker: &CrosslinkerProfile,
     settings: &Settings,
-    variant: &GlycanVariant,
+    varmod: &VarModPlan,
     fasta_path: &Path,
 ) -> Result<JobDefs, String> {
-    let defs = build_defs(xquest_root, crosslinker, settings, variant, fasta_path)?;
+    let defs = build_defs(xquest_root, crosslinker, settings, varmod, fasta_path)?;
     fs::create_dir_all(job_dir).map_err(|err| {
         format!("cannot create job directory {}: {err}", job_dir.display())
     })?;
@@ -43,7 +43,7 @@ fn build_defs(
     xquest_root: &Path,
     crosslinker: &CrosslinkerProfile,
     settings: &Settings,
-    variant: &GlycanVariant,
+    varmod: &VarModPlan,
     fasta_path: &Path,
 ) -> Result<JobDefs, String> {
     let fasta_path = fasta_path
@@ -72,12 +72,8 @@ fn build_defs(
         CrosslinkerLabel::None => (0.0, 0, 0, 0.0),
     };
 
-    let mut variable_mod = format!("N,{:.6}", variant.mass);
-    let mut nvariable_mod = 1usize;
-    if settings.variable_oxidation {
-        variable_mod.push_str(&format!(",M,{:.6}", 15.994915));
-        nvariable_mod += 1;
-    }
+    let variable_mod = varmod.variable_mod_value();
+    let nvariable_mod = varmod.nvariable_mod();
 
     let aa_required = if crosslinker.nterm_xlinkable || settings.nterm_xlinkable {
         format!("{},K:Z,Z:Z", crosslinker.xlink_sites)
@@ -87,8 +83,10 @@ fn build_defs(
 
     let mut lines: Vec<String> = template
         .lines()
-        .map(|line| substitute_template_line(line, &fasta_path, crosslinker, settings, variant))
+        .map(|line| substitute_template_line(line, &fasta_path, crosslinker, settings, varmod))
         .collect();
+
+    apply_fixed_mods(&mut lines, settings);
 
     set_or_append(&mut lines, "database", &fasta_path.display().to_string());
     set_or_append(&mut lines, "AArequired", &aa_required);
@@ -103,7 +101,10 @@ fn build_defs(
     set_or_append(&mut lines, "variable_mod", &variable_mod);
     set_or_append(&mut lines, "nvariable_mod", &nvariable_mod.to_string());
     set_or_append(&mut lines, "outputpath", "results");
-    set_or_append(&mut lines, "copydb2resdir", "0");
+    // Give every job its own database copy + index under results/db. This keeps
+    // concurrently-running jobs from contending on a single shared DB_File index
+    // next to the source FASTA, which otherwise serializes parallel execution.
+    set_or_append(&mut lines, "copydb2resdir", "1");
     set_or_append(&mut lines, "RuntimeDecoys", "0");
     set_or_append(&mut lines, "cp_isotopediff", &format!("{:.6}", cp_isotope_diff));
     set_or_append(&mut lines, "drawspectra", "0");
@@ -140,7 +141,7 @@ fn substitute_template_line(
     fasta_path: &Path,
     crosslinker: &CrosslinkerProfile,
     settings: &Settings,
-    variant: &GlycanVariant,
+    varmod: &VarModPlan,
 ) -> String {
     let trimmed = line.trim_start();
     let key = trimmed.split_whitespace().next().unwrap_or("");
@@ -151,14 +152,45 @@ fn substitute_template_line(
         "crosslinkername" => format!("crosslinkername {}", crosslinker.name),
         "xlinkermw" => format!("xlinkermw {:.7}", crosslinker.xlinkermw),
         "ms2tolerance" => format!("ms2tolerance {:.4}", settings.ms2_tolerance_da),
-        "variable_mod" => format!("variable_mod N,{:.6}", variant.mass),
-        "nvariable_mod" => {
-            let count = 1 + usize::from(settings.variable_oxidation);
-            format!("nvariable_mod {count}")
-        }
+        "variable_mod" => format!("variable_mod {}", varmod.variable_mod_value()),
+        "nvariable_mod" => format!("nvariable_mod {}", varmod.nvariable_mod()),
         "outputpath" => "outputpath results".into(),
         "RuntimeDecoys" => "RuntimeDecoys 0".into(),
         _ => line.to_string(),
+    }
+}
+
+/// Rewrite the fixed-modification block so cysteine carbamidomethylation reflects settings.
+///
+/// The template's `modifications fixed` block lists one residue per line as
+/// `<residue>\t<mass>`. We set the `C` row to `57.02146` (on) or `0` (off).
+fn apply_fixed_mods(lines: &mut Vec<String>, settings: &Settings) {
+    let carbamidomethyl_mass = if settings.fixed_carbamidomethyl_cys {
+        "57.02146"
+    } else {
+        "0"
+    };
+
+    let mut in_fixed_block = false;
+    for line in lines.iter_mut() {
+        let trimmed = line.trim_start();
+        if trimmed.starts_with("modifications fixed") {
+            in_fixed_block = true;
+            continue;
+        }
+        if !in_fixed_block {
+            continue;
+        }
+        // The fixed block is a flat residue/mass table; stop at the next section header.
+        let mut fields = trimmed.split_whitespace();
+        match (fields.next(), fields.next()) {
+            (Some("C"), Some(_)) => {
+                *line = format!("C\t{carbamidomethyl_mass}");
+                break;
+            }
+            (Some(residue), Some(_)) if residue.len() == 1 => continue,
+            _ => break,
+        }
     }
 }
 
@@ -207,23 +239,30 @@ crosslinkername DSS
 mod tests {
     use super::*;
     use crate::crosslinker::CrosslinkerProfile;
+    use crate::jobs::{build_varmod_plan, GlycanVariant};
 
-    #[test]
-    fn dmtmm_defs_use_zero_isotope_shift() {
-        let settings = Settings::defaults();
-        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dmtmm")).unwrap();
+    fn n_glycan_varmod(settings: &Settings) -> VarModPlan {
         let variant = GlycanVariant {
             glycan_name: "HexNAc(1)".into(),
             composition: "HexNAc(1)".into(),
             mass: 203.079373,
             loss_label: String::new(),
+            residue_targets: vec!['N'],
         };
-        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("xQuest/V2.1.6/xquest");
+        build_varmod_plan(&variant, settings).unwrap()
+    }
+
+    #[test]
+    fn dmtmm_defs_use_zero_isotope_shift() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dmtmm")).unwrap();
+        let varmod = n_glycan_varmod(&settings);
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("V2.1.6/xquest");
         let defs = build_defs(
             &root,
             &crosslinker,
             &settings,
-            &variant,
+            &varmod,
             Path::new("proteins.fasta"),
         )
         .unwrap();
@@ -232,5 +271,55 @@ mod tests {
         assert!(defs.xquest_def.contains("AArequired K:E,K:D"));
         assert!(defs.xquest_def.contains("Iontagmode"));
         assert!(defs.xquest_def.contains("outputpath results"));
+        assert!(defs.xquest_def.contains("variable_mod N,203.079373"));
+    }
+
+    #[test]
+    fn o_glycan_variable_mod_targets_ser_thr() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let variant = GlycanVariant {
+            glycan_name: "HexNAc(1)".into(),
+            composition: "HexNAc(1)".into(),
+            mass: 203.079373,
+            loss_label: String::new(),
+            residue_targets: vec!['S', 'T'],
+        };
+        let varmod = build_varmod_plan(&variant, &settings).unwrap();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("V2.1.6/xquest");
+        let defs = build_defs(&root, &crosslinker, &settings, &varmod, Path::new("proteins.fasta"))
+            .unwrap();
+        assert!(defs.xquest_def.contains("variable_mod S,203.079373,T,203.079373"));
+        assert!(defs.xquest_def.contains("nvariable_mod 2"));
+    }
+
+    #[test]
+    fn fixed_carbamidomethyl_toggle_rewrites_cys_row() {
+        let crosslinker = CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("V2.1.6/xquest");
+
+        let mut on = Settings::defaults();
+        on.fixed_carbamidomethyl_cys = true;
+        let varmod_on = n_glycan_varmod(&on);
+        let defs_on = build_defs(&root, &crosslinker, &on, &varmod_on, Path::new("proteins.fasta"))
+            .unwrap();
+        assert!(defs_on.xquest_def.contains("C\t57.02146"));
+
+        let crosslinker = CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap();
+        let root = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("V2.1.6/xquest");
+        let varmod = n_glycan_varmod(&Settings::defaults());
+        let defs = build_defs(&root, &crosslinker, &Settings::defaults(), &varmod, Path::new("proteins.fasta"))
+            .unwrap();
+        assert!(
+            defs.xquest_def.contains("copydb2resdir 1"),
+            "per-job DB isolation requires copydb2resdir 1 for parallel xQuest jobs"
+        );
+
+        let mut off = Settings::defaults();
+        off.fixed_carbamidomethyl_cys = false;
+        let varmod_off = n_glycan_varmod(&off);
+        let defs_off = build_defs(&root, &crosslinker, &off, &varmod_off, Path::new("proteins.fasta"))
+            .unwrap();
+        assert!(defs_off.xquest_def.contains("C\t0"));
     }
 }

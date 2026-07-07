@@ -3,8 +3,10 @@
 mod catalog;
 mod composition;
 mod diagnostic;
+mod library;
 
 pub use catalog::{glycan_data_dir, resolve_database, supported_glycan_databases};
+pub use library::load_glycan_library_file;
 pub use diagnostic::DiagnosticIon;
 pub use composition::{
     composition_mass, contains_family, load_masses, parse_composition, read_compositions,
@@ -30,6 +32,20 @@ pub struct GlycanEntry {
 pub struct GlycanLibrary {
     pub database_id: String,
     pub entries: Vec<GlycanEntry>,
+}
+
+/// Load a glycan library from either a file path or a bundled database id.
+///
+/// If `spec` points to an existing file, it is parsed as an explicit CSV/TSV
+/// glycan library; otherwise it is treated as a bundled database id such as
+/// `nglyc309` or `oglyc78`.
+pub fn load_glycans(spec: &str) -> Result<GlycanLibrary, String> {
+    let path = std::path::Path::new(spec);
+    if path.is_file() {
+        load_glycan_library_file(path)
+    } else {
+        load_glycan_database(spec)
+    }
 }
 
 /// Load a bundled glycan database by catalog id (e.g. `nglyc309`, `oglyc78`).

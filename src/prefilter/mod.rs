@@ -14,7 +14,7 @@ use crate::glyco::GlycanLibrary;
 use crate::mzxml::{self, Ms2Scan};
 
 pub use diagnostic::{DiagnosticMatch, MatchedIon};
-pub use isotope::{IsotopePair, IsotopePairOutcome, ScanRef};
+pub use isotope::{IsotopePair, ScanRef};
 pub use prune::PrunedGlycan;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -177,31 +177,24 @@ fn apply_isotope_pair_filter(
         })
         .collect();
 
-    for outcome in isotope::match_isotope_pairs(&scan_refs, settings) {
-        match outcome {
-            IsotopePairOutcome::Paired(pair) => {
-                stats.isotope_pairs += 1;
-                isotope_pairs.push(pair.clone());
+    let match_result = isotope::match_isotope_pairs(&scan_refs, settings);
+    for pair in &match_result.pairs {
+        stats.isotope_pairs += 1;
+        isotope_pairs.push(pair.clone());
 
-                if let Some(light) =
-                    find_entry(diagnostic_positive, &pair.light_file, pair.light_scan)
-                {
-                    append_filtered_and_pruning(filtered, pruning, light, library)?;
-                }
-                if let Some(heavy) =
-                    find_entry(diagnostic_positive, &pair.heavy_file, pair.heavy_scan)
-                {
-                    append_filtered_and_pruning(filtered, pruning, heavy, library)?;
-                }
-            }
-            IsotopePairOutcome::Unpaired(scan_ref) => {
-                rejected.push(RejectedSpectrum {
-                    source_file: scan_ref.source_file,
-                    scan_number: scan_ref.scan.scan_number,
-                    reason: RejectReason::NoIsotopePair,
-                });
-            }
+        if let Some(light) = find_entry(diagnostic_positive, &pair.light_file, pair.light_scan) {
+            append_filtered_and_pruning(filtered, pruning, light, library)?;
         }
+        if let Some(heavy) = find_entry(diagnostic_positive, &pair.heavy_file, pair.heavy_scan) {
+            append_filtered_and_pruning(filtered, pruning, heavy, library)?;
+        }
+    }
+    for scan_ref in match_result.unpaired {
+        rejected.push(RejectedSpectrum {
+            source_file: scan_ref.source_file,
+            scan_number: scan_ref.scan.scan_number,
+            reason: RejectReason::NoIsotopePair,
+        });
     }
 
     stats.filtered_scans = filtered.len();
@@ -310,12 +303,12 @@ fn write_isotope_pairs(path: &Path, rows: &[IsotopePair]) -> Result<(), String> 
     let mut w = tsv_writer(path)?;
     write_io(writeln!(
         w,
-        "light_file\tlight_scan\theavy_file\theavy_scan\trt_light\trt_heavy\tmz_light\tmz_heavy\tcharge"
+        "light_file\tlight_scan\theavy_file\theavy_scan\trt_light\trt_heavy\tmz_light\tmz_heavy\tlight_charge\theavy_charge"
     ))?;
     for row in rows {
         write_io(writeln!(
             w,
-            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
+            "{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}",
             row.light_file.display(),
             row.light_scan,
             row.heavy_file.display(),
@@ -324,7 +317,8 @@ fn write_isotope_pairs(path: &Path, rows: &[IsotopePair]) -> Result<(), String> 
             row.rt_heavy_min,
             row.mz_light,
             row.mz_heavy,
-            row.charge,
+            row.light_charge,
+            row.heavy_charge,
         ))?;
     }
     Ok(())

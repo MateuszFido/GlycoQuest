@@ -3,5 +3,6 @@
 mod plan;
 
 pub use plan::{
-    filtered_for_key, isotope_pair_for_scan, GlycanVariant, JobPlan, PlannedJob, SpectrumKey,
+    build_varmod_plan, filtered_for_key, GlycanVariant, JobManifest, JobManifestEntry, JobPlan,
+    PlannedJob, SpectrumKey, VarModPlan,
 };

@@ -6,9 +6,13 @@ use std::path::PathBuf;
 use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::glyco::GlycanLibrary;
-use crate::prefilter::{FilteredSpectrum, GlycanPruningRow, IsotopePair, PrefilterResult};
+use crate::prefilter::{FilteredSpectrum, GlycanPruningRow, PrefilterResult};
 
 const WATER_LOSS_DA: f64 = 18.010565;
+const OXIDATION_DA: f64 = 15.994915;
+
+/// xQuest exposes exactly four variable-modification pseudo-residues.
+const PSEUDO_RESIDUES: [char; 4] = ['X', 'U', 'B', 'J'];
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GlycanVariant {
@@ -16,6 +20,114 @@ pub struct GlycanVariant {
     pub composition: String,
     pub mass: f64,
     pub loss_label: String,
+    /// Source residues a glycan of this variant may attach to (e.g. `N`, or `S`/`T`).
+    pub residue_targets: Vec<char>,
+}
+
+/// What a variable-modification pseudo-residue represents.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VarModKind {
+    Glycan,
+    Oxidation,
+}
+
+/// One xQuest variable modification, mapped to a pseudo-residue (`X`/`U`/`B`/`J`).
+#[derive(Debug, Clone, PartialEq)]
+pub struct VarModEntry {
+    pub pseudo: char,
+    pub source_residue: char,
+    pub mass: f64,
+    pub kind: VarModKind,
+}
+
+/// Ordered variable-modification layout for a single xQuest job.
+///
+/// `entries[i]` maps to xQuest pseudo-residue `PSEUDO_RESIDUES[i]`.
+#[derive(Debug, Clone, PartialEq)]
+pub struct VarModPlan {
+    pub entries: Vec<VarModEntry>,
+}
+
+impl VarModPlan {
+    /// The comma-separated `variable_mod` value written to `xquest.def`.
+    pub fn variable_mod_value(&self) -> String {
+        self.entries
+            .iter()
+            .map(|entry| format!("{},{:.6}", entry.source_residue, entry.mass))
+            .collect::<Vec<_>>()
+            .join(",")
+    }
+
+    /// Number of variable modifications (`nvariable_mod`).
+    pub fn nvariable_mod(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// The set of pseudo-residues that represent a glycan attachment.
+    pub fn glycan_pseudos(&self) -> Vec<char> {
+        self.entries
+            .iter()
+            .filter(|entry| entry.kind == VarModKind::Glycan)
+            .map(|entry| entry.pseudo)
+            .collect()
+    }
+
+    /// Map a pseudo-residue back to the entry it represents.
+    pub fn entry_for_pseudo(&self, pseudo: char) -> Option<&VarModEntry> {
+        self.entries.iter().find(|entry| entry.pseudo == pseudo)
+    }
+}
+
+/// Build the variable-modification layout for a glycan variant.
+///
+/// One glycan entry per configured attachment residue, followed by an optional
+/// oxidation entry. Fails if more than four entries are required, because xQuest
+/// only exposes four pseudo-residues.
+pub fn build_varmod_plan(
+    variant: &GlycanVariant,
+    settings: &Settings,
+) -> Result<VarModPlan, String> {
+    let mut entries = Vec::new();
+
+    for &residue in &variant.residue_targets {
+        entries.push(VarModEntry {
+            pseudo: '?',
+            source_residue: residue,
+            mass: variant.mass,
+            kind: VarModKind::Glycan,
+        });
+    }
+
+    if entries.is_empty() {
+        return Err(format!(
+            "glycan {} has no attachment residue targets",
+            variant.glycan_name
+        ));
+    }
+
+    if settings.variable_oxidation {
+        entries.push(VarModEntry {
+            pseudo: '?',
+            source_residue: 'M',
+            mass: OXIDATION_DA,
+            kind: VarModKind::Oxidation,
+        });
+    }
+
+    if entries.len() > PSEUDO_RESIDUES.len() {
+        return Err(format!(
+            "glycan {} requires {} variable modifications but xQuest supports at most {}",
+            variant.glycan_name,
+            entries.len(),
+            PSEUDO_RESIDUES.len()
+        ));
+    }
+
+    for (index, entry) in entries.iter_mut().enumerate() {
+        entry.pseudo = PSEUDO_RESIDUES[index];
+    }
+
+    Ok(VarModPlan { entries })
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -23,6 +135,28 @@ pub struct PlannedJob {
     pub job_id: String,
     pub variant: GlycanVariant,
     pub spectrum_keys: Vec<SpectrumKey>,
+}
+
+/// Records what each generated xQuest job searched for, so hits can be annotated
+/// with the glycan and attachment residue after xQuest runs.
+#[derive(Debug, Clone, PartialEq)]
+pub struct JobManifestEntry {
+    pub job_id: String,
+    pub variant: GlycanVariant,
+    pub varmod_plan: VarModPlan,
+    pub source_file: PathBuf,
+    pub spectrum_keys: Vec<SpectrumKey>,
+}
+
+#[derive(Debug, Clone, PartialEq, Default)]
+pub struct JobManifest {
+    pub entries: Vec<JobManifestEntry>,
+}
+
+impl JobManifest {
+    pub fn by_job_id(&self, job_id: &str) -> Option<&JobManifestEntry> {
+        self.entries.iter().find(|entry| entry.job_id == job_id)
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
@@ -114,20 +248,38 @@ fn glycan_variants_for_row(
         .find(|e| e.name == row.glycan_name || e.composition == row.composition)
         .ok_or_else(|| format!("pruned glycan not in library: {}", row.glycan_name))?;
 
+    let residue_targets = residue_targets_to_chars(&entry.residue_targets)?;
+
+    let make = |mass: f64, loss_label: &str| GlycanVariant {
+        glycan_name: entry.name.clone(),
+        composition: entry.composition.clone(),
+        mass,
+        loss_label: loss_label.to_string(),
+        residue_targets: residue_targets.clone(),
+    };
+
     Ok(vec![
-        GlycanVariant {
-            glycan_name: entry.name.clone(),
-            composition: entry.composition.clone(),
-            mass: entry.monoisotopic_mass,
-            loss_label: String::new(),
-        },
-        GlycanVariant {
-            glycan_name: entry.name.clone(),
-            composition: entry.composition.clone(),
-            mass: entry.monoisotopic_mass - WATER_LOSS_DA,
-            loss_label: "-H2O".into(),
-        },
+        make(entry.monoisotopic_mass, ""),
+        make(entry.monoisotopic_mass - WATER_LOSS_DA, "-H2O"),
+        make(entry.monoisotopic_mass - 2.0 * WATER_LOSS_DA, "-2H2O"),
     ])
+}
+
+fn residue_targets_to_chars(targets: &[String]) -> Result<Vec<char>, String> {
+    let mut chars = Vec::with_capacity(targets.len());
+    for target in targets {
+        let trimmed = target.trim();
+        let mut iter = trimmed.chars();
+        match (iter.next(), iter.next()) {
+            (Some(ch), None) => chars.push(ch),
+            _ => {
+                return Err(format!(
+                    "glycan residue target must be a single residue letter, got '{trimmed}'"
+                ));
+            }
+        }
+    }
+    Ok(chars)
 }
 
 fn variant_key(variant: &GlycanVariant) -> String {
@@ -168,17 +320,6 @@ pub fn filtered_for_key<'a>(
 ) -> Option<&'a FilteredSpectrum> {
     prefilter.filtered.iter().find(|row| {
         row.source_file == key.source_file && row.scan_number == key.scan_number
-    })
-}
-
-pub fn isotope_pair_for_scan<'a>(
-    pairs: &'a [IsotopePair],
-    file: &PathBuf,
-    scan: u32,
-) -> Option<&'a IsotopePair> {
-    pairs.iter().find(|pair| {
-        (pair.light_file == *file && pair.light_scan == scan)
-            || (pair.heavy_file == *file && pair.heavy_scan == scan)
     })
 }
 
