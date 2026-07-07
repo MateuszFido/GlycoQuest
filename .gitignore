@@ -21,3 +21,5 @@
 
 # Viewer package
 /viewer/node_modules/
+.DS_Store
+src/.DS_Store
