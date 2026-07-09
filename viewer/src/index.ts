@@ -1,52 +1,88 @@
 import type { ViewerBundle } from './types';
+import { normalizeViewerBundle } from './data/normalize';
 import { SelectionStore } from './store/selection';
 import { renderQcPanel } from './panels/QcPanel';
-import { renderSequencePanel } from './panels/SequencePanel';
 import { renderNetworkPanel } from './panels/NetworkPanel';
 import { renderSpectrumPanel } from './panels/SpectrumPanel';
 import { renderHitsTable } from './panels/HitsTable';
 
-export type { ViewerBundle } from './types';
+export type { ViewerBundle, ViewerCrosslink } from './types';
 
 export interface MountOptions {
-  bundle?: ViewerBundle;
+  bundle?: unknown;
   bundleUrl?: string;
+  theme?: ViewerTheme;
+  onSelectCrosslink?: (crosslink: ViewerBundle['crosslinks'][number] | null) => void;
 }
+
+export type ViewerTheme = 'default' | 'lcmspector' | Partial<Record<ViewerThemeToken, string>>;
+
+export type ViewerThemeToken =
+  | '--gq-surface'
+  | '--gq-panel'
+  | '--gq-panel-muted'
+  | '--gq-border'
+  | '--gq-text'
+  | '--gq-muted'
+  | '--gq-accent'
+  | '--gq-experimental'
+  | '--gq-theoretical'
+  | '--gq-glycan'
+  | '--gq-crosslink'
+  | '--gq-warning'
+  | '--gq-fail';
 
 /**
  * Mount the GlycoQuest crosslink viewer into `container`.
  * Loads `viewer.json` from `bundleUrl` when `bundle` is not provided.
  */
 export async function mountViewer(container: HTMLElement, options: MountOptions = {}): Promise<() => void> {
-  let bundle: ViewerBundle;
+  let rawBundle: unknown;
   if (options.bundle) {
-    bundle = options.bundle;
+    rawBundle = options.bundle;
   } else {
     const url = options.bundleUrl ?? './viewer.json';
     const response = await fetch(url);
     if (!response.ok) throw new Error(`Failed to load viewer.json: ${response.status}`);
-    bundle = (await response.json()) as ViewerBundle;
+    rawBundle = await response.json();
   }
 
+  const bundle = normalizeViewerBundle(rawBundle);
   const store = new SelectionStore(bundle);
   const cleanups: Array<() => void> = [];
 
   container.innerHTML = '';
-  container.id = 'app';
+
+  const root = document.createElement('div');
+  root.className = 'gq-viewer';
+  applyTheme(root, options.theme);
 
   const header = buildHeader(bundle);
   const toolbar = buildToolbar(store, bundle);
   const main = document.createElement('main');
   main.className = 'gq-main';
+  const left = document.createElement('section');
+  left.className = 'gq-column gq-column--left';
+  const right = document.createElement('section');
+  right.className = 'gq-column gq-column--right';
+  main.append(left, right);
   const footer = buildFooter();
 
-  container.append(header, toolbar, main, footer);
+  root.append(header, toolbar, main, footer);
+  container.appendChild(root);
 
-  cleanups.push(renderQcPanel(main, store));
-  cleanups.push(renderNetworkPanel(main, store));
-  cleanups.push(renderHitsTable(main, store));
-  cleanups.push(renderSequencePanel(main, store));
-  cleanups.push(renderSpectrumPanel(main, store));
+  if (options.onSelectCrosslink) {
+    cleanups.push(
+      store.subscribe(() => {
+        options.onSelectCrosslink?.(store.selectedCrosslink);
+      }),
+    );
+  }
+
+  cleanups.push(renderHitsTable(left, store));
+  cleanups.push(renderQcPanel(left, store));
+  cleanups.push(renderNetworkPanel(right, store));
+  cleanups.push(renderSpectrumPanel(right, store));
 
   if (bundle.crosslinks.length > 0) {
     const first = store.visibleCrosslinks[0] ?? bundle.crosslinks[0];
@@ -59,6 +95,8 @@ export async function mountViewer(container: HTMLElement, options: MountOptions 
   };
 }
 
+export { normalizeViewerBundle } from './data/normalize';
+
 function buildHeader(bundle: ViewerBundle): HTMLElement {
   const header = document.createElement('header');
   header.className = 'gq-header';
@@ -70,6 +108,7 @@ function buildHeader(bundle: ViewerBundle): HTMLElement {
       <span>Crosslinker: ${esc(meta.crosslinker)} (${esc(meta.xlink_sites)})</span>
       <span>Glycans: ${esc(meta.glycan_library)}</span>
       <span>${meta.passing_hits} passing / ${meta.total_hits} total</span>
+      ${meta.generated_at_iso ? `<span>Generated: ${esc(formatDate(meta.generated_at_iso))}</span>` : ''}
       ${meta.resume ? '<span>Resume mode</span>' : ''}
     </div>`;
   return header;
@@ -80,6 +119,7 @@ function buildToolbar(store: SelectionStore, bundle: ViewerBundle): HTMLElement 
   bar.className = 'gq-toolbar';
 
   const proteinSelect = document.createElement('label');
+  proteinSelect.className = 'gq-field';
   proteinSelect.textContent = 'Protein ';
   const select = document.createElement('select');
   const allOpt = document.createElement('option');
@@ -100,13 +140,16 @@ function buildToolbar(store: SelectionStore, bundle: ViewerBundle): HTMLElement 
   bar.appendChild(proteinSelect);
 
   const failedLabel = document.createElement('label');
+  failedLabel.className = 'gq-check';
   const failedCb = document.createElement('input');
   failedCb.type = 'checkbox';
+  failedCb.checked = store.filters.showFailed;
   failedCb.addEventListener('change', () => store.setShowFailed(failedCb.checked));
   failedLabel.append(failedCb, ' Show failed hits');
   bar.appendChild(failedLabel);
 
   const scoreLabel = document.createElement('label');
+  scoreLabel.className = 'gq-field';
   scoreLabel.textContent = 'Min score ';
   const scoreInput = document.createElement('input');
   scoreInput.type = 'number';
@@ -128,9 +171,31 @@ function buildFooter(): HTMLElement {
   const footer = document.createElement('footer');
   footer.className = 'gq-footer';
   footer.innerHTML =
-    'GlycoQuest crosslink viewer (MIT). Network layout inspired by xiNET (Apache-2.0). ' +
-    'Spectra use approximate b/y annotation.';
+    'GlycoQuest viewer (MIT). Approximate annotations are labeled when exact fragment evidence is unavailable.';
   return footer;
+}
+
+function applyTheme(root: HTMLElement, theme: ViewerTheme | undefined): void {
+  if (!theme || theme === 'default') return;
+  if (theme === 'lcmspector') {
+    root.classList.add('gq-viewer--lcmspector');
+    return;
+  }
+  for (const [key, value] of Object.entries(theme)) {
+    if (value) root.style.setProperty(key, value);
+  }
+}
+
+function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
 
 function esc(s: string): string {

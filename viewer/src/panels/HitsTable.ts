@@ -2,12 +2,10 @@ import type { SelectionStore } from '../store/selection';
 
 export function renderHitsTable(container: HTMLElement, store: SelectionStore): () => void {
   const panel = document.createElement('section');
-  panel.className = 'gq-panel';
+  panel.className = 'gq-panel gq-panel--hits';
   panel.innerHTML = '<h2>Crosslinks</h2>';
   const body = document.createElement('div');
   body.className = 'gq-panel-body';
-  body.style.maxHeight = '320px';
-  body.style.overflow = 'auto';
   panel.appendChild(body);
   container.appendChild(panel);
 
@@ -21,16 +19,18 @@ export function renderHitsTable(container: HTMLElement, store: SelectionStore): 
     const table = document.createElement('table');
     table.className = 'gq-table';
     table.innerHTML = `<thead><tr>
-      <th>Scan</th><th>P1</th><th>P2</th><th>Glycan</th><th>Score</th><th>Status</th>
+      <th>Scan</th><th>RT</th><th>P1</th><th>P2</th><th>Glycan</th><th>Score</th><th>Status</th>
     </tr></thead>`;
     const tbody = document.createElement('tbody');
 
     for (const xl of rows) {
       const tr = document.createElement('tr');
+      tr.dataset.crosslinkId = xl.id;
       if (xl.id === store.selectedCrosslinkId) tr.classList.add('selected');
       const statusCls = xl.postfilter_status === 'pass' ? 'pass' : 'fail';
       tr.innerHTML = `
         <td>${xl.scan ?? ''}</td>
+        <td>${formatRt(xl.retention_time_min)}</td>
         <td>${esc(xl.protein1)}</td>
         <td>${esc(xl.protein2)}</td>
         <td>${esc(xl.glycan_composition ?? '-')}</td>
@@ -51,6 +51,10 @@ export function renderHitsTable(container: HTMLElement, store: SelectionStore): 
   };
 }
 
+function formatRt(value: number | null): string {
+  return value == null ? '-' : `${value.toFixed(2)} min`;
+}
+
 function esc(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }

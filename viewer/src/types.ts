@@ -5,7 +5,8 @@ export interface ViewerBundle {
   crosslinks: ViewerCrosslink[];
   qc: ViewerQc;
   spectra: Record<string, ViewerSpectrum>;
-  fragments: Record<string, ViewerFragments>;
+  fragments?: Record<string, ViewerFragments>;
+  mirror_fragments: Record<string, ViewerMirrorFragments>;
 }
 
 export interface ViewerMeta {
@@ -16,6 +17,8 @@ export interface ViewerMeta {
   glycan_library: string;
   resume: boolean;
   generated_at: string;
+  generated_at_iso: string;
+  generated_at_unix: number | null;
   total_hits: number;
   passing_hits: number;
 }
@@ -41,10 +44,13 @@ export interface ViewerCrosslink {
   score: number;
   soft_score: number;
   scan: number | null;
+  retention_time_min: number | null;
+  source_file: string | null;
   charge: number;
   precursor_mz: number;
   precursor_error_ppm: number;
   topology: string;
+  protein_pair_key: string;
   glycan_name: string | null;
   glycan_composition: string | null;
   glyco_residue: string | null;
@@ -79,6 +85,7 @@ export interface Histogram {
 export interface ViewerSpectrum {
   mz: number[];
   intensity: number[];
+  retention_time_min: number | null;
   precursor_mz: number;
   charge: number;
 }
@@ -87,6 +94,18 @@ export interface ViewerFragments {
   theoretical_mz: number[];
   labels: string[];
   matched_indices: number[];
+}
+
+export interface ViewerMirrorFragments {
+  theoretical_mz: number[];
+  theoretical_intensity: number[];
+  experimental_mz: number[];
+  experimental_intensity: number[];
+  ion_types: string[];
+  labels: string[];
+  matched_indices_experimental: number[];
+  matched_indices_theoretical: number[];
+  annotation_source: 'glycoquest_approx' | 'xquest' | 'external';
 }
 
 export type ViewerListener = () => void;

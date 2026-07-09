@@ -42,9 +42,10 @@ export function renderQcPanel(container: HTMLElement, store: SelectionStore): ()
 
 function barChart(title: string, data: NamedCount[]): HTMLElement {
   const wrap = document.createElement('div');
+  wrap.className = 'gq-chart-card';
   const h = document.createElement('h3');
   h.textContent = title;
-  h.style.cssText = 'margin:0 0 8px;font-size:13px;color:var(--muted)';
+  h.className = 'gq-chart-title';
   wrap.appendChild(h);
 
   if (data.length === 0) {
@@ -71,9 +72,10 @@ function barChart(title: string, data: NamedCount[]): HTMLElement {
 
 function histChart(title: string, hist: Histogram): HTMLElement {
   const wrap = document.createElement('div');
+  wrap.className = 'gq-chart-card';
   const h = document.createElement('h3');
   h.textContent = title;
-  h.style.cssText = 'margin:0 0 8px;font-size:13px;color:var(--muted)';
+  h.className = 'gq-chart-title';
   wrap.appendChild(h);
 
   if (hist.n === 0) {

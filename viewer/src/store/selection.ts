@@ -1,3 +1,4 @@
+import { proteinPairKey } from '../data/normalize';
 import type { ViewerBundle, ViewerCrosslink, ViewerFilters, ViewerListener } from '../types';
 
 export class SelectionStore {
@@ -10,10 +11,6 @@ export class SelectionStore {
 
   constructor(bundle: ViewerBundle) {
     this.bundle = bundle;
-    if (bundle.proteins.length > 0) {
-      this.selectedProteinId = bundle.proteins[0].id;
-      this.filters.proteinId = bundle.proteins[0].id;
-    }
   }
 
   subscribe(listener: ViewerListener): () => void {
@@ -41,13 +38,30 @@ export class SelectionStore {
     return this.bundle.crosslinks.find((xl) => xl.id === this.selectedCrosslinkId) ?? null;
   }
 
+  get focusedProteinIds(): string[] {
+    const selected = this.selectedCrosslink;
+    if (!selected) return [];
+    return selected.protein1 === selected.protein2
+      ? [selected.protein1]
+      : [selected.protein1, selected.protein2];
+  }
+
+  get selectedPairCrosslinks(): ViewerCrosslink[] {
+    const selected = this.selectedCrosslink;
+    if (!selected) return [];
+    const selectedKey = selected.protein_pair_key ?? proteinPairKey(selected.protein1, selected.protein2);
+    return this.visibleCrosslinks.filter((xl) => {
+      const key = xl.protein_pair_key ?? proteinPairKey(xl.protein1, xl.protein2);
+      return key === selectedKey;
+    });
+  }
+
   selectCrosslink(id: string | null): void {
     this.selectedCrosslinkId = id;
     if (id) {
       const xl = this.bundle.crosslinks.find((x) => x.id === id);
       if (xl) {
         this.selectedProteinId = xl.protein1;
-        this.filters.proteinId = xl.protein1;
       }
     }
     this.notify();

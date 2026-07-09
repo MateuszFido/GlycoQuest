@@ -18,6 +18,7 @@ const MAX_PEAKS_PER_SCAN: usize = 2000;
 #[derive(Debug, Clone, PartialEq)]
 pub struct ScanSpectrum {
     pub scan: u32,
+    pub retention_time_min: f64,
     pub precursor_mz: f64,
     pub charge: u8,
     pub mz: Vec<f32>,
@@ -28,8 +29,14 @@ pub struct ScanSpectrum {
 #[derive(Debug, Clone, PartialEq)]
 pub struct FragmentAnnotation {
     pub theoretical_mz: Vec<f32>,
+    pub theoretical_intensity: Vec<f32>,
+    pub experimental_mz: Vec<f32>,
+    pub experimental_intensity: Vec<f32>,
+    pub ion_types: Vec<String>,
     pub labels: Vec<String>,
     pub matched_indices: Vec<usize>,
+    pub matched_indices_experimental: Vec<usize>,
+    pub matched_indices_theoretical: Vec<usize>,
 }
 
 /// Load peaks for the given scans from reduced mzXML files under `spectra_dir`.
@@ -48,7 +55,10 @@ pub fn load_spectra_for_scans(
 
     for entry in entries.flatten() {
         let path = entry.path();
-        if path.extension().is_none_or(|ext| !ext.eq_ignore_ascii_case("mzxml")) {
+        if path
+            .extension()
+            .is_none_or(|ext| !ext.eq_ignore_ascii_case("mzxml"))
+        {
             continue;
         }
         if let Ok(file_scans) = mzxml::parse_scans(&path) {
@@ -72,6 +82,7 @@ fn merge_scans(
             scan.scan_number,
             ScanSpectrum {
                 scan: scan.scan_number,
+                retention_time_min: scan.retention_time_min,
                 precursor_mz: scan.precursor_mz,
                 charge: scan.precursor_charge.unwrap_or(2),
                 mz,
@@ -121,14 +132,42 @@ pub fn annotate_fragments(
         &mut labels,
     );
 
-    let matched_indices = spectrum
-        .map(|spec| match_peaks(&theoretical_mz, &spec.mz))
+    let matches = spectrum
+        .map(|spec| match_peak_pairs(&theoretical_mz, &spec.mz))
         .unwrap_or_default();
+    let matched_indices: Vec<usize> = matches.iter().map(|(obs_idx, _)| *obs_idx).collect();
+    let matched_indices_experimental = matched_indices.clone();
+    let matched_indices_theoretical: Vec<usize> =
+        matches.iter().map(|(_, theo_idx)| *theo_idx).collect();
+    let experimental_mz = spectrum
+        .map(|spec| {
+            matched_indices_experimental
+                .iter()
+                .filter_map(|&idx| spec.mz.get(idx).copied())
+                .collect()
+        })
+        .unwrap_or_default();
+    let experimental_intensity = spectrum
+        .map(|spec| {
+            matched_indices_experimental
+                .iter()
+                .filter_map(|&idx| spec.intensity.get(idx).copied())
+                .collect()
+        })
+        .unwrap_or_default();
+    let ion_types = labels.iter().map(|label| ion_type(label)).collect();
+    let theoretical_intensity = vec![1.0; theoretical_mz.len()];
 
     FragmentAnnotation {
         theoretical_mz,
+        theoretical_intensity,
+        experimental_mz,
+        experimental_intensity,
+        ion_types,
         labels,
         matched_indices,
+        matched_indices_experimental,
+        matched_indices_theoretical,
     }
 }
 
@@ -199,17 +238,31 @@ fn residue_mass(residue: char) -> f64 {
     }
 }
 
-fn match_peaks(theoretical: &[f32], observed: &[f32]) -> Vec<usize> {
+fn match_peak_pairs(theoretical: &[f32], observed: &[f32]) -> Vec<(usize, usize)> {
     let mut matched = Vec::new();
     for (idx, &obs) in observed.iter().enumerate() {
-        if theoretical
-            .iter()
-            .any(|&theo| (theo - obs).abs() <= TOLERANCE_DA)
-        {
-            matched.push(idx);
+        let mut best: Option<(usize, f32)> = None;
+        for (theo_idx, &theo) in theoretical.iter().enumerate() {
+            let delta = (theo - obs).abs();
+            if delta <= TOLERANCE_DA && best.is_none_or(|(_, best_delta)| delta < best_delta) {
+                best = Some((theo_idx, delta));
+            }
+        }
+        if let Some((theo_idx, _)) = best {
+            matched.push((idx, theo_idx));
         }
     }
     matched
+}
+
+fn ion_type(label: &str) -> String {
+    if label.contains("_b") {
+        "b".into()
+    } else if label.contains("_y") {
+        "y".into()
+    } else {
+        "unknown".into()
+    }
 }
 
 /// Collect scan numbers referenced by hits (passing hits only when `passing_only`).
@@ -254,8 +307,7 @@ mod tests {
 
     #[test]
     fn load_spectra_from_fixture() {
-        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/fixtures/mzxml");
+        let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/mzxml");
         let scans: HashSet<u32> = [1, 2].into_iter().collect();
         let loaded = load_spectra_for_scans(&dir, &scans);
         // Fixture directory contains mzXML files with scans.

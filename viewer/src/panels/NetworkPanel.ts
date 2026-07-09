@@ -1,92 +1,54 @@
 import type { SelectionStore } from '../store/selection';
 import type { ViewerCrosslink, ViewerProtein } from '../types';
 
-const BAR_HEIGHT = 14;
-const BAR_GAP = 36;
-const MARGIN = { top: 24, left: 120, right: 24 };
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const LANE_LEFT = 136;
+const LANE_RIGHT = 40;
+const LANE_WIDTH = 760;
+const LANE_HEIGHT = 12;
+const TOP_LANE_Y = 92;
+const BOTTOM_LANE_Y = 204;
 
-interface LayoutProtein {
+interface Lane {
   protein: ViewerProtein;
   y: number;
-  barWidth: number;
 }
 
-/**
- * Clean-room SVG crosslink network (xiNET-inspired protein bars + residue-resolution edges).
- */
+interface Site {
+  absPos: number | null;
+  pepPos: number | null;
+  peptide: string;
+}
+
 export function renderNetworkPanel(container: HTMLElement, store: SelectionStore): () => void {
   const panel = document.createElement('section');
-  panel.className = 'gq-panel gq-panel--network';
-  panel.innerHTML = '<h2>Crosslink network</h2>';
+  panel.className = 'gq-panel gq-panel--pair-map';
+  panel.innerHTML = '<h2>Sequence Pair Map</h2>';
   const body = document.createElement('div');
   body.className = 'gq-panel-body';
   panel.appendChild(body);
   container.appendChild(panel);
 
   const render = () => {
-    const crosslinks = store.visibleCrosslinks.filter((xl) => xl.mapped);
-    const proteinIds = new Set<string>();
-    for (const xl of crosslinks) {
-      proteinIds.add(xl.protein1);
-      proteinIds.add(xl.protein2);
-    }
-    const proteins = store.bundle.proteins.filter((p) => proteinIds.has(p.id));
-    if (proteins.length === 0) {
-      body.innerHTML =
-        '<p class="gq-empty">No mapped crosslinks to display. Check FASTA protein IDs match xQuest output.</p>';
+    const selected = store.selectedCrosslink;
+    if (!selected) {
+      body.innerHTML = '<p class="gq-empty">Select a crosslink to view sequence context.</p>';
       return;
     }
 
-    const maxLen = Math.max(...proteins.map((p) => p.sequence.length), 1);
-    const barAreaWidth = 600;
-    const height = MARGIN.top + proteins.length * BAR_GAP + 40;
-
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    svg.setAttribute('class', 'gq-network-svg');
-    svg.setAttribute('viewBox', `0 0 ${MARGIN.left + barAreaWidth + MARGIN.right} ${height}`);
-
-    const layouts: LayoutProtein[] = proteins.map((protein, i) => ({
-      protein,
-      y: MARGIN.top + i * BAR_GAP,
-      barWidth: Math.max(40, (protein.sequence.length / maxLen) * barAreaWidth),
-    }));
-
-    const layoutById = new Map(layouts.map((l) => [l.protein.id, l]));
-
-    for (const layout of layouts) {
-      const { protein, y, barWidth } = layout;
-      const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
-      bar.setAttribute('class', 'protein-bar');
-      bar.setAttribute('x', String(MARGIN.left));
-      bar.setAttribute('y', String(y));
-      bar.setAttribute('width', String(barWidth));
-      bar.setAttribute('height', String(BAR_HEIGHT));
-      bar.setAttribute('rx', '3');
-      svg.appendChild(bar);
-
-      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      label.setAttribute('class', 'protein-label');
-      label.setAttribute('x', '8');
-      label.setAttribute('y', String(y + BAR_HEIGHT - 2));
-      label.textContent = truncateId(protein.display_name, 14);
-      svg.appendChild(label);
-
-      const lenLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
-      lenLabel.setAttribute('class', 'protein-label');
-      lenLabel.setAttribute('x', String(MARGIN.left + barWidth + 6));
-      lenLabel.setAttribute('y', String(y + BAR_HEIGHT - 2));
-      lenLabel.setAttribute('fill', '#94a3b8');
-      lenLabel.textContent = `${protein.sequence.length} aa`;
-      svg.appendChild(lenLabel);
+    const proteins = focusedProteins(store, selected);
+    if (proteins.length === 0 || !selected.mapped) {
+      body.innerHTML =
+        '<p class="gq-empty">No mapped sequence coordinates for the selected crosslink.</p>';
+      return;
     }
 
-    for (const xl of crosslinks) {
-      drawEdge(svg, xl, layoutById, store.selectedCrosslinkId === xl.id, () =>
-        store.selectCrosslink(xl.id),
-      );
-    }
-
-    body.replaceChildren(svg);
+    const pairCrosslinks = store.selectedPairCrosslinks.filter((xl) => xl.mapped);
+    const svg = selected.protein1 === selected.protein2
+      ? renderIntraproteinMap(proteins[0], pairCrosslinks, selected, store)
+      : renderInterproteinMap(proteins, pairCrosslinks, selected, store);
+    const detail = buildDetail(selected, pairCrosslinks.length);
+    body.replaceChildren(svg, detail);
   };
 
   const unsub = store.subscribe(render);
@@ -97,69 +59,306 @@ export function renderNetworkPanel(container: HTMLElement, store: SelectionStore
   };
 }
 
-function drawEdge(
+function renderInterproteinMap(
+  proteins: ViewerProtein[],
+  crosslinks: ViewerCrosslink[],
+  selected: ViewerCrosslink,
+  store: SelectionStore,
+): SVGSVGElement {
+  const lanes: Lane[] = [
+    { protein: proteins[0], y: TOP_LANE_Y },
+    { protein: proteins[1], y: BOTTOM_LANE_Y },
+  ];
+  const svg = baseSvg(BOTTOM_LANE_Y + 70);
+  lanes.forEach((lane) => drawLane(svg, lane, crosslinks, selected));
+
+  drawInterproteinLinks(svg, lanes, crosslinks, selected, store);
+  return svg;
+}
+
+function renderIntraproteinMap(
+  protein: ViewerProtein,
+  crosslinks: ViewerCrosslink[],
+  selected: ViewerCrosslink,
+  store: SelectionStore,
+): SVGSVGElement {
+  const lane = { protein, y: BOTTOM_LANE_Y - 28 };
+  const svg = baseSvg(BOTTOM_LANE_Y + 76);
+  drawLane(svg, lane, crosslinks, selected);
+  drawIntraproteinArcs(svg, lane, crosslinks, selected, store);
+  return svg;
+}
+
+function baseSvg(height: number): SVGSVGElement {
+  const width = LANE_LEFT + LANE_WIDTH + LANE_RIGHT;
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  svg.setAttribute('class', 'gq-pair-svg');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', String(width));
+  svg.setAttribute('height', String(height));
+  svg.setAttribute('role', 'img');
+  return svg;
+}
+
+function drawLane(
   svg: SVGSVGElement,
-  xl: ViewerCrosslink,
-  layouts: Map<string, LayoutProtein>,
-  selected: boolean,
-  onClick: () => void,
+  lane: Lane,
+  crosslinks: ViewerCrosslink[],
+  selected: ViewerCrosslink,
 ): void {
-  const l1 = layouts.get(xl.protein1);
-  const l2 = layouts.get(xl.protein2);
-  if (!l1 || !l2 || !xl.abs_pos1 || !xl.abs_pos2) return;
+  const y = lane.y;
+  appendText(svg, lane.protein.display_name, 14, y + 9, 'gq-pair-label');
+  appendText(svg, `${lane.protein.sequence.length} aa`, LANE_LEFT + LANE_WIDTH + 8, y + 9, 'gq-pair-length');
 
-  const x1 = residueX(l1, xl.abs_pos1);
-  const y1 = l1.y + BAR_HEIGHT / 2;
-  const x2 = residueX(l2, xl.abs_pos2);
-  const y2 = l2.y + BAR_HEIGHT / 2;
+  for (const xl of crosslinks) {
+    for (const coverage of peptideCoverage(lane.protein.id, xl)) {
+      const start = residueX(lane.protein, coverage.start);
+      const end = residueX(lane.protein, coverage.end);
+      appendRect(svg, start, y - 8, Math.max(2, end - start), LANE_HEIGHT + 16, 'gq-peptide-band');
+    }
+  }
 
-  const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  const midY = (y1 + y2) / 2;
-  const d =
-    y1 === y2
-      ? `M ${x1} ${y1} L ${x2} ${y2}`
-      : `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
-  path.setAttribute('d', d);
-  let cls = 'xlink-edge';
-  if (xl.glycan_composition) cls += ' xlink-edge--glycan';
-  if (selected) cls += ' xlink-edge--selected';
-  if (xl.postfilter_status !== 'pass') cls += ' xlink-edge--failed';
-  path.setAttribute('class', cls);
-  path.addEventListener('click', onClick);
-  const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-  title.textContent = edgeTitle(xl);
-  path.appendChild(title);
-  svg.appendChild(path);
+  appendRect(svg, LANE_LEFT, y, LANE_WIDTH, LANE_HEIGHT, 'gq-sequence-lane');
 
-  for (const [x, y] of [
-    [x1, y1],
-    [x2, y2],
-  ] as const) {
-    const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-    dot.setAttribute('class', selected ? 'xlink-site xlink-site--selected' : 'xlink-site');
-    dot.setAttribute('cx', String(x));
-    dot.setAttribute('cy', String(y));
-    dot.setAttribute('r', '4');
-    dot.addEventListener('click', onClick);
-    svg.appendChild(dot);
+  for (const pos of xlinkPositions(lane.protein.id, crosslinks)) {
+    const dot = appendCircle(svg, residueX(lane.protein, pos), y + LANE_HEIGHT / 2, 4, 'gq-site-dot');
+    dot.appendChild(title(`Crosslink residue ${lane.protein.id}:${pos}`));
+  }
+
+  for (const marker of glycanMarkers(lane.protein.id, crosslinks)) {
+    const x = residueX(lane.protein, marker.position);
+    const diamond = document.createElementNS(SVG_NS, 'path');
+    diamond.setAttribute('class', 'gq-glycan-marker');
+    diamond.setAttribute('d', `M ${x} ${y - 16} l 6 6 l -6 6 l -6 -6 Z`);
+    diamond.appendChild(title(marker.label));
+    svg.appendChild(diamond);
+  }
+
+  const selectedPositions = selectedSitesForProtein(selected, lane.protein.id);
+  for (const pos of selectedPositions) {
+    appendCircle(svg, residueX(lane.protein, pos), y + LANE_HEIGHT / 2, 6, 'gq-site-dot gq-site-dot--selected');
   }
 }
 
-function residueX(layout: LayoutProtein, absPos: number): number {
-  const len = layout.protein.sequence.length;
-  const frac = len > 1 ? (absPos - 1) / (len - 1) : 0.5;
-  return MARGIN.left + frac * layout.barWidth;
+function drawInterproteinLinks(
+  svg: SVGSVGElement,
+  lanes: Lane[],
+  crosslinks: ViewerCrosslink[],
+  selected: ViewerCrosslink,
+  store: SelectionStore,
+): void {
+  const draw = (xl: ViewerCrosslink) => {
+    const topSite = siteForProtein(xl, lanes[0].protein.id);
+    const bottomSite = siteForProtein(xl, lanes[1].protein.id);
+    if (!topSite.absPos || !bottomSite.absPos) return;
+    const x1 = residueX(lanes[0].protein, topSite.absPos);
+    const y1 = lanes[0].y + LANE_HEIGHT / 2;
+    const x2 = residueX(lanes[1].protein, bottomSite.absPos);
+    const y2 = lanes[1].y + LANE_HEIGHT / 2;
+    const line = document.createElementNS(SVG_NS, 'line');
+    line.setAttribute('x1', String(x1));
+    line.setAttribute('y1', String(y1));
+    line.setAttribute('x2', String(x2));
+    line.setAttribute('y2', String(y2));
+    line.setAttribute('class', linkClass(xl, selected, 'gq-xlink-line'));
+    line.addEventListener('click', () => store.selectCrosslink(xl.id));
+    line.appendChild(title(linkTitle(xl)));
+    svg.appendChild(line);
+  };
+
+  crosslinks.filter((xl) => xl.id !== selected.id).forEach(draw);
+  draw(selected);
 }
 
-function edgeTitle(xl: ViewerCrosslink): string {
+function drawIntraproteinArcs(
+  svg: SVGSVGElement,
+  lane: Lane,
+  crosslinks: ViewerCrosslink[],
+  selected: ViewerCrosslink,
+  store: SelectionStore,
+): void {
+  const draw = (xl: ViewerCrosslink, index: number) => {
+    const s1 = siteForProtein(xl, lane.protein.id, 1);
+    const s2 = siteForProtein(xl, lane.protein.id, 2);
+    if (!s1.absPos || !s2.absPos) return;
+    const x1 = residueX(lane.protein, s1.absPos);
+    const x2 = residueX(lane.protein, s2.absPos);
+    const y = lane.y + LANE_HEIGHT / 2;
+    const distance = Math.abs(x2 - x1);
+    const arcHeight = Math.min(118, Math.max(36, distance * 0.34 + index * 9));
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute(
+      'd',
+      `M ${x1} ${y} C ${x1} ${y - arcHeight}, ${x2} ${y - arcHeight}, ${x2} ${y}`,
+    );
+    path.setAttribute('class', linkClass(xl, selected, 'gq-xlink-arc'));
+    path.addEventListener('click', () => store.selectCrosslink(xl.id));
+    path.appendChild(title(linkTitle(xl)));
+    svg.appendChild(path);
+  };
+
+  crosslinks.filter((xl) => xl.id !== selected.id).forEach(draw);
+  draw(selected, crosslinks.length);
+}
+
+function focusedProteins(store: SelectionStore, selected: ViewerCrosslink): ViewerProtein[] {
+  const ids = selected.protein1 === selected.protein2
+    ? [selected.protein1]
+    : [selected.protein1, selected.protein2];
+  return ids
+    .slice(0, 2)
+    .map((id) => store.bundle.proteins.find((protein) => protein.id === id))
+    .filter((protein): protein is ViewerProtein => Boolean(protein));
+}
+
+function siteForProtein(xl: ViewerCrosslink, proteinId: string, preferredArm?: 1 | 2): Site {
+  if (preferredArm !== 2 && xl.protein1 === proteinId) {
+    return { absPos: xl.abs_pos1, pepPos: xl.pep_pos1, peptide: xl.pep_seq1 };
+  }
+  if (preferredArm !== 1 && xl.protein2 === proteinId) {
+    return { absPos: xl.abs_pos2, pepPos: xl.pep_pos2, peptide: xl.pep_seq2 };
+  }
+  return { absPos: null, pepPos: null, peptide: '' };
+}
+
+function selectedSitesForProtein(xl: ViewerCrosslink, proteinId: string): number[] {
+  const positions: number[] = [];
+  if (xl.protein1 === proteinId && xl.abs_pos1 != null) positions.push(xl.abs_pos1);
+  if (xl.protein2 === proteinId && xl.abs_pos2 != null) positions.push(xl.abs_pos2);
+  return positions;
+}
+
+function peptideCoverage(proteinId: string, xl: ViewerCrosslink): Array<{ start: number; end: number }> {
+  const sites = [siteForProtein(xl, proteinId, 1), siteForProtein(xl, proteinId, 2)];
+  return sites.flatMap((site) => {
+    if (!site.pepPos || !site.peptide) return [];
+    return [{ start: site.pepPos, end: site.pepPos + site.peptide.length - 1 }];
+  });
+}
+
+function xlinkPositions(proteinId: string, crosslinks: ViewerCrosslink[]): number[] {
+  return Array.from(
+    new Set(
+      crosslinks.flatMap((xl) =>
+        selectedSitesForProtein(xl, proteinId).filter((pos) => Number.isFinite(pos)),
+      ),
+    ),
+  );
+}
+
+function glycanMarkers(
+  proteinId: string,
+  crosslinks: ViewerCrosslink[],
+): Array<{ position: number; label: string }> {
+  const markers: Array<{ position: number; label: string }> = [];
+  for (const xl of crosslinks) {
+    if (!xl.glyco_residue || !xl.glyco_peptide) continue;
+    const site = xl.glyco_peptide === 1 ? siteForProtein(xl, proteinId, 1) : siteForProtein(xl, proteinId, 2);
+    if (!site.pepPos || !site.peptide) continue;
+    for (let i = 0; i < site.peptide.length; i++) {
+      if (site.peptide[i].toUpperCase() === xl.glyco_residue.toUpperCase()) {
+        markers.push({
+          position: site.pepPos + i,
+          label: `Glycan ${xl.glycan_composition ?? xl.glycan_name ?? 'site'}`,
+        });
+      }
+    }
+  }
+  return markers;
+}
+
+function residueX(protein: ViewerProtein, absPos: number): number {
+  const len = Math.max(protein.sequence.length, 1);
+  const frac = len > 1 ? (absPos - 1) / (len - 1) : 0.5;
+  return LANE_LEFT + Math.max(0, Math.min(1, frac)) * LANE_WIDTH;
+}
+
+function linkClass(xl: ViewerCrosslink, selected: ViewerCrosslink, base: string): string {
+  const classes = [base];
+  if (xl.glycan_composition) classes.push('gq-xlink--glycan');
+  if (xl.postfilter_status !== 'pass') classes.push('gq-xlink--failed');
+  if (xl.id === selected.id) classes.push('gq-xlink--selected');
+  return classes.join(' ');
+}
+
+function linkTitle(xl: ViewerCrosslink): string {
   const parts = [
-    `${xl.protein1}:${xl.abs_pos1} ↔ ${xl.protein2}:${xl.abs_pos2}`,
+    `${xl.protein1}:${xl.abs_pos1 ?? '?'} <-> ${xl.protein2}:${xl.abs_pos2 ?? '?'}`,
     `score ${xl.score.toFixed(2)}`,
   ];
   if (xl.glycan_composition) parts.push(xl.glycan_composition);
-  return parts.join(' · ');
+  return parts.join(' | ');
 }
 
-function truncateId(id: string, max: number): string {
-  return id.length > max ? id.slice(0, max - 1) + '…' : id;
+function buildDetail(selected: ViewerCrosslink, pairCount: number): HTMLElement {
+  const detail = document.createElement('div');
+  detail.className = 'gq-detail';
+  detail.textContent = [
+    `${selected.protein1}:${selected.abs_pos1 ?? '?'} <-> ${selected.protein2}:${selected.abs_pos2 ?? '?'}`,
+    `score ${selected.score.toFixed(2)}`,
+    `scan ${selected.scan ?? '?'}`,
+    selected.retention_time_min == null ? null : `RT ${selected.retention_time_min.toFixed(2)} min`,
+    selected.glycan_composition ? `glycan ${selected.glycan_composition}` : null,
+    `${pairCount} visible link(s) for this pair`,
+  ]
+    .filter((part): part is string => Boolean(part))
+    .join(' | ');
+  return detail;
+}
+
+function appendRect(
+  svg: SVGSVGElement,
+  x: number,
+  y: number,
+  width: number,
+  height: number,
+  className: string,
+): SVGRectElement {
+  const rect = document.createElementNS(SVG_NS, 'rect');
+  rect.setAttribute('class', className);
+  rect.setAttribute('x', String(x));
+  rect.setAttribute('y', String(y));
+  rect.setAttribute('width', String(width));
+  rect.setAttribute('height', String(height));
+  rect.setAttribute('rx', '4');
+  svg.appendChild(rect);
+  return rect;
+}
+
+function appendCircle(
+  svg: SVGSVGElement,
+  cx: number,
+  cy: number,
+  r: number,
+  className: string,
+): SVGCircleElement {
+  const circle = document.createElementNS(SVG_NS, 'circle');
+  circle.setAttribute('class', className);
+  circle.setAttribute('cx', String(cx));
+  circle.setAttribute('cy', String(cy));
+  circle.setAttribute('r', String(r));
+  svg.appendChild(circle);
+  return circle;
+}
+
+function appendText(
+  svg: SVGSVGElement,
+  value: string,
+  x: number,
+  y: number,
+  className: string,
+): SVGTextElement {
+  const text = document.createElementNS(SVG_NS, 'text');
+  text.setAttribute('class', className);
+  text.setAttribute('x', String(x));
+  text.setAttribute('y', String(y));
+  text.textContent = value;
+  svg.appendChild(text);
+  return text;
+}
+
+function title(value: string): SVGTitleElement {
+  const titleEl = document.createElementNS(SVG_NS, 'title');
+  titleEl.textContent = value;
+  return titleEl;
 }

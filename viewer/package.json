@@ -11,6 +11,7 @@
   "scripts": {
     "build": "tsc && vite build",
     "dev": "vite",
+    "test": "tsc -p tsconfig.test.json && node ../target/viewer-test/test/viewerData.test.js",
     "preview": "vite preview"
   },
   "dependencies": {
