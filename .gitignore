@@ -2,6 +2,8 @@
 /data/
 /glycoquest_*_out/
 /glycoquest_*_input/
+DESIGN.md
+/scripts/__pycache__/
 
 *.mzXML
 *.mzxml

@@ -2,6 +2,9 @@
 
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicUsize, Ordering};
+
+use rayon::prelude::*;
 
 use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
@@ -14,7 +17,7 @@ use crate::progress::PhaseProgress;
 use crate::xquest::XQuestRuntime;
 use crate::xquest::defs::write_job_defs;
 use crate::xquest::matchlist::{
-    build_matchlist, isotopepairs_path, specxml_filename, write_matchlist,
+    FilteredSpectrumIndex, build_matchlist, isotopepairs_path, specxml_filename, write_matchlist,
 };
 
 #[derive(Debug, Clone, PartialEq)]
@@ -50,40 +53,48 @@ pub fn generate_jobs(
     fs::create_dir_all(layout.logs_dir()).map_err(|err| err.to_string())?;
     fs::create_dir_all(layout.tmp_dir()).map_err(|err| err.to_string())?;
 
-    let mut generated = Vec::new();
-    let mut manifest = JobManifest::default();
-    for job in &plan.jobs {
-        let varmod = build_varmod_plan(&job.variant, settings)?;
-        generated.push(write_job(
-            &jobs_root,
-            job,
-            &varmod,
-            prefilter,
-            pruned_mzxml_paths,
-            crosslinker,
-            settings,
-            fasta,
-            runtime,
-        )?);
-        manifest.entries.push(JobManifestEntry {
-            job_id: job.job_id.clone(),
-            variant: job.variant.clone(),
-            varmod_plan: varmod,
-            source_file: job
-                .spectrum_keys
-                .first()
-                .map(|key| key.source_file.clone())
-                .unwrap_or_default(),
-            spectrum_keys: job.spectrum_keys.clone(),
-        });
-        if let Some(progress) = progress {
-            progress.inc(1);
-            progress.set_message(format!("{} job folders written", generated.len()));
-        }
-    }
+    let spectrum_index = FilteredSpectrumIndex::new(prefilter);
+    let completed = AtomicUsize::new(0);
+    let generated_and_manifest: Result<Vec<_>, String> = plan
+        .jobs
+        .par_iter()
+        .map(|job| {
+            let varmod = build_varmod_plan(&job.variant, settings)?;
+            let generated = write_job(
+                &jobs_root,
+                job,
+                &varmod,
+                prefilter,
+                &spectrum_index,
+                pruned_mzxml_paths,
+                crosslinker,
+                settings,
+                fasta,
+                runtime,
+            )?;
+            let manifest = JobManifestEntry {
+                job_id: job.job_id.clone(),
+                variant: job.variant.clone(),
+                varmod_plan: varmod,
+                source_file: job
+                    .spectrum_keys
+                    .first()
+                    .map(|key| key.source_file.clone())
+                    .unwrap_or_default(),
+                spectrum_keys: job.spectrum_keys.clone(),
+            };
+            if let Some(progress) = progress {
+                progress.inc(1);
+                let count = completed.fetch_add(1, Ordering::Relaxed) + 1;
+                progress.set_message(format!("{count} job folders written"));
+            }
+            Ok((generated, manifest))
+        })
+        .collect();
+    let (generated, entries): (Vec<_>, Vec<_>) = generated_and_manifest?.into_iter().unzip();
     Ok(GeneratedJobs {
         jobs: generated,
-        manifest,
+        manifest: JobManifest { entries },
     })
 }
 
@@ -92,6 +103,7 @@ fn write_job(
     job: &PlannedJob,
     varmod: &VarModPlan,
     prefilter: &PrefilterResult,
+    spectrum_index: &FilteredSpectrumIndex<'_>,
     pruned_mzxml_paths: &[PathBuf],
     crosslinker: &CrosslinkerProfile,
     settings: &Settings,
@@ -129,7 +141,7 @@ fn write_job(
     let mzxml_link = job_dir.join(&mzxml_name);
     symlink_or_copy(&pruned_abs, &mzxml_link)?;
 
-    let rows = build_matchlist(job, prefilter, &mzxml_stem, crosslinker)?;
+    let rows = build_matchlist(job, prefilter, spectrum_index, &mzxml_stem, crosslinker)?;
     let matchlist_path = job_dir.join("glycoquest_matched.txt");
     write_matchlist(&matchlist_path, &rows)?;
 

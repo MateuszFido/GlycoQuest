@@ -1,6 +1,6 @@
 # GlycoQuest documentation
 
-**GlycoQuest** finds DSS- or DMTMM-crosslinked **glycopeptide–peptide** pairs in LC–MS/MS data. It prefilters spectra on glycan diagnostic ions, detects light/heavy isotope pairs for labelled crosslinkers, searches retained spectra with [xQuest](https://www.nature.com/articles/nprot.2013.168), and returns annotated hits audiatble in the browser.
+**GlycoQuest** finds **glycopeptide–peptide** pairs in LC–MS/MS data using DSS, DMTMM, or published glycan-to-peptide linker models. It prefilters spectra on glycan diagnostic ions, detects light/heavy isotope pairs for labelled crosslinkers, searches retained spectra with [xQuest](https://www.nature.com/articles/nprot.2013.168), and returns annotated hits auditable in the browser.
 
 ## Start here
 
@@ -25,7 +25,7 @@
 
 - [CLI reference](configuration/cli-reference.md) — command-line flags
 - [Settings reference](configuration/settings-reference.md) — `settings.ini` sections
-- [Crosslinkers](configuration/crosslinkers.md) — DSS, DMTMM, labeling modes
+- [Crosslinkers](configuration/crosslinkers.md) — DSS, DMTMM, NHS–cyclooctyne, SSBXL, PCBXL, and labeling modes
 - [Glycan libraries](configuration/glycan-libraries.md) — bundled and custom libraries
 
 ### Workflow

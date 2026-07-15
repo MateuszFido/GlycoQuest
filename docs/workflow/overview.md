@@ -105,13 +105,8 @@ Jobs are independent (separate directories, separate peptide indexes). GlycoQues
 | Pass/fail rules and soft score | [Post-filter](postfilter.md) |
 | Output file tree | [Output files](../results/output-files.md) |
 
-## Real-data example
+## Reference data and run planning
 
-The hCG validation run documented in the project `README.md` (dry-run, Jun 2026):
+Published GPx datasets exist in MassIVE, including `MSV000093174` (Chen et al., 2025) and the publicly downloadable `MSV000087442` (Xie et al., 2021). GlycoQuest includes `nhs-cyclooctyne`, `ssbxl`, and `pcbxl` models for their azido-sialic-acid/NHS chemistry. See [Published reference datasets](../science/glycopeptide-crosslinking.md#published-reference-datasets) for citations, exact masses, access status, and the executed MSV000087442 proof of concept.
 
-- 24 250 MS2 scans
-- 8 436 diagnostic-positive
-- 9 DSS isotope pairs → **18** filtered spectra
-- **576** xQuest jobs, ~17 496 spectrum comparisons
-
-Inspect `plan.json` after your own dry-run for equivalent numbers.
+Run a dry-run on your own experiment and inspect `plan.json` for the scan funnel, job count, and estimated comparisons before launching xQuest.

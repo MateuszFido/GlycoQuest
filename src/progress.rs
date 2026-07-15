@@ -83,6 +83,7 @@ impl PhaseProgress {
     }
 
     pub(crate) fn make_determinate(&self, length: u64) {
+        self.bar.set_position(0);
         self.bar.set_length(length.max(1));
         self.bar.set_style(determinate_style());
         self.bar.reset_elapsed();
@@ -116,6 +117,11 @@ impl PhaseProgress {
 
     pub(crate) fn abandon(&self, message: impl Into<String>) {
         self.bar.abandon_with_message(message.into());
+    }
+
+    #[cfg(test)]
+    pub(crate) fn test_snapshot(&self) -> (u64, String) {
+        (self.bar.position(), self.bar.message().to_string())
     }
 }
 
@@ -174,5 +180,14 @@ mod tests {
     fn explicit_progress_modes_override_terminal_detection() {
         assert!(ProgressReporter::new(ProgressMode::Always).enabled);
         assert!(!ProgressReporter::new(ProgressMode::Never).enabled);
+    }
+
+    #[test]
+    fn changing_determinate_work_units_resets_position() {
+        let progress = ProgressReporter::new(ProgressMode::Never);
+        let phase = progress.determinate(2, 4, "Preparing xQuest jobs", 4);
+        phase.inc(4);
+        phase.make_determinate(3);
+        assert_eq!(phase.test_snapshot().0, 0);
     }
 }

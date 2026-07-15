@@ -23,17 +23,40 @@ pub struct DiagnosticMatch {
     pub passes: bool,
 }
 
+/// Diagnostic targets compiled once for all spectra in a prefilter run.
+pub struct DiagnosticMatcher {
+    targets: Vec<DiagnosticIon>,
+    tolerance_ppm: f64,
+}
+
+impl DiagnosticMatcher {
+    pub fn new(library: &GlycanLibrary, tolerance_ppm: f64) -> Self {
+        Self {
+            targets: unique_diagnostic_targets(library),
+            tolerance_ppm,
+        }
+    }
+
+    pub fn match_scan(&self, scan: &Ms2Scan) -> DiagnosticMatch {
+        match_targets(scan, &self.targets, self.tolerance_ppm)
+    }
+}
+
+#[cfg(test)]
 pub fn match_diagnostic_ions(
     scan: &Ms2Scan,
     library: &GlycanLibrary,
     tolerance_ppm: f64,
 ) -> DiagnosticMatch {
-    let targets = unique_diagnostic_targets(library);
+    DiagnosticMatcher::new(library, tolerance_ppm).match_scan(scan)
+}
+
+fn match_targets(scan: &Ms2Scan, targets: &[DiagnosticIon], tolerance_ppm: f64) -> DiagnosticMatch {
     let mut matched_ions = Vec::new();
     let mut families = BTreeSet::new();
 
     for (peak_index, (obs_mz, intensity)) in scan.peaks.iter().enumerate() {
-        for ion in &targets {
+        for ion in targets {
             if within_ppm(*obs_mz, ion.mz, tolerance_ppm) {
                 families.insert(ion.family.clone());
                 matched_ions.push(MatchedIon {

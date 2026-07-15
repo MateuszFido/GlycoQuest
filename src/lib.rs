@@ -404,11 +404,14 @@ fn execute_pipeline(
             }
         };
 
-    let job_plan = match jobs::JobPlan::build(
+    prepare_progress.make_determinate(prefilter.pruning.len() as u64);
+    prepare_progress.set_message("planning spectrum-glycan jobs");
+    let job_plan = match jobs::JobPlan::build_with_progress(
         &prefilter,
         &validated.glycan_library,
         &config.settings,
         &config.crosslinker,
+        Some(&prepare_progress),
     ) {
         Ok(plan) => plan,
         Err(message) => {
@@ -1046,13 +1049,15 @@ mod tests {
     }
 
     #[test]
-    fn optional_hcg_dry_run_integration() {
-        let mzxml = match std::env::var("GLYCOQUEST_HCG_MZXML") {
+    fn optional_dry_run_integration() {
+        let mzxml = match std::env::var("GLYCOQUEST_INTEGRATION_MZXML") {
             Ok(path) => PathBuf::from(path),
             Err(_) => return,
         };
-        let fasta =
-            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/rcsb_pdb_1HRP_no_contams.fasta");
+        let fasta = match std::env::var("GLYCOQUEST_INTEGRATION_FASTA") {
+            Ok(path) => PathBuf::from(path),
+            Err(_) => return,
+        };
         if !mzxml.is_file() || !fasta.is_file() {
             return;
         }
@@ -1062,7 +1067,7 @@ mod tests {
         if !xquest_root.is_dir() {
             return;
         }
-        let out = temp_dir("hcg_integration");
+        let out = temp_dir("dry_run_integration");
         let _ = fs::create_dir_all(&out);
         let config = RunConfig {
             cli: CliParams {

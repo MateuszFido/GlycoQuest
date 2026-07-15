@@ -7,7 +7,7 @@ use std::path::PathBuf;
 use clap::error::ErrorKind;
 use clap::{Parser, ValueEnum};
 
-/// Default bundled glycan database id ([`parse_cli`]).
+/// Default bundled N-glycan database id ([`parse_cli`]).
 pub const DEFAULT_GLYCANS: &str = "nglyc309";
 
 /// When the live terminal progress display should be enabled.
@@ -61,7 +61,7 @@ impl Default for CliParams {
 #[command(
     name = "glycoquest",
     version,
-    about = "Prepare and run xQuest searches for DSS-crosslinked glycopeptide-peptide spectra.",
+    about = "Prepare and run xQuest searches for crosslinked glycopeptide-peptide spectra.",
     arg_required_else_help = false,
     after_help = "Advanced options (xquest_bin, tolerances, modifications, limits, etc.) live in settings.ini.\n\nExamples:\n  glycoquest input.mzXML --database proteins.fasta\n  glycoquest input.mzXML --database proteins.fasta --out job --dry-run"
 )]
@@ -83,7 +83,8 @@ struct Args {
     #[arg(long, value_name = "DIR", default_value = ".")]
     xquest_root: PathBuf,
 
-    /// Crosslinker chemistry name (e.g. dss). Overrides settings.ini [crosslinker] name.
+    /// Crosslinker name (e.g. dss, dmtmm, nhs-cyclooctyne, ssbxl, pcbxl).
+    /// Overrides settings.ini [crosslinker] name.
     #[arg(long, value_name = "NAME")]
     crosslinker: Option<String>,
 

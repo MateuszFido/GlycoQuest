@@ -27,7 +27,7 @@ glycoquest run.mzXML --database proteins.fasta --crosslinker dss
 
 ### DMTMM
 
-Dimethyl 3,3′-dithiobispropionimidate — zero-length crosslink between Lys and Asp/Glu side chains.
+4-(4,6-dimethoxy-1,3,5-triazin-2-yl)-4-methylmorpholinium — a coupling reagent that produces a zero-length amide between a Lys amine and an Asp/Glu carboxyl group.
 
 | Parameter | Value |
 |-----------|-------|
@@ -42,13 +42,41 @@ Dimethyl 3,3′-dithiobispropionimidate — zero-length crosslink between Lys an
 glycoquest run.mzXML --database proteins.fasta --crosslinker dmtmm
 ```
 
+### Published glycan-to-peptide linkers
+
+These presets encode a physical SiaNAz–linker–Lys bridge as xQuest `X:K`.
+GlycoQuest puts the glycan in the first variable-modification slot, which xQuest
+rewrites to pseudo-residue `X`; this forces the glycan and crosslink onto the
+same Asn. They are unlabeled, so isotope pairing is disabled.
+
+| Preset | Reference/sample state | `xlinkermw` | Formula relative to NeuAc glycan | Sites |
+|--------|------------------------|------------:|-----------------------------------|-------|
+| `nhs-cyclooctyne` | Xie et al. 2021 intact NHS–cyclooctyne product | 205.085126607 | C10H11N3O2 | `X:K` |
+| `ssbxl` | Chen et al. 2025 after TCEP and IAA | 573.179438173 | C28H27N7O5S | `X:K` |
+| `pcbxl` | Chen et al. 2025 after photocleavage | 456.190988659 | C25H24N6O3 | `X:K` |
+
+The formulas and masses assume that the glycan library contains ordinary NeuAc;
+the preset mass includes the SiaNAz-for-NeuAc delta. Do not reuse these values
+unchanged with a library whose glycan masses already contain SiaNAz. For SSBXL,
+573.179438173 + 291.095416527 (NeuAc residue) + 1.007276467 (H+) gives m/z
+865.2821, matching the linker's required signature ion in Chen et al.
+
+```bash
+glycoquest run.mzXML --database proteins.fasta \
+  --crosslinker nhs-cyclooctyne \
+  --glycans examples/MSV000087442/glycans.csv
+```
+
+See the executed repository example at `examples/MSV000087442/README.md` and
+[the chemistry derivation](../science/glycopeptide-crosslinking.md#paper-derived-search-masses).
+
 ## Labeling modes (`[crosslinker] label`)
 
 | Mode | Isotope prefilter | xQuest isotope settings | Typical use |
 |------|-------------------|-------------------------|-------------|
 | `light-heavy` | On | `isotopeshift 12.075321`, isotopic scan pairs | DSS duplex (default) |
 | `light-only` | Off | Light-only pair printing | Single-channel DSS |
-| `none` | Off | `isotopeshift 0` | DMTMM, EDC, other unlabeled chemistries |
+| `none` | Off | `isotopeshift 0` | DMTMM, GPx linkers, EDC, other unlabeled chemistries |
 
 When `label=none`, `shift_da` is ignored for the isotope prefilter (a warning is printed if shift ≠ 0).
 
@@ -74,7 +102,10 @@ Set `nterm_xlinkable = true` to enable xQuest N-terminus support (`ntermxlinkabl
 
 ## Scientific distinction: crosslink vs glycan
 
-The **crosslinker** connects two peptide chains (e.g. Lys–Lys for DSS). The **glycan** is a separate modification on Asn/Ser/Thr, modeled as an xQuest variable modification — it is not part of the crosslink bond and is not isotope-coded by DSS.
+For DSS and DMTMM, the **crosslinker** connects two peptide chains while the
+**glycan** is a separate modification on Asn/Ser/Thr. For the GPx presets, the
+physical crosslink runs from SiaNAz within that glycan to a peptide Lys; xQuest's
+`X:K` site pair is the computational encoding of that relationship.
 
 ```
 Peptide A ——[DSS]—— Peptide B

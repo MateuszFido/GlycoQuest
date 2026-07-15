@@ -8,6 +8,8 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
+use rayon::prelude::*;
+
 use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::glyco::GlycanLibrary;
@@ -98,7 +100,8 @@ pub(crate) fn run_prefilter_with_progress(
     let mut diagnostic_positive = Vec::new();
     let mut stats = PrefilterStats::default();
 
-    if let Some(progress) = progress.filter(|progress| progress.enabled()) {
+    let progress = progress.filter(|progress| progress.enabled()).cloned();
+    if let Some(progress) = &progress {
         progress.set_message("counting MS2 scans");
         let total = files.iter().try_fold(0usize, |total, file| {
             mzxml::count_ms2_scans(file).map(|count| total + count)
@@ -106,10 +109,10 @@ pub(crate) fn run_prefilter_with_progress(
         progress.make_determinate(total as u64);
     }
 
-    let mut processed = 0u64;
+    let matcher = diagnostic::DiagnosticMatcher::new(library, settings.diagnostic_tolerance_ppm);
 
     for (file_index, file) in files.iter().enumerate() {
-        if let Some(progress) = progress {
+        if let Some(progress) = &progress {
             progress.set_message(format!(
                 "reading file {}/{} · {}",
                 file_index + 1,
@@ -120,7 +123,7 @@ pub(crate) fn run_prefilter_with_progress(
         let scans = mzxml::parse_scans(file)?;
         stats.scans_total += scans.len();
 
-        if let Some(progress) = progress {
+        if let Some(progress) = &progress {
             progress.set_message(format!(
                 "filtering file {}/{} · {}",
                 file_index + 1,
@@ -129,16 +132,18 @@ pub(crate) fn run_prefilter_with_progress(
             ));
         }
 
-        for scan in scans {
-            let diag = diagnostic::match_diagnostic_ions(
-                &scan,
-                library,
-                settings.diagnostic_tolerance_ppm,
-            );
-            processed += 1;
-            if let Some(progress) = progress {
-                progress.set_position(processed);
-            }
+        let matched: Vec<_> = scans
+            .into_par_iter()
+            .map(|scan| {
+                let diag = matcher.match_scan(&scan);
+                if let Some(progress) = &progress {
+                    progress.inc(1);
+                }
+                (scan, diag)
+            })
+            .collect();
+
+        for (scan, diag) in matched {
             if !diag.passes {
                 rejected.push(RejectedSpectrum {
                     source_file: file.clone(),
@@ -162,7 +167,7 @@ pub(crate) fn run_prefilter_with_progress(
     let mut pruning = Vec::new();
 
     if crosslinker.requires_isotope_pair_prefilter() {
-        if let Some(progress) = progress {
+        if let Some(progress) = &progress {
             progress.set_message("matching light/heavy isotope pairs");
         }
         apply_isotope_pair_filter(

@@ -282,6 +282,25 @@ mod tests {
     }
 
     #[test]
+    fn gpx_defs_crosslink_the_glycan_pseudo_residue() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("nhs-cyclooctyne")).unwrap();
+        let varmod = n_glycan_varmod(&settings);
+        let defs = build_defs(
+            Path::new("missing-xquest"),
+            &crosslinker,
+            &settings,
+            &varmod,
+            Path::new("proteins.fasta"),
+        )
+        .unwrap();
+
+        assert!(defs.xquest_def.contains("variable_mod N,203.079373"));
+        assert!(defs.xquest_def.contains("AArequired X:K"));
+        assert!(defs.xquest_def.contains("xlinkermw 205.0851266"));
+    }
+
+    #[test]
     fn o_glycan_variable_mod_targets_ser_thr() {
         let settings = Settings::defaults();
         let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();

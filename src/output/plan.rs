@@ -6,7 +6,7 @@ use std::path::{Path, PathBuf};
 
 use crate::crosslinker::CrosslinkerProfile;
 use crate::jobs::JobPlan;
-use crate::prefilter::PrefilterResult;
+use crate::prefilter::{PrefilterResult, PrefilterStats};
 use crate::xquest::GeneratedJob;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -16,7 +16,7 @@ pub struct RunPlanDocument {
     pub crosslinker_label: String,
     pub job_count: usize,
     pub total_comparisons: u64,
-    pub prefilter_stats: PrefilterResult,
+    pub prefilter_stats: PrefilterStats,
     pub pruned_mzxml_paths: Vec<PathBuf>,
     pub jobs: Vec<GeneratedJob>,
     pub commands: Vec<String>,
@@ -31,7 +31,7 @@ pub fn write_plan_json(out_dir: &Path, doc: &RunPlanDocument) -> Result<PathBuf,
 }
 
 fn render_json(doc: &RunPlanDocument) -> String {
-    let stats = &doc.prefilter_stats.stats;
+    let stats = &doc.prefilter_stats;
     let jobs: Vec<String> = doc
         .jobs
         .iter()
@@ -125,7 +125,7 @@ pub fn build_run_plan_document(
         crosslinker_label: crosslinker.label.as_str().to_string(),
         job_count: job_plan.jobs.len(),
         total_comparisons: job_plan.total_comparisons,
-        prefilter_stats: prefilter.clone(),
+        prefilter_stats: prefilter.stats.clone(),
         pruned_mzxml_paths,
         jobs,
         commands,

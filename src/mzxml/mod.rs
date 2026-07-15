@@ -483,16 +483,16 @@ mod tests {
     }
 
     #[test]
-    fn optional_hcg_integration_prefilter() {
-        let path = match std::env::var("GLYCOQUEST_HCG_MZXML") {
+    fn optional_mzxml_integration_prefilter() {
+        let path = match std::env::var("GLYCOQUEST_INTEGRATION_MZXML") {
             Ok(path) => PathBuf::from(path),
             Err(_) => return,
         };
         if !path.is_file() {
             return;
         }
-        let scans = parse_scans(&path).expect("hCG mzXML should parse");
-        assert!(!scans.is_empty(), "expected MS2 scans in hCG file");
+        let scans = parse_scans(&path).expect("integration mzXML should parse");
+        assert!(!scans.is_empty(), "expected MS2 scans in integration file");
         assert!(
             scans.iter().all(|scan| scan.retention_time_min.is_finite()),
             "every scan should have retention time"

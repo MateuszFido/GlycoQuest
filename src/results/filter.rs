@@ -997,7 +997,8 @@ mod tests {
                 spectrum_keys: vec![SpectrumKey {
                     source_file,
                     scan_number: 42,
-                }],
+                }]
+                .into(),
             }],
         }
     }

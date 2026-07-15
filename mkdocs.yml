@@ -1,6 +1,5 @@
 site_name: GlycoQuest
 site_description: Documentation for GlycoQuest — glycopeptide crosslink search with xQuest
-# Set site_url when hosting the built site (e.g. GitHub Pages or internal static host).
 repo_url: https://git.proxiomics.com/matt/GlycoQuest
 repo_name: GlycoQuest
 edit_uri: -/tree/master/docs/

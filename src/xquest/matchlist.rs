@@ -1,13 +1,13 @@
 //! xQuest compare_peaks matchlist generation.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use crate::crosslinker::CrosslinkerProfile;
-use crate::jobs::{PlannedJob, SpectrumKey, filtered_for_key};
-use crate::prefilter::PrefilterResult;
+use crate::jobs::{PlannedJob, SpectrumKey};
+use crate::prefilter::{FilteredSpectrum, PrefilterResult};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum MatchlistRow {
@@ -34,6 +34,30 @@ pub enum MatchlistRow {
     },
 }
 
+/// Constant-time lookup shared by every job generated from one prefilter run.
+pub struct FilteredSpectrumIndex<'a> {
+    by_key: HashMap<SpectrumKey, &'a FilteredSpectrum>,
+}
+
+impl<'a> FilteredSpectrumIndex<'a> {
+    pub fn new(prefilter: &'a PrefilterResult) -> Self {
+        let mut by_key = HashMap::with_capacity(prefilter.filtered.len());
+        for spectrum in &prefilter.filtered {
+            by_key
+                .entry(SpectrumKey {
+                    source_file: spectrum.source_file.clone(),
+                    scan_number: spectrum.scan_number,
+                })
+                .or_insert(spectrum);
+        }
+        Self { by_key }
+    }
+
+    fn get(&self, key: &SpectrumKey) -> Option<&'a FilteredSpectrum> {
+        self.by_key.get(key).copied()
+    }
+}
+
 /// Build a per-spectrum label for matchlist columns 4/5. compare_peaks3.pl uses
 /// `basename(col4)_basename(col5)` both as its redundancy key and as the spectrum
 /// name that flows into the result XML. The scan is placed first so the label is
@@ -47,6 +71,7 @@ fn spectrum_label(scan: u32, stem: &str) -> String {
 pub fn build_matchlist(
     job: &PlannedJob,
     prefilter: &PrefilterResult,
+    spectrum_index: &FilteredSpectrumIndex<'_>,
     stem: &str,
     crosslinker: &CrosslinkerProfile,
 ) -> Result<Vec<MatchlistRow>, String> {
@@ -74,8 +99,9 @@ pub fn build_matchlist(
                 continue;
             }
 
-            let light_spec =
-                filtered_for_key(prefilter, &light_key).ok_or_else(|| missing_spec(&light_key))?;
+            let light_spec = spectrum_index
+                .get(&light_key)
+                .ok_or_else(|| missing_spec(&light_key))?;
 
             rows.push(MatchlistRow::Paired {
                 id: format!("{},{}", pair.light_scan, pair.heavy_scan),
@@ -92,8 +118,8 @@ pub fn build_matchlist(
             });
         }
     } else {
-        for key in &job.spectrum_keys {
-            let spec = filtered_for_key(prefilter, key).ok_or_else(|| missing_spec(key))?;
+        for key in job.spectrum_keys.iter() {
+            let spec = spectrum_index.get(key).ok_or_else(|| missing_spec(key))?;
             rows.push(MatchlistRow::Single {
                 id: spec.scan_number.to_string(),
                 precursor_mz: spec.precursor_mz,

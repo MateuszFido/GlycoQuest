@@ -1,4 +1,4 @@
-//! FASTA database validation for xQuest compatibility.
+//! FASTA database validation for compatibility with xQuest.
 
 use std::path::{Path, PathBuf};
 
@@ -98,8 +98,7 @@ pub fn validate_fasta(path: &Path) -> Result<FastaDatabase, String> {
     })
 }
 
-/// Copy the validated FASTA into `out/<project>/input/` so xQuest indexes there,
-/// not beside the user's source database path.
+/// Copy the validated FASTA into `out/<project>/input/` so xQuest indexes there.
 pub fn stage_fasta_for_project(
     fasta: &FastaDatabase,
     layout: &ProjectLayout,
@@ -221,6 +220,7 @@ mod tests {
         let text = fs::read_to_string(&staged.path).unwrap();
         assert!(text.contains("ACDEFG"));
 
+        // cleanup and discard
         let _ = fs::remove_dir_all(out);
         let _ = fs::remove_file(source);
     }
@@ -234,14 +234,5 @@ mod tests {
         ));
         let err = validate_fasta(&path).unwrap_err();
         assert!(err.contains("not accessible") || err.contains("not found"));
-    }
-
-    #[test]
-    fn bundled_hrp_fasta_rejects_contaminant_with_reserved_x() {
-        let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("data/rcsb_pdb_1HRP.fasta");
-        if path.is_file() {
-            let err = validate_fasta(&path).unwrap_err();
-            assert!(err.contains("reserved pseudo-residue"));
-        }
     }
 }

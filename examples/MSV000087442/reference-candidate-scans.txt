@@ -1,0 +1,5 @@
+# Mass/diagnostic-ion candidates reconstructed from Supplementary Table S1.
+60939
+52377
+50440
+54853

@@ -4,5 +4,5 @@ mod plan;
 
 pub use plan::{
     GlycanVariant, JobManifest, JobManifestEntry, JobPlan, PlannedJob, SpectrumKey, VarModPlan,
-    build_varmod_plan, filtered_for_key,
+    build_varmod_plan,
 };

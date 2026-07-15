@@ -27,11 +27,11 @@ Boolean values accept: `true`/`false`, `yes`/`no`, `1`/`0`, `on`/`off`.
 
 | Key | Default | Description |
 |-----|---------|-------------|
-| `name` | `dss` | Chemistry name written to xQuest (`xkinkerID`, `crosslinkername`). Overridden by CLI `--crosslinker` preset |
+| `name` | `dss` | Bundled preset (`dss`, `dmtmm`, `nhs-cyclooctyne`, `ssbxl`, `pcbxl`) or custom chemistry name. Overridden by CLI `--crosslinker` |
 | `label` | `light-heavy` | `light-heavy`, `light-only`, or `none` — controls isotope prefilter and xQuest isotope settings |
 | `shift_da` | `12.075321` | Heavy-label mass shift for DSS isotope coding |
 | `xlinkermw` | `138.0680796` | Crosslinker monoisotopic mass in xQuest (Da) |
-| `xlink_sites` | `K:K` | Allowed site pairs (`AArequired` syntax), e.g. `K:E,K:D` for DMTMM |
+| `xlink_sites` | `K:K` | Allowed site pairs (`AArequired` syntax), e.g. `K:E,K:D` for DMTMM or `X:K` for GPx (`X` = glycan-modified Asn) |
 | `nterm_xlinkable` | `false` | Enable N-terminal crosslinking (`ntermxlinkable 1`, `Z` pseudo-site) |
 
 See [Crosslinkers](crosslinkers.md) for presets and labeling modes.

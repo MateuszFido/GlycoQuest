@@ -1,4 +1,4 @@
-//! Bundled crosslinker chemistry presets.
+//! Bundled crosslinker presets.
 
 use super::CrosslinkerProfile;
 
@@ -54,6 +54,34 @@ impl CrosslinkerPreset {
             shift_da: 0.0,
             xlinkermw: -18.0109,
             xlink_sites: "K:E,K:D",
+            nterm_xlinkable: false,
+        },
+        // Xie et al., Chem. Sci. 2021, DOI 10.1039/D1SC00814E.
+        CrosslinkerPreset {
+            id: "nhs-cyclooctyne",
+            label: CrosslinkerLabel::None,
+            shift_da: 0.0,
+            xlinkermw: 205.085126607,
+            xlink_sites: "X:K",
+            nterm_xlinkable: false,
+        },
+        // Chen et al., Anal. Chem. 2025, DOI 10.1021/acs.analchem.4c04134.
+        CrosslinkerPreset {
+            id: "ssbxl",
+            label: CrosslinkerLabel::None,
+            shift_da: 0.0,
+            xlinkermw: 573.179438173,
+            xlink_sites: "X:K",
+            nterm_xlinkable: false,
+        },
+        // Post-photorelease PCBXL bridge relative to a NeuAc glycan:
+        // C25H24N6O3, 456.190988659 Da.
+        CrosslinkerPreset {
+            id: "pcbxl",
+            label: CrosslinkerLabel::None,
+            shift_da: 0.0,
+            xlinkermw: 456.190988659,
+            xlink_sites: "X:K",
             nterm_xlinkable: false,
         },
     ];

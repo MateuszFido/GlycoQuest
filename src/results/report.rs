@@ -747,7 +747,7 @@ mod tests {
 
         let ctx = ReportContext {
             project: "report_demo".into(),
-            input_label: "260607_LU02_disoic_hCG_01_1.c.mzXML".into(),
+            input_label: "published_gpx_reference.mzXML".into(),
             crosslinker_name: "dss".into(),
             xlink_sites: "K:K".into(),
             glycan_library: "nglyc309".into(),

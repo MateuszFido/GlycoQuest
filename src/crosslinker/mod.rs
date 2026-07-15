@@ -1,4 +1,4 @@
-//! Crosslinker profiles and bundled chemistry presets.
+//! Crosslinker preset construction and verification.
 
 mod preset;
 
@@ -24,12 +24,7 @@ impl CrosslinkerProfile {
             .map(str::trim)
             .filter(|s| !s.is_empty())
             .or_else(|| {
-                if settings.crosslinker_name.trim().eq_ignore_ascii_case("dss")
-                    || settings
-                        .crosslinker_name
-                        .trim()
-                        .eq_ignore_ascii_case("dmtmm")
-                {
+                if CrosslinkerPreset::by_name(&settings.crosslinker_name).is_some() {
                     Some(settings.crosslinker_name.as_str())
                 } else {
                     None
@@ -69,6 +64,7 @@ impl CrosslinkerProfile {
     }
 }
 
+/// Construct profiles from settings.ini file.
 fn profile_from_settings(settings: &Settings) -> CrosslinkerProfile {
     CrosslinkerProfile {
         name: settings.crosslinker_name.clone(),
@@ -101,6 +97,40 @@ mod tests {
         let profile = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
         assert!(profile.requires_isotope_pair_prefilter());
         assert!((profile.xlinkermw - 138.0680796).abs() < 1e-4);
+    }
+
+    #[test]
+    // test for the pseudoresidues from example dataset
+    fn glycan_protein_link_glycan_to_lysine() {
+        let settings = Settings::defaults();
+        for (name, mass) in [
+            ("nhs-cyclooctyne", 205.085126607),
+            ("ssbxl", 573.179438173),
+            ("pcbxl", 456.190988659),
+        ] {
+            let profile = CrosslinkerProfile::resolve(&settings, Some(name)).unwrap();
+            assert_eq!(profile.label, CrosslinkerLabel::None);
+            assert_eq!(profile.xlink_sites, "X:K");
+            assert!((profile.xlinkermw - mass).abs() < 1e-9);
+            assert!(!profile.requires_isotope_pair_prefilter());
+        }
+    }
+
+    #[test]
+    fn ssbxl_bridge_signature_ion() {
+        const NEUAC_RESIDUE: f64 = 291.095416527;
+        const PROTON: f64 = 1.007276466621;
+        let signature_mz = 573.179438173 + NEUAC_RESIDUE + PROTON;
+        assert!((signature_mz - 865.282131166).abs() < 1e-9);
+    }
+
+    #[test]
+    fn settings_name_selects_glycan_protein_preset() {
+        let mut settings = Settings::defaults();
+        settings.crosslinker_name = "ssbxl".into();
+        let profile = CrosslinkerProfile::resolve(&settings, None).unwrap();
+        assert!((profile.xlinkermw - 573.179438173).abs() < 1e-9);
+        assert_eq!(profile.xlink_sites, "X:K");
     }
 
     #[test]

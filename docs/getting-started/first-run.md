@@ -17,12 +17,14 @@ Optional: copy `settings.ini` from the repository root to your working directory
 Dry-run validates and writes the prefilter outputs and xQuest job folders **without** actually running xQuest:
 
 ```bash
-./target/release/glycoquest data/260521_LU02_disoic_hCG_01.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+./target/release/glycoquest tests/fixtures/mzxml/dss_pair.mzXML \
+  --database data/target_proteins_asf.fasta \
   --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_hcg_out \
+  --out glycoquest_fixture_out \
   --dry-run
 ```
+
+The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For published GPx experiments and their public data, see [Published reference datasets](../science/glycopeptide-crosslinking.md#published-reference-datasets).
 
 ### What to check
 
@@ -41,17 +43,17 @@ overall: ✓ PASS  ready
 **Terminal — prefilter summary**
 
 ```
-prefilter: scans=24250
-prefilter: diagnostic_positive=8436
-prefilter: isotope_pairs=9
-prefilter: filtered_scans=18
-prefilter: rejected=...
+prefilter: scans=2
+prefilter: diagnostic_positive=2
+prefilter: isotope_pairs=1
+prefilter: filtered_scans=2
+prefilter: rejected=0
 ```
 
 **Terminal — job plan**
 
 ```
-plan: 576 jobs, 17496 estimated comparisons, isotope_prefilter=true
+plan: 864 jobs, 3456 estimated comparisons, isotope_prefilter=true
 dry-run: job folders and plan.json written (xQuest not executed)
 ```
 
@@ -71,13 +73,13 @@ If `filtered_scans=0`, the run exits with code **2**. Inspect `rejected_spectra.
 
 ## 3. Full run
 
-Remove `--dry-run` to execute xQuest on all generated jobs:
+Use your converted experimental data and matching FASTA, then omit `--dry-run` to execute xQuest on all generated jobs:
 
 ```bash
-./target/release/glycoquest data/260521_LU02_disoic_hCG_01.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+./target/release/glycoquest /path/to/experiment.mzXML \
+  --database /path/to/proteins.fasta \
   --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_hcg_out \
+  --out glycoquest_out \
   --jobs 8
 ```
 
@@ -89,7 +91,7 @@ Remove `--dry-run` to execute xQuest on all generated jobs:
 ### Expected output
 
 ```
-run: executing 576 xQuest jobs across 8 worker thread(s)
+run: executing N xQuest jobs across 8 worker thread(s)
 run: wrote N hits from M result file(s) to results/glycoquest_xquest.csv
 run: wrote results/xiview.csv (...), results/report.html, and results/viewer/ (...)
 ```
@@ -143,7 +145,7 @@ Individual xQuest job failures are logged as warnings and listed in `results/fai
 
 ```bash
 ./target/release/glycoquest tests/fixtures/mzxml/hexnac_positive.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+  --database data/target_proteins_asf.fasta \
   --crosslinker dmtmm \
   --xquest-root xQuest/V2.1.7/xquest \
   --out glycoquest_dmtmm_out \

@@ -1,8 +1,8 @@
 # GlycoQuest
 
-GlycoQuest is a Rust CLI wrapper around xQuest for DSS- and DMTMM-crosslinked glycopeptide–peptide searches. It prefilters mzXML spectra using glycan diagnostic ions, optionally requires DSS light/heavy isotope pairs, prunes glycan candidates, generates xQuest job folders, and consolidates results.
+GlycoQuest is a Rust CLI wrapper around xQuest for glycopeptide–peptide searches. It supports DSS, DMTMM, and published glycan-to-peptide crosslinkers; prefilters mzXML spectra using glycan diagnostic ions; optionally requires light/heavy isotope pairs; prunes glycan candidates; generates xQuest job folders; and consolidates results.
 
-**Documentation:** full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, results, viewer, science background). Build a searchable site with `pip install -r docs/requirements.txt && mkdocs serve`.
+**Documentation:** full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, results, viewer). A searchable site can be built with `pip install -r docs/requirements.txt && mkdocs serve`.
 
 ## Requirements
 
@@ -20,7 +20,7 @@ Default xQuest binary in [`settings.ini`](settings.ini): `xquest_bin = bin/xques
 ```bash
 cargo build --release
 ./target/release/glycoquest tests/fixtures/mzxml/dss_pair.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+  --database data/target_proteins_asf.fasta \
   --xquest-root /path/to/xQuest/V2.1.7/xquest \
   --out glycoquest_out \
   --dry-run
@@ -30,7 +30,7 @@ cargo build --release
 
 ```bash
 ./target/release/glycoquest tests/fixtures/mzxml/hexnac_positive.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+  --database data/target_proteins_asf.fasta \
   --crosslinker dmtmm \
   --xquest-root /path/to/xQuest/V2.1.7/xquest \
   --out glycoquest_out \
@@ -39,54 +39,37 @@ cargo build --release
 
 Advanced options (tolerances, crosslinker chemistry, job limits, modifications) live in [`settings.ini`](settings.ini). Copy it to your working directory or pass `--config`.
 
-### Real hCG validation (local data)
+### Example
 
-Dry-run on the msconvert hCG file (~30k MS2 scans, ~80s parse on a typical workstation):
-
-```bash
-./target/release/glycoquest data/260521_LU02_disoic_hCG_01.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
-  --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_hcg_out \
-  --dry-run
-```
-
-Observed dry-run stats (Jun 2026): 24 250 MS2 scans, 8 436 diagnostic-positive, 9 DSS isotope pairs → 18 filtered spectra, 576 jobs, 17 496 spectrum comparisons. See `plan.json` for the full run plan.
-
-Full run (executes `compare_peaks3.pl` + `xquest.pl` per job under `jobs/`):
+A bundled publicly available dataset (MassIVE DOI: 10.25345/C5VV5S, MSV000087442) is available for testing.
+Citation: Xie, *et al.* Glycan–protein cross-linking mass spectrometry reveals sialic acid-mediated protein networks on cell surfaces. Chem. Sci. 2021; 12 (25): 8767–8777.
 
 ```bash
-./target/release/glycoquest data/260521_LU02_disoic_hCG_01.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
-  --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_hcg_out
+./target/release/glycoquest experiment.mzXML \
+  --database proteins.fasta \
+  --glycans glycans.csv \
+  --crosslinker nhs-cyclooctyne \
+  --xquest-root /path/to/xQuest/V2.1.7/xquest
 ```
 
-Requires `perl-DB_File` for the xQuest search step. Each job writes `results/results.spec.xml`, `glycoquest_matched_isotopepairs.txt`, and on success `results/xquest.xml`; consolidated hits land in `results/glycoquest_xquest.csv`.
+Its search encoding uses `X:K`: xQuest rewrites the glycan-bearing Asn to its first variable-modification pseudo-residue, `X`, so the glycan and crosslink occupy the same residue. The bond runs through SiaNAz on that N-glycan to a peptide Lys. The glycan library contains ordinary NeuAc, so the preset crosslink mass (205.085126607 Da) includes both the NHS–cyclooctyne residue and the SiaNAz-for-NeuAc mass difference.
 
 ### Parallel job execution
 
 xQuest jobs are independent and run concurrently on a thread pool. Control the number of concurrent jobs with `--jobs`/`-j` (overrides `[execution] job_parallelism` in `settings.ini`); `0` means one worker per available CPU core.
 
-Interactive runs show phase-aware progress and timing estimates for spectrum filtering, job preparation, parallel xQuest searches, and result consolidation. The display is enabled automatically for terminals; use `--progress never` to disable it or `--progress always` to force it. Redirected output remains plain text.
+Interactive runs show phase-aware progress and timing estimates for spectrum filtering, job preparation, parallel xQuest searches, and result consolidation. The display is enabled automatically for terminals; use `--progress never` to disable it or `--progress always` to force.
 
 ```bash
-./target/release/glycoquest data/260521_LU02_disoic_hCG_01.mzXML \
-  --database data/rcsb_pdb_1HRP_no_contams.fasta \
+./target/release/glycoquest /path/to/experiment.mzXML \
+  --database /path/to/proteins.fasta \
   --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_hcg_out \
+  --out glycoquest_out \
   --jobs 8
 ```
 
-Each job builds its own database index in its result directory, so concurrent jobs do not share writable state.
+Each job builds its own database index in its result directory.
 
-Optional integration tests (skipped unless env vars are set):
-
-```bash
-export GLYCOQUEST_HCG_MZXML=data/260521_LU02_disoic_hCG_01.mzXML   # mzXML parser smoke test
-export GLYCOQUEST_XQUEST_ROOT=xQuest/V2.1.7/xquest                  # reserved for future xQuest CI
-cargo test
-```
 
 Glycan libraries via `--glycans`: a bundled id (`nglyc309` default, `oglyc78`) or a
 path to a custom CSV/TSV file with columns
@@ -105,19 +88,19 @@ O-glycan libraries drive the xQuest `variable_mod` onto Ser/Thr; N-glycans onto 
 | 3 | xQuest job infrastructure failure (cannot read jobs directory or create logs) |
 | 4 | Result extraction failure |
 
-Individual xQuest job failures are logged as warnings, listed in `results/failed_jobs.tsv`, and do not change the exit code.
+Individual xQuest job failures are logged as warnings, listed in `results/failed_jobs.tsv`, and do not change the main exit code.
 
 ## Output layout (dry-run / run)
 
 - `filtered_spectra.tsv`, `isotope_pairs.tsv`, `rejected_spectra.tsv`, `glycan_pruning.tsv` — prefilter results
-- `spectra/` — reduced mzXML with only prefilter-retained MS2 scans (open in any mzXML viewer)
+- `spectra/` — reduced mzXML with only the retained MS2 scans (open in any mzXML viewer)
 - `tmp/` — ephemeral xQuest job folders, logs, and peptide indexes (removed after a successful run)
 - `plan.json` — normalized run plan and resource summary
 - `results/glycoquest_xquest.csv` — consolidated, glycan-annotated, de-duplicated hits (run mode; header-only when no hits)
 - `results/xiview.csv` — passing crosslinks in CLMS-CSV layout for network visualization tools
 - `results/report.html` — self-contained QC/glycan report (prefilter funnel, score/error distributions, glycan breakdown, hits table)
 - `results/viewer/` — interactive crosslink viewer (`index.html`, `viewer.json`, `database.fasta`); open `index.html` in a browser after a run
-- `results/failed_jobs.tsv` — jobs whose `run.sh` exited non-zero (when any fail)
+- `results/failed_jobs.tsv` — jobs where `run.sh` exited non-zero (any failure)
 
 ### Consolidated results columns
 
@@ -128,27 +111,25 @@ Individual xQuest job failures are logged as warnings, listed in `results/failed
 `topology`, `precursor_mz`, `mr`, `precursor_error_ppm`, `xlink_position`, `score`,
 `hard_status`, `soft_score`, `postfilter_status`.
 
-Post-filter hard requirements (all must hold for `postfilter_status=pass`): DSS
-crosslink evidence in the hit, exactly one glycan pseudo-residue across the peptide
+Post-filter hard requirements: configured crosslink evidence in the hit,
+exactly one glycan pseudo-residue across the peptide
 pair (V1 peptide-glycopeptide class), diagnostic-ion evidence in the originating
 spectrum, precursor mass error within `max_precursor_error_ppm`, and `score` at or
 above `min_score`. `soft_score` additionally rewards sequon presence, plausible
-precursor charge, and diagnostic-ion count.
+precursor charge, and diagnostic ion count.
 
-### Visualization outputs
+### Visualization
 
-Three artifacts support scientific analysis of crosslinks on the actual proteins:
+The outputs of GlycoQuest can be visualized using the in-built viewer:
 
-- `results/viewer/` — MIT-licensed interactive viewer (network, sequence map, MS/MS plot, Filtering, QC). Open `results/viewer/index.html` in a browser (offline; loads `viewer.json` and bundled FASTA). Build or refresh static assets with `cd viewer && npm install && npm run build` before running GlycoQuest if you change the viewer sources.
-- `results/xiview.csv` — passing crosslinks in CLMS-CSV layout
+- `results/viewer/` — MIT-licensed interactive viewer (network, sequence map, MS/MS plot, Filtering, QC). Open `results/viewer/index.html` in a browser (offline; loads `viewer.json` and bundled FASTA).
+- `results/xiview.csv` — passing crosslinks compatible with the CLMS-CSV layout (https://crosslinkviewer.org/index.php).
   (`Protein1,PepPos1,PepSeq1,LinkPos1,AbsPos1,Protein2,PepPos2,PepSeq2,LinkPos2,AbsPos2,Score,…`).
-  Peptides are resolved back from xQuest pseudo-residues and located in the FASTA to
-  yield 1-based peptide start positions and absolute cross-link residue numbers.
   Glycan composition, glycosylation residue, and loss label are appended as trailing columns.
 - `results/report.html` — a dependency-free report (inline CSS + SVG charts, no network
   or JavaScript) with the prefilter funnel, post-filter outcome breakdown, xQuest score and
   precursor-error distributions, the glycan and glycosylation-site distribution over passing
-  hits, and a hits table. Open it directly in any browser.
+  hits, and a hits table. Can be opened in any browser.
 
 Default output layout: `out/<project>/` where `<project>` is derived from the first input mzXML filename. Override with `--out path/to/project_dir`.
 

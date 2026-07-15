@@ -1,0 +1,9 @@
+# Proteins in the four high-scoring, mass/diagnostic-ion-matched GPx candidates.
+P15144
+O75976
+P32004
+P11717
+P48960
+Q09666
+P26006
+P78536
