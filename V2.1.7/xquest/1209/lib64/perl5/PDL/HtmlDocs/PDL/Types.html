@@ -1,0 +1,275 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Types - define fundamental PDL Datatypes</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#support_functions">Support functions</a></li>
+	<ul>
+
+		<li><a href="#typesrtkeys">typesrtkeys</a></li>
+		<li><a href="#ppdefs">ppdefs</a></li>
+		<li><a href="#typefld">typefld</a></li>
+		<li><a href="#mapfld__in_value__in_key__out_key_">mapfld (in_value, in_key, out_key)</a></li>
+		<li><a href="#typesynonyms">typesynonyms</a></li>
+	</ul>
+
+	<li><a href="#pdl__type_objects">PDL::Type OBJECTS</a></li>
+	<li><a href="#adding_removing_types">Adding/removing types</a></li>
+	<ul>
+
+		<li><a href="#format_of_a_type_entry">Format of a type entry</a></li>
+		<li><a href="#fields_in_a_type_entry">Fields in a type entry</a></li>
+		<li><a href="#other_things_you_need_to_do">Other things you need to do</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Types - define fundamental PDL Datatypes</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Types;</pre>
+<pre>
+ $pdl = ushort( 2.0, 3.0 );
+ print &quot;The actual c type used to store ushort's is '&quot; .
+    $pdl-&gt;type-&gt;realctype() . &quot;'\n&quot;;
+ The actual c type used to store ushort's is 'unsigned short'</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Internal module - holds all the PDL Type info.  The type info can be
+accessed easily using the <code>PDL::Type</code> object returned by
+the <a href="./Core.html#type">type</a> method.</p>
+<p>Skip to the end of this document to find out how to change
+the set of types supported by PDL.</p>
+<p>
+</p>
+<hr />
+<h1><a name="support_functions">Support functions</a></h1>
+<p>A number of functions are available for module writers
+to get/process type information. These are used in various
+places (e.g. <code>PDL::PP</code>, <code>PDL::Core</code>) to generate the
+appropriate type loops, etc.</p>
+<p>
+</p>
+<h2><a name="typesrtkeys">typesrtkeys</a></h2>
+<p>return array of keys of typehash sorted in order of type complexity</p>
+<p>
+</p>
+<h2><a name="ppdefs">ppdefs</a></h2>
+<p>return array of pp symbols for all known types</p>
+<p>
+</p>
+<h2><a name="typefld">typefld</a></h2>
+<p>return specified field (<code>$fld</code>) for specified type (<code>$type</code>)
+by querying type hash</p>
+<p>
+</p>
+<h2><a name="mapfld__in_value__in_key__out_key_">mapfld (in_value, in_key, out_key)</a></h2>
+<p>Map a given source field to the corresponding target field by
+querying the type hash. This gives you a way to say, &quot;Find the type
+whose <code>$in_key</code> is equal to <code>$value</code>, and return that type's value
+for <code>$out_key</code>. For example:</p>
+<pre>
+ # Does byte type use nan?
+ $uses_nan = PDL::Types::mapfld(byte =&gt; 'ppforcetype', 'usenan');
+ # Equivalent:
+ $uses_nan = byte-&gt;usenan;
+ 
+ # What is the actual C type for the value that we call 'long'?
+ $type_name = PDL::Types::mapfld(long =&gt; 'convertfunc', 'realctype');
+ # Equivalent:
+ $type_name = long-&gt;realctype;</pre>
+<p>As you can see, the equivalent examples are much shorter and legible, so you
+should only use mapfld if you were given the type index (in which case the
+actual type is not immediately obvious):</p>
+<pre>
+ $type_index = 4;
+ $type_name = PDL::Types::mapfld($type_index =&gt; numval, 'realctype');</pre>
+<p>
+</p>
+<h2><a name="typesynonyms">typesynonyms</a></h2>
+<p>return type related synonym definitions to be included in pdl.h .
+This routine must be updated to include new types as required.
+Mostly the automatic updating should take care of the vital
+things.</p>
+<p>
+</p>
+<hr />
+<h1><a name="pdl__type_objects">PDL::Type OBJECTS</a></h1>
+<p>This module declares one class - <code>PDL::Type</code> - objects of this class
+are returned by the <a href="./Core.html#type">type</a> method of a piddle.  It has
+several methods, listed below, which provide an easy way to access
+type information:</p>
+<p>Additionally, comparison and stringification are overloaded so that
+you can compare and print type objects, e.g.</p>
+<pre>
+  $nofloat = 1 if $pdl-&gt;type &lt; float;
+  die &quot;must be double&quot; if $type != double;</pre>
+<p>For further examples check again the
+<a href="./Core.html#type">type</a> method.</p>
+<dl>
+<dt><strong><a name="enum" class="item">enum</a></strong></dt>
+
+<dd>
+<p>Returns the number representing this datatype (see <a href="./Core.html#pdl__get_datatype">get_datatype</a>).</p>
+</dd>
+<dt><strong><a name="symbol" class="item">symbol</a></strong></dt>
+
+<dd>
+<p>Returns one of 'PDL_B', 'PDL_S', 'PDL_US', 'PDL_L', 'PDL_LL', 'PDL_F' 
+or 'PDL_D'.</p>
+</dd>
+<dt><strong><a name="ctype" class="item">ctype</a></strong></dt>
+
+<dd>
+<p>Returns the macro used to represent this type in C code (eg 'PDL_Long').</p>
+</dd>
+<dt><strong><a name="ppsym" class="item">ppsym</a></strong></dt>
+
+<dd>
+<p>The letter used to represent this type in PP code code (eg 'U' for <a href="./Core.html#ushort">ushort</a>).</p>
+</dd>
+<dt><strong><a name="realctype" class="item">realctype</a></strong></dt>
+
+<dd>
+<p>The actual C type used to store this type.</p>
+</dd>
+<dt><strong><a name="shortctype" class="item">shortctype</a></strong></dt>
+
+<dd>
+<p>The value returned by <a href="#ctype"><code>ctype</code></a> without the 'PDL_' prefix.</p>
+</dd>
+<dt><strong><a name="badvalue" class="item">badvalue</a></strong></dt>
+
+<dd>
+<p>The special numerical value used to represent bad values for this type.
+See <a href="./Bad.html#badvalue">badvalue routine in PDL::Bad</a> for more details.</p>
+</dd>
+<dt><strong><a name="orig_badvalue" class="item">orig_badvalue</a></strong></dt>
+
+<dd>
+<p>The default special numerical value used to represent bad values for this
+type. (You can change the value that represents bad values for each type
+during runtime.) See the
+<a href="./Bad.html#orig_badvalue">orig_badvalue routine in PDL::Bad</a> for more details.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="adding_removing_types">Adding/removing types</a></h1>
+<p>You can change the types that PDL knows about by editing entries in
+the definition of the variable <code>@types</code> that appears close to the
+top of the file <em class="file">Types.pm.PL</em> (i.e. the file from which this module
+was generated).</p>
+<p>
+</p>
+<h2><a name="format_of_a_type_entry">Format of a type entry</a></h2>
+<p>Each entry in the <code>@types</code> array is a hash reference. Here is an example
+taken from the actual code that defines the <code>ushort</code> type:</p>
+<pre>
+             {
+              identifier =&gt; 'US',
+              onecharident =&gt; 'U',   # only needed if different from identifier
+              pdlctype =&gt; 'PDL_Ushort',
+              realctype =&gt; 'unsigned short',
+              ppforcetype =&gt; 'ushort',
+              usenan =&gt; 0,
+              packtype =&gt; 'S*',
+             },</pre>
+<p>Before we start to explain the fields please take this important
+message on board:
+<em>entries must be listed in order of increasing complexity</em>. This
+is critical to ensure that PDL's type conversion works correctly.
+Basically, a less complex type will be converted to a more complex
+type as required.</p>
+<p>
+</p>
+<h2><a name="fields_in_a_type_entry">Fields in a type entry</a></h2>
+<p>Each type entry has a number of required and optional entry.</p>
+<p>A list of all the entries:</p>
+<ul>
+<li>
+<p>identifier</p>
+<p><em>Required</em>. A short sequence of upercase letters that identifies this
+type uniquely. More than three characters is probably overkill.</p>
+</li>
+<li>
+<p>onecharident</p>
+<p><em>Optional</em>. Only required if the <code>identifier</code> has more than one character.
+This should be a unique uppercase character that will be used to reference
+this type in PP macro expressions of the <code>TBSULFD</code> type. If you don't
+know what I am talking about read the PP manpage or ask on the mailing list.</p>
+</li>
+<li>
+<p>pdlctype</p>
+<p><em>Required</em>. The <code>typedefed</code> name that will be used to access this type
+from C code.</p>
+</li>
+<li>
+<p>realctype</p>
+<p><em>Required</em>. The C compiler type that is used to implement this type.
+For portability reasons this one might be platform dependent.</p>
+</li>
+<li>
+<p>ppforcetype</p>
+<p><em>Required</em>. The type name used in PP signatures to refer to this type.</p>
+</li>
+<li>
+<p>usenan</p>
+<p><em>Required</em>. Flag that signals if this type has to deal with NaN issues.
+Generally only required for floating point types.</p>
+</li>
+<li>
+<p>packtype</p>
+<p><em>Required</em>. The Perl pack type used to pack Perl values into the machine representation for this type. For details see <code>perldoc -f pack</code>.</p>
+</li>
+</ul>
+<p>Also have a look at the entries at the top of <em class="file">Types.pm.PL</em>.</p>
+<p>The syntax is not written into stone yet and might change as the
+concept matures.</p>
+<p>
+</p>
+<h2><a name="other_things_you_need_to_do">Other things you need to do</a></h2>
+<p>You need to check modules that do I/O (generally in the <em class="file">IO</em>
+part of the directory tree). In the future we might add fields to
+type entries to automate this. This requires changes to those IO
+modules first though.</p>
+<p>You should also make sure that any type macros in PP files
+(i.e. <code>$TBSULFD...</code>) are updated to reflect the new type. PDL::PP::Dump
+has a mode to check for type macros requiring updating. Do something like</p>
+<pre>
+    find . -name \*.pd -exec perl -Mblib=. -M'PDL::PP::Dump=typecheck' {} \;</pre>
+<p>from the PDL root directory <em>after</em> updating <em class="file">Types.pm.PL</em> to check
+for such places.</p>
+
+</body>
+
+</html>

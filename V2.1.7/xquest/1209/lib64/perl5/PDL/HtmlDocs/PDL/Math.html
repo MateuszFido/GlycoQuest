@@ -1,0 +1,362 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Math - extended mathematical operations and special functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#acos">acos</a></li>
+		<li><a href="#asin">asin</a></li>
+		<li><a href="#atan">atan</a></li>
+		<li><a href="#cosh">cosh</a></li>
+		<li><a href="#sinh">sinh</a></li>
+		<li><a href="#tan">tan</a></li>
+		<li><a href="#tanh">tanh</a></li>
+		<li><a href="#ceil">ceil</a></li>
+		<li><a href="#floor">floor</a></li>
+		<li><a href="#rint">rint</a></li>
+		<li><a href="#pow">pow</a></li>
+		<li><a href="#acosh">acosh</a></li>
+		<li><a href="#asinh">asinh</a></li>
+		<li><a href="#atanh">atanh</a></li>
+		<li><a href="#erf">erf</a></li>
+		<li><a href="#erfc">erfc</a></li>
+		<li><a href="#bessj0">bessj0</a></li>
+		<li><a href="#bessj1">bessj1</a></li>
+		<li><a href="#bessy0">bessy0</a></li>
+		<li><a href="#bessy1">bessy1</a></li>
+		<li><a href="#bessjn">bessjn</a></li>
+		<li><a href="#bessyn">bessyn</a></li>
+		<li><a href="#lgamma">lgamma</a></li>
+		<li><a href="#badmask">badmask</a></li>
+		<li><a href="#isfinite">isfinite</a></li>
+		<li><a href="#erfi">erfi</a></li>
+		<li><a href="#ndtri">ndtri</a></li>
+		<li><a href="#polyroots">polyroots</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Math - extended mathematical operations and special functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Math;</pre>
+<pre>
+ use PDL::Graphics::TriD;
+ imag3d [SURF2D,bessj0(rvals(zeroes(50,50))/2)];</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module extends PDL with more advanced mathematical functions than
+provided by standard Perl.</p>
+<p>All the functions have one input pdl, and one output, unless otherwise
+stated.</p>
+<p>Many of the functions are linked from the system maths library or the 
+Cephes maths library (determined when PDL is compiled); a few are implemented
+entirely in PDL.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="acos">acos</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The usual trigonometric function. Works inplace.</p>
+<p>acos does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="asin">asin</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The usual trigonometric function. Works inplace.</p>
+<p>asin does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="atan">atan</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The usual trigonometric function. Works inplace.</p>
+<p>atan does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cosh">cosh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>cosh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="sinh">sinh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>sinh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="tan">tan</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The usual trigonometric function. Works inplace.</p>
+<p>tan does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="tanh">tanh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>tanh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="ceil">ceil</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Round to integer values in floating-point format. Works inplace.</p>
+<p>ceil does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="floor">floor</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Round to integer values in floating-point format. Works inplace.</p>
+<p>floor does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="rint">rint</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Round to integer values in floating-point format.</p>
+<p>rint uses the 'round half to even' rounding method (also known as
+banker's rounding).  Half-integers are rounded to the nearest even
+number. This avoids a slight statistical bias inherent in always
+rounding half-integers up or away from zero.</p>
+<p>If you are looking to round half-integers up (regardless of sign), try
+<code>floor($x+0.5)</code>.  If you want to round half-integers away from zero,
+try <code>floor(abs($x)+0.5)*($x&lt;=&gt;0)</code>. Works inplace.</p>
+<p>rint does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="pow">pow</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c())</pre>
+<p>Synonym for `**'. Works inplace.</p>
+<p>pow does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="acosh">acosh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>acosh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="asinh">asinh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>asinh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="atanh">atanh</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The standard hyperbolic function. Works inplace.</p>
+<p>atanh does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="erf">erf</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The error function. Works inplace.</p>
+<p>erf does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="erfc">erfc</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The complement of the error function. Works inplace.</p>
+<p>erfc does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessj0">bessj0</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The regular Bessel function of the first kind, J_n Works inplace.</p>
+<p>bessj0 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessj1">bessj1</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The regular Bessel function of the first kind, J_n Works inplace.</p>
+<p>bessj1 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessy0">bessy0</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The regular Bessel function of the second kind, Y_n. Works inplace.</p>
+<p>bessy0 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessy1">bessy1</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The regular Bessel function of the second kind, Y_n. Works inplace.</p>
+<p>bessy1 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessjn">bessjn</a></h2>
+<pre>
+  Signature: (a(); int n(); [o]b())</pre>
+<p>The regular Bessel function of the first kind, J_n
+.
+This takes a second int argument which gives the order
+of the function required.
+ Works inplace.</p>
+<p>bessjn does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bessyn">bessyn</a></h2>
+<pre>
+  Signature: (a(); int n(); [o]b())</pre>
+<p>The regular Bessel function of the first kind, Y_n
+.
+This takes a second int argument which gives the order
+of the function required.
+ Works inplace.</p>
+<p>bessyn does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="lgamma">lgamma</a></h2>
+<pre>
+  Signature: (a(); [o]b(); int[o]s())</pre>
+<p>log gamma function</p>
+<p>This returns 2 piddles -- the first set gives the log(gamma) values,
+while the second set, of integer values, gives the sign of the gamma
+function.  This is useful for determining factorials, amongst other
+things.</p>
+<p>lgamma does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="badmask">badmask</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c())</pre>
+<p>Clears all <code>infs</code> and <code>nans</code> in <code>$a</code> to the corresponding value in <code>$b</code>.</p>
+<p>badmask can be run with <code>$a</code> inplace:</p>
+<pre>
+  badmask($a-&gt;inplace,0);
+  $a-&gt;inplace-&gt;badmask(0);</pre>
+<p>If bad values are present, these are also cleared.</p>
+<p>
+</p>
+<h2><a name="isfinite">isfinite</a></h2>
+<pre>
+  Signature: (a(); int [o]mask())</pre>
+<p>Sets <code>$mask</code> true if <code>$a</code> is not a <code>NaN</code> or <code>inf</code> (either positive or negative). Works inplace.</p>
+<p>Bad values are treated as <code>NaN</code> or <code>inf</code>.</p>
+<p>
+</p>
+<h2><a name="erfi">erfi</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The inverse of the error function. Works inplace.</p>
+<p>erfi does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="ndtri">ndtri</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>The value for which the area under the
+Gaussian probability density function (integrated from
+minus infinity) is equal to the argument (cf <a href="#erfi">erfi</a>). Works inplace.</p>
+<p>ndtri does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="polyroots">polyroots</a></h2>
+<pre>
+  Signature: (cr(n); ci(n); [o]rr(m); [o]ri(m))</pre>
+<p>Complex roots of a complex polynomial, given coefficients in order
+of decreasing powers.</p>
+<pre>
+ ($rr, $ri) = polyroots($cr, $ci);</pre>
+<p>polyroots does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Hasn't been tested on all platforms to ensure Cephes
+versions are picked up automatically and used correctly.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) R.J.R. Williams 1997 (<a href="mailto:rjrw@ast.leeds.ac.uk">rjrw@ast.leeds.ac.uk</a>), Karl Glazebrook
+(<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>) and Tuomas J. Lukka (<a href="mailto:Tuomas.Lukka@helsinki.fi">Tuomas.Lukka@helsinki.fi</a>)
+Portions (C) Craig DeForest 2002 (<a href="mailto:deforest@boulder.swri.edu">deforest@boulder.swri.edu</a>)</p>
+<p>All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the PDL copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

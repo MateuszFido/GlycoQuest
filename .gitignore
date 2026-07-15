@@ -1,4 +1,5 @@
 /out/
+/data/
 /glycoquest_*_out/
 /glycoquest_*_input/
 
@@ -21,5 +22,8 @@
 
 # Viewer package
 /viewer/node_modules/
+
+# MkDocs build output
+/site/
 .DS_Store
 src/.DS_Store

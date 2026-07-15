@@ -7,12 +7,15 @@ use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::fasta::FastaDatabase;
 use crate::jobs::{
-    build_varmod_plan, JobManifest, JobManifestEntry, JobPlan, PlannedJob, VarModPlan,
+    JobManifest, JobManifestEntry, JobPlan, PlannedJob, VarModPlan, build_varmod_plan,
 };
 use crate::prefilter::PrefilterResult;
-use crate::xquest::defs::write_job_defs;
-use crate::xquest::matchlist::{build_matchlist, isotopepairs_path, specxml_filename, write_matchlist};
+use crate::progress::PhaseProgress;
 use crate::xquest::XQuestRuntime;
+use crate::xquest::defs::write_job_defs;
+use crate::xquest::matchlist::{
+    build_matchlist, isotopepairs_path, specxml_filename, write_matchlist,
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct GeneratedJob {
@@ -40,6 +43,7 @@ pub fn generate_jobs(
     settings: &Settings,
     fasta: &FastaDatabase,
     runtime: &XQuestRuntime,
+    progress: Option<&PhaseProgress>,
 ) -> Result<GeneratedJobs, String> {
     let jobs_root = layout.jobs_dir();
     fs::create_dir_all(&jobs_root).map_err(|err| err.to_string())?;
@@ -72,6 +76,10 @@ pub fn generate_jobs(
                 .unwrap_or_default(),
             spectrum_keys: job.spectrum_keys.clone(),
         });
+        if let Some(progress) = progress {
+            progress.inc(1);
+            progress.set_message(format!("{} job folders written", generated.len()));
+        }
     }
     Ok(GeneratedJobs {
         jobs: generated,
@@ -105,12 +113,9 @@ fn write_job(
     )?;
 
     let pruned = pruned_mzxml_for_job(job, pruned_mzxml_paths)?;
-    let pruned_abs = pruned.canonicalize().map_err(|err| {
-        format!(
-            "cannot resolve pruned mzXML {}: {err}",
-            pruned.display()
-        )
-    })?;
+    let pruned_abs = pruned
+        .canonicalize()
+        .map_err(|err| format!("cannot resolve pruned mzXML {}: {err}", pruned.display()))?;
     // Persist the real spectrum filename inside the job directory so it flows
     // through xQuest into the result XML instead of an opaque "input.mzXML".
     let mzxml_name = pruned_abs
@@ -131,8 +136,14 @@ fn write_job(
     let isotopepairs = isotopepairs_path(&matchlist_path);
     let specxml = specxml_filename("results");
     let compare_peaks = runtime.root.join("bin/compare_peaks3.pl");
-    let xquest_exe = runtime.executable.canonicalize().unwrap_or_else(|_| runtime.executable.clone());
-    let xquest_root = runtime.root.canonicalize().unwrap_or_else(|_| runtime.root.clone());
+    let xquest_exe = runtime
+        .executable
+        .canonicalize()
+        .unwrap_or_else(|_| runtime.executable.clone());
+    let xquest_root = runtime
+        .root
+        .canonicalize()
+        .unwrap_or_else(|_| runtime.root.clone());
     let compare_peaks = compare_peaks.canonicalize().unwrap_or(compare_peaks);
     let def_path = job_dir.join("xquest.def");
     let run_script = job_dir.join("run.sh");
@@ -208,7 +219,9 @@ fn symlink_or_copy(source: &Path, dest: &Path) -> Result<(), String> {
         fs::remove_file(dest).ok();
     }
     std::os::unix::fs::symlink(source, dest).or_else(|_| {
-        fs::copy(source, dest).map(|_| ()).map_err(|err| err.to_string())
+        fs::copy(source, dest)
+            .map(|_| ())
+            .map_err(|err| err.to_string())
     })
 }
 

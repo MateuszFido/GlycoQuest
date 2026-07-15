@@ -5,12 +5,15 @@ export class SelectionStore {
   bundle: ViewerBundle;
   selectedCrosslinkId: string | null = null;
   selectedProteinId: string | null = null;
+  selectedGlycanComposition: string | null = null;
   filters: ViewerFilters = { showFailed: false, proteinId: null, minScore: 0 };
 
   private listeners = new Set<ViewerListener>();
+  private crosslinksById = new Map<string, ViewerCrosslink>();
 
   constructor(bundle: ViewerBundle) {
     this.bundle = bundle;
+    this.crosslinksById = new Map(bundle.crosslinks.map((xl) => [xl.id, xl]));
   }
 
   subscribe(listener: ViewerListener): () => void {
@@ -35,15 +38,13 @@ export class SelectionStore {
 
   get selectedCrosslink(): ViewerCrosslink | null {
     if (!this.selectedCrosslinkId) return null;
-    return this.bundle.crosslinks.find((xl) => xl.id === this.selectedCrosslinkId) ?? null;
+    return this.crosslinksById.get(this.selectedCrosslinkId) ?? null;
   }
 
   get focusedProteinIds(): string[] {
     const selected = this.selectedCrosslink;
     if (!selected) return [];
-    return selected.protein1 === selected.protein2
-      ? [selected.protein1]
-      : [selected.protein1, selected.protein2];
+    return proteinIdsForCrosslink(selected);
   }
 
   get selectedPairCrosslinks(): ViewerCrosslink[] {
@@ -59,11 +60,19 @@ export class SelectionStore {
   selectCrosslink(id: string | null): void {
     this.selectedCrosslinkId = id;
     if (id) {
-      const xl = this.bundle.crosslinks.find((x) => x.id === id);
+      const xl = this.crosslinksById.get(id);
       if (xl) {
         this.selectedProteinId = xl.protein1;
+        if (xl.glycan_composition) {
+          this.selectedGlycanComposition = xl.glycan_composition;
+        }
       }
     }
+    this.notify();
+  }
+
+  selectGlycan(composition: string | null): void {
+    this.selectedGlycanComposition = composition;
     this.notify();
   }
 
@@ -82,4 +91,11 @@ export class SelectionStore {
     this.filters.minScore = score;
     this.notify();
   }
+}
+
+function proteinIdsForCrosslink(xl: ViewerCrosslink): string[] {
+  if (xl.link_type === 'monolink' || !xl.protein2) return [xl.protein1].filter(Boolean);
+  return xl.protein1 === xl.protein2
+    ? [xl.protein1]
+    : [xl.protein1, xl.protein2].filter(Boolean);
 }

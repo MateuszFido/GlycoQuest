@@ -1,0 +1,134 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Core::Dev - PDL development module</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#isbigendian">isbigendian</a></li>
+		<li><a href="#trylink">trylink</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Core::Dev - PDL development module</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module encapsulates most of the stuff useful for
+PDL development and is often used from within Makefile.PL's.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use PDL::Core::Dev;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="isbigendian">isbigendian</a></h2>
+<p>Is the machine big or little endian?</p>
+<pre>
+  print &quot;Your machins is big endian.\n&quot; if isbigendian();</pre>
+<p>returns 1 if the machine is big endian, 0 if little endian,
+or dies if neither.  It uses the <code>byteorder</code> element of
+perl's <code>%Config</code> array.</p>
+<pre>
+   my $retval = isbigendian();</pre>
+<p>
+</p>
+<h2><a name="trylink">trylink</a></h2>
+<p>a perl configure clone</p>
+<pre>
+  if (trylink 'libGL', '', 'char glBegin(); glBegin();', '-lGL') {
+    $libs = '-lGLU -lGL';
+    $have_GL = 1;
+  } else {
+    $have_GL = 0;
+  }
+  $maybe =
+    trylink 'libwhatever', $inc, $body, $libs, $cflags,
+        {MakeMaker=&gt;1, Hide=&gt;0, Clean=&gt;1};</pre>
+<p>Try to link some C-code making up the body of a function
+with a given set of library specifiers</p>
+<p>return 1 if successful, 0 otherwise</p>
+<pre>
+   trylink $infomsg, $include, $progbody, $libs [,$cflags,{OPTIONS}];</pre>
+<p>Takes 4 + 2 optional arguments.</p>
+<ul>
+<li>
+<p>an informational message to print (can be empty)</p>
+</li>
+<li>
+<p>any commands to be included at the top of the generated C program
+(typically something like <code>#include &quot;mylib.h&quot;</code>)</p>
+</li>
+<li>
+<p>the body of the program (in function main)</p>
+</li>
+<li>
+<p>library flags to use for linking. Preprocessing
+by MakeMaker should be performed as needed (see options and example).</p>
+</li>
+<li>
+<p>compilation flags. For example, something like <code>-I/usr/local/lib</code>.
+Optional argument. Empty if omitted.</p>
+</li>
+<li>
+<p>OPTIONS</p>
+<dl>
+<dt><strong><a name="makemaker" class="item">MakeMaker</a></strong></dt>
+
+<dd>
+<p>Preprocess library strings in the way MakeMaker does things. This is
+advisable to ensure that your code will actually work after the link
+specs have been processed by MakeMaker.</p>
+</dd>
+<dt><strong><a name="hide" class="item">Hide</a></strong></dt>
+
+<dd>
+<p>Controls if linking output etc is hidden from the user or not.
+On by default except within the build of the PDL distribution
+where the config value set in <em class="file">perldl.conf</em> prevails.</p>
+</dd>
+<dt><strong><a name="clean" class="item">Clean</a></strong></dt>
+
+<dd>
+<p>Remove temporary files. Enabled by default. You might want to switch
+it off during debugging.</p>
+</dd>
+</dl>
+</li>
+</ul>
+
+</body>
+
+</html>

@@ -1,0 +1,154 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Graphics::LUT - provides access to a number of look-up tables</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#lut_names__"><code>lut_names()</code></a></li>
+		<li><a href="#lut_ramps__"><code>lut_ramps()</code></a></li>
+		<li><a href="#lut_data__"><code>lut_data()</code></a></li>
+	</ul>
+
+	<li><a href="#variables">VARIABLES</a></li>
+	<ul>
+
+		<li><a href="#_tabledir">$tabledir</a></li>
+		<li><a href="#_rampdir">$rampdir</a></li>
+		<li><a href="#_suffix">$suffix</a></li>
+	</ul>
+
+	<li><a href="#further_information">FURTHER INFORMATION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Graphics::LUT - provides access to a number of look-up tables</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Graphics::PGPLOT;
+ use PDL::Graphics::LUT;</pre>
+<pre>
+ # what tables are available
+ my @tables = lut_names();</pre>
+<pre>
+ # get the reversed colour table 'smooth',
+ # with the gamma intensity ramp
+ my ( $l, $r, $g, $b ) = lut_data( 'smooth', 1, 'gamma' );</pre>
+<pre>
+ # use the table idl5 in ctab
+ ctab( lut_data('idl5') );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>PDL::Graphics::LUT contains a number of colour look-up tables
+(in rgb format) and intensity ramps, and provides routines to 
+access this data.
+The format of the data is suitable for use by
+<a href="PGPLOT/Window.html#ctab">ctab</a>.</p>
+<p>Unlike the initial release of the package, the data tables are
+now stored within the PDL distribution as FITS files
+(see <a href="#_tabledir">$tabledir</a> and <a href="#_rampdir">$rampdir</a>),
+rather than in the module itself.
+Changes to these directories will be picked up on the next call
+to one of the package functions.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="lut_names__"><code>lut_names()</code></a></h2>
+<p>Return, as a list, the names of the available colour tables.</p>
+<pre>
+ @tables = lut_names();</pre>
+<p>
+</p>
+<h2><a name="lut_ramps__"><code>lut_ramps()</code></a></h2>
+<p>Return, as a list, the names of the available intensity ramps.</p>
+<pre>
+ @ramps = lut_ramps();</pre>
+<p>
+</p>
+<h2><a name="lut_data__"><code>lut_data()</code></a></h2>
+<p>Load in the requested colour table and intensity ramp.</p>
+<pre>
+ ( $l, $r, $g, $b ) = lut_data( $table, [ $reverse, [ $ramp ] ] );</pre>
+<p>Returns the levels and r, g, b components of the colour table
+<code>$table</code>. If <code>$reverse</code> is 1 (defaults to <strong>0</strong> 
+if not supplied),
+then the r, g, and b components are reversed before being 
+returned.
+If not supplied, <code>$ramp</code> defaults to <strong>&quot;ramp&quot;</strong> 
+(this is a linear intensity ramp).</p>
+<p>The returned values are piddles containing values in the range
+0 to 1 inclusive, and are floats.</p>
+<p>
+</p>
+<hr />
+<h1><a name="variables">VARIABLES</a></h1>
+<p>
+</p>
+<h2><a name="_tabledir">$tabledir</a></h2>
+<p>The directory in which the colour tables (in rgb format) 
+are stored.</p>
+<p>
+</p>
+<h2><a name="_rampdir">$rampdir</a></h2>
+<p>The directory in which the intensity ramps are stored.</p>
+<p>
+</p>
+<h2><a name="_suffix">$suffix</a></h2>
+<p>The suffix for the data files in <code>$tabledir</code> and
+<code>$rampdir</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="further_information">FURTHER INFORMATION</a></h1>
+<p>The colour tables were taken from the STARLINK GAIA package,
+and are provided under the GNU copyleft.
+See <a href="http://star-www.rl.ac.uk/">http://star-www.rl.ac.uk/</a> and 
+<a href="http://star-www.dur.ac.uk/~pdraper/">http://star-www.dur.ac.uk/~pdraper/</a> for more details.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Doug Burke (<a href="mailto:djburke@cpan.org">djburke@cpan.org</a>), with thanks to 
+Peter Draper/STARLINK for providing the colour-table data,
+and Christian Soeller and Karl Glazebrook for their help.</p>
+<p>All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

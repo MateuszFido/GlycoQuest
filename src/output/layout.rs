@@ -18,6 +18,19 @@ impl ProjectLayout {
         Self { root }
     }
 
+    /// Staged user inputs (FASTA copy for xQuest; keeps source data directories read-only).
+    pub fn input_dir(&self) -> PathBuf {
+        self.root.join("input")
+    }
+
+    /// Path for the FASTA staged under [`Self::input_dir`], preserving the source filename.
+    pub fn staged_fasta_path(&self, source: &Path) -> Result<PathBuf, String> {
+        let name = source
+            .file_name()
+            .ok_or_else(|| format!("invalid FASTA path: {}", source.display()))?;
+        Ok(self.input_dir().join(name))
+    }
+
     /// Truncated mzXML containing only prefilter-retained MS2 scans (user-inspectable).
     pub fn spectra_dir(&self) -> PathBuf {
         self.root.join("spectra")

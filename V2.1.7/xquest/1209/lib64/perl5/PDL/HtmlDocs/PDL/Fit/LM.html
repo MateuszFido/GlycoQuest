@@ -1,0 +1,234 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Fit::LM -- Levenberg-Marquardt fitting routine for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#lmfit">lmfit</a></li>
+		<li><a href="#tlmfit">tlmfit</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Fit::LM -- Levenberg-Marquardt fitting routine for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides fitting functions for PDL. Currently, only
+Levenberg-Marquardt fitting is implemented. Other procedures should
+be added as required. For a fairly concise overview on fitting
+see Numerical Recipes, chapter 15 &quot;Modeling of data&quot;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Fit::LM;
+ $ym = lmfit $x, $y, $sig, \&amp;expfunc, $a, {Maxiter =&gt; 300};</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="lmfit">lmfit</a></h2>
+<p>Levenberg-Marquardt fitting of a user supplied model function</p>
+<pre>
+ ($ym,$a,$covar,$iters) =
+      lmfit $x, $y, $sig, \&amp;expfunc, $a, {Maxiter =&gt; 300, Eps =&gt; 1e-3};</pre>
+<p>Options:</p>
+<pre>
+ Maxiter:  maximum number of iterations before giving up
+ Eps:      convergence citerium for fit; success when normalized change
+           in chisquare smaller than Eps</pre>
+<p>The user supplied sub routine reference should accept 4 arguments</p>
+<ul>
+<li>
+<p>a vector of independent values $x</p>
+</li>
+<li>
+<p>a vector of fitting parameters</p>
+</li>
+<li>
+<p>a vector of dependent variables that will be assigned upon return</p>
+</li>
+<li>
+<p>a matrix of partial derivatives with respect to the fitting parameters
+that will be assigned upon return</p>
+</li>
+</ul>
+<p>As an example take this definition of a single exponential with
+3 parameters (width, amplitude, offset):</p>
+<pre>
+ sub expdec {
+   my ($x,$par,$ym,$dyda) = @_;
+   my ($a,$b,$c) = map {$par-&gt;slice(&quot;($_)&quot;)} (0..2);
+   my $arg = $x/$a;
+   my $ex = exp($arg);
+   $ym .= $b*$ex+$c;
+   my (@dy) = map {$dyda-&gt;slice(&quot;,($_)&quot;)} (0..2);
+   $dy[0] .= -$b*$ex*$arg/$a;
+   $dy[1] .= $ex;
+   $dy[2] .= 1;
+ }</pre>
+<p>Note usage of the <code>.=</code> operator for assignment</p>
+<p>In scalar context returns a vector of the fitted dependent
+variable. In list context returns fitted y-values, vector
+of fitted parameters, an estimate of the covariance matrix
+(as an indicator of goodness of fit) and number of iterations
+performed.</p>
+<p>An extended example script that uses lmfit is included below.
+This nice example was provided by John Gehman and should
+help you to master the initial hurdles. It can also be found in
+the <em class="file">Example/Fit</em> directory.</p>
+<pre>
+   use PDL;
+   use PDL::Math;
+   use PDL::Fit::LM;
+   use strict;</pre>
+<pre>
+   ### fit using pdl's lmfit (Marquardt-Levenberg non-linear least squares fitting)
+   ###
+   ### `lmfit' Syntax: 
+   ###
+   ### ($ym,$a,$covar,$iters) 
+   ###  = lmfit $x, $y, $sig, \&amp;fn, $initp, {Maxiter =&gt; 300, Eps =&gt; 1e-3};
+   ###
+   ### Explanation of variables
+   ### 
+   ### OUTPUT
+   ### $ym =    pdl of fitted values
+   ### $a  =    pdl of paramters
+   ### $covar = covariance matrix
+   ### $iters = number of iterations actually used
+   ###
+   ### INPUT
+   ### $x =      x data
+   ### $y =      y data
+   ### $sig =    weights for y data (can be set to scalar 1 for equal weighting)
+   ### \&amp;fn =    reference to function provided by user (more on this below) 
+   ### $initp =  initial values for floating parameters 
+   ###               (needs to be explicitly set prior to use of lmfit)
+   ### Maxiter = maximum iterations
+   ### Eps =     convergence criterium (maximum normalized change in Chi Sq.)</pre>
+<pre>
+   ### Example:
+   # make up experimental data:
+   my $xdata = pdl sequence 5;
+   my $ydata = pdl [1.1,1.9,3.05,4,4.9];</pre>
+<pre>
+   # set initial prameters in a pdl (order in accord with fit function below)
+   my $initp = pdl [0,1];</pre>
+<pre>
+   # Weight all y data equally (else specify different weights in a pdl)
+   my $wt = 1;</pre>
+<pre>
+   # Use lmfit. Fourth input argument is reference to user-defined 
+   # subroutine ( here \&amp;linefit ) detailed below.
+   my ($yf,$pf,$cf,$if) = lmfit $xdata, $ydata, $wt, \&amp;linefit, $initp;</pre>
+<pre>
+   # Note output
+   print &quot;\nXDATA\n$xdata\nY DATA\n$ydata\n\nY DATA FIT\n$yf\n\n&quot;;
+   print &quot;Slope and Intercept\n$pf\n\nCOVARIANCE MATRIX\n$cf\n\n&quot;;
+   print &quot;NUMBER ITERATIONS\n$if\n\n&quot;;</pre>
+<pre>
+   # simple example of user defined fit function. Guidelines included on
+   # how to write your own function subroutine.
+   sub linefit {</pre>
+<pre>
+           # leave this line as is
+           my ($x,$par,$ym,$dyda) = @_;</pre>
+<pre>
+           # $m and $b are fit parameters, internal to this function
+           # call them whatever make sense to you, but replace (0..1)
+           # with (0..x) where x is equal to your number of fit parameters
+           # minus 1
+           my ($m,$b) = map { $par-&gt;slice(&quot;($_)&quot;) } (0..1);</pre>
+<pre>
+           # Write function with dependent variable $ym,
+           # independent variable $x, and fit parameters as specified above.
+           # Use the .= (dot equals) assignment operator to express the equality 
+           # (not just a plain equals)
+           $ym .= $m * $x + $b;</pre>
+<pre>
+           # Edit only the (0..1) part to (0..x) as above
+           my (@dy) = map {$dyda -&gt; slice(&quot;,($_)&quot;) } (0..1);</pre>
+<pre>
+           # Partial derivative of the function with respect to first 
+           # fit parameter ($m in this case). Again, note .= assignment 
+           # operator (not just &quot;equals&quot;)
+           $dy[0] .= $x;</pre>
+<pre>
+           # Partial derivative of the function with respect to next 
+           # fit parameter ($b in this case)
+           $dy[1] .= 1;</pre>
+<pre>
+           # Add $dy[ ] .= () lines as necessary to supply 
+           # partial derivatives for all floating paramters.
+   }</pre>
+<p>
+</p>
+<h2><a name="tlmfit">tlmfit</a></h2>
+<p>threaded version of Levenberg-Marquardt fitting routine mfit</p>
+<pre>
+ tlmfit $x, $y, float(1)-&gt;dummy(0), $na, float(200), float(1e-4),
+       $ym=null, $afit=null, \&amp;expdec;</pre>
+<pre>
+  Signature: tlmfit(x(n);y(n);sig(n);a(m);iter();eps();[o] ym(n);[o] ao(m);
+           OtherPar =&gt; subref)</pre>
+<p>a threaded version of <code>lmfit</code> by using perl threading. Direct
+threading in <code>lmfit</code> seemed difficult since we have an if condition
+in the iteration. In principle that can be worked around by
+using <code>where</code> but .... Send a threaded <code>lmfit</code> version if
+you work it out!</p>
+<p>Since we are using perl threading here speed is not really great
+but it is just convenient to have a threaded version for many
+applications (no explicit for-loops required, etc). Suffers from
+some of the current limitations of perl level threading.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Not known yet.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999, Christian Soeller
+(<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>)  All rights reserved. There is no
+warranty. You are allowed to redistribute this software documentation
+under certain conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution, the
+copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

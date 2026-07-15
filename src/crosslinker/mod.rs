@@ -25,7 +25,10 @@ impl CrosslinkerProfile {
             .filter(|s| !s.is_empty())
             .or_else(|| {
                 if settings.crosslinker_name.trim().eq_ignore_ascii_case("dss")
-                    || settings.crosslinker_name.trim().eq_ignore_ascii_case("dmtmm")
+                    || settings
+                        .crosslinker_name
+                        .trim()
+                        .eq_ignore_ascii_case("dmtmm")
                 {
                     Some(settings.crosslinker_name.as_str())
                 } else {

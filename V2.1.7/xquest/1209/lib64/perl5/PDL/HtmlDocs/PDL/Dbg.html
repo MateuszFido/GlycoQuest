@@ -1,0 +1,138 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Dbg - functions to support debugging of PDL scripts</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#px">px</a></li>
+		<li><a href="#vars">vars</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Dbg - functions to support debugging of PDL scripts</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+       use PDL;
+       use PDL::Dbg;</pre>
+<pre>
+       $c = $a-&gt;slice(&quot;5:10,2:30&quot;)-&gt;px-&gt;diagonal(3,4);
+       PDL-&gt;px;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This packages implements a couple of functions that should come in
+handy when debugging your PDL scripts. They make a lot of sense while
+you're doing rapid prototyping of new PDL code, let's say inside the
+perldl or pdl2 shell.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="px">px</a></h2>
+<p>Print info about a piddle (or all known piddles)</p>
+<pre>
+    pdl&gt; PDL-&gt;px
+    pdl&gt; $b += $a-&gt;clump(2)-&gt;px('clumptest')-&gt;sumover
+    pdl&gt; $a-&gt;px('%C (%A) Type: %T') # prints nothing unless $PDL::debug
+    pdl&gt; $PDL::debug = 1
+    pdl&gt;  $a-&gt;px('%C (%A) Type: %T')
+    PDL (52433464) Type: Double</pre>
+<p>This function prints some information about piddles. It can be invoked
+as a class method (e.g. <code>PDL-&gt;px</code> ) or as an instance method (e.g.
+<code>$pdl-&gt;px($arg)</code>). If</p>
+<dl>
+<dt><strong><a name="invoked_as_a_class_method" class="item">invoked as a class method</a></strong></dt>
+
+<dd>
+<p>it prints info about all piddles found in the current package
+(<em>excluding</em> <code>my</code> variables). This comes in quite handy when you are
+not quite sure which pdls you have already defined, what data they
+hold , etc. <code>px</code> is supposed to support inheritance and prints info
+about all symbols for which an <code>isa($class)</code> is true. An optional
+string argument is interpreted as the package name for which to print
+symbols:</p>
+<pre>
+  pdl&gt; PDL-&gt;px('PDL::Mypack')</pre>
+<p>The default package is that of the caller.</p>
+</dd>
+<dt><strong><a name="invoked_as_an_instance_method" class="item">invoked as an instance method</a></strong></dt>
+
+<dd>
+<p>it prints info about that particular piddle if <code>$PDL::debug</code> is
+true and returns the pdl object upon completion. It accepts an
+optional string argument that is simply prepended to the default info
+if it doesn't contain a <code>%</code> character. If, however, the argument
+contains a <code>%</code> then the string is passed to the <code>info</code> method to
+control the format of the printed information. This can be used to
+achieve customized output from <code>px</code>. See the documentation of
+<code>PDL::info</code> for further details.</p>
+</dd>
+</dl>
+<p>The output of px will be determined by the default formatting string
+that is passed to the <code>info</code> method (unless you pass a string
+containing <code>%</code> to px when invoking as an instance method, see
+above). This default string is stored in <code>$PDL::Dbg::Infostr</code> and the
+default output format can be accordingly changed by setting this
+variable.  If you do this you should also change the default title
+string that the class method branch prints at the top of the listing
+to match your new format string. The default title is stored in the
+variable <code>$PDL::Dbg::Title</code>.</p>
+<p>For historical reasons <code>vars</code> is an alias for <code>px</code>.</p>
+<p>
+</p>
+<h2><a name="vars">vars</a></h2>
+<p>Alias for <code>px</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>There are probably some. Please report if you find any. Bug reports
+should be sent to the PDL mailing list <a href="mailto:perldl@jachw.hawaii.edu.">perldl@jachw.hawaii.edu.</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright(C) 1997 Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>)
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

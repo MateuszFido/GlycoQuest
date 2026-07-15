@@ -1,0 +1,130 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Opt::Simplex -- Simplex optimization routines</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#simplex">simplex</a></li>
+	</ul>
+
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Opt::Simplex -- Simplex optimization routines</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Opt::Simplex;</pre>
+<pre>
+ ($optimum,$ssize,$optval) = simplex($init,$initsize,$minsize,
+                 $maxiter,
+                 sub {evaluate_func_at($_[0])},
+                 sub {display_simplex($_[0])}
+                 );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package implements the commonly used simplex optimization
+algorithm. The basic idea of the algorithm is to move
+a &quot;simplex&quot; of N+1 points in the N-dimensional search space
+according to certain rules. The main
+benefit of the algorithm is that you do not need to calculate
+the derivatives of your function.</p>
+<p>$init is a 1D vector holding the initial values of the N fitted
+parameters, $optimum is a vector holding the final solution.
+$optval is the evaluation of the final solution.</p>
+<p>$initsize is the size of $init (more...)</p>
+<p>$minsize is some sort of convergence criterion (more...)
+- e.g. $minsize = 1e-6</p>
+<p>The sub is assumed to understand more than 1 dimensions and threading.
+Its signature is 'inp(nparams); [ret]out()'. An example would be</p>
+<pre>
+        sub evaluate_func_at {
+                my($xv) = @_;
+                my $x1 = $xv-&gt;slice(&quot;(0)&quot;);
+                my $x2 = $xv-&gt;slice(&quot;(1)&quot;);
+                return $x1**4 + ($x2-5)**4 + $x1*$x2;
+        }</pre>
+<p>Here $xv is a vector holding the current values of the parameters
+being fitted which are then sliced out explicitly as $x1 and $x2.</p>
+<p>$ssize gives a very very approximate estimate of how close we might
+be - it might be miles wrong. It is the euclidean distance between
+the best and the worst vertices. If it is not very small, the algorithm
+has not converged.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="simplex">simplex</a></h2>
+<p>Simplex optimization routine</p>
+<pre>
+ ($optimum,$ssize,$optval) = simplex($init,$initsize,$minsize,
+                 $maxiter,
+                 sub {evaluate_func_at($_[0])},
+                 sub {display_simplex($_[0])}
+                 );</pre>
+<p>See module <code>PDL::Opt::Simplex</code> for more information.</p>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>Do not use the simplex method if your function has local minima.
+It will not work. Use genetic algorithms or simulated annealing
+or conjugate gradient or momentum gradient descent.</p>
+<p>They will not really work either but they are not guaranteed not to work ;)
+(if you have infinite time, simulated annealing is guaranteed to work
+but only after it has visited every point in your space).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>Ron Shaffer's chemometrics web page and references therein:
+<code>http://chem1.nrl.navy.mil/~shaffer/chemoweb.html</code>.</p>
+<p>Numerical Recipes (bla bla bla XXX ref).</p>
+<p>The demonstration (Examples/Simplex/tsimp.pl and tsimp2.pl).</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright(C) 1997 Tuomas J. Lukka. 
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL 
+distribution. If this file is separated from the PDL distribution, 
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

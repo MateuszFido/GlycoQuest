@@ -1,0 +1,163 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Compression - compression utilities</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<li><a href="#methods">METHODS</a></li>
+	<ul>
+
+		<li><a href="#rice_compress">rice_compress</a></li>
+		<li><a href="#rice_expand">rice_expand</a></li>
+	</ul>
+
+	<li><a href="#authors">AUTHORS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#todo">TODO</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Compression - compression utilities</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>These routines generally accept some data as a PDL and compress it
+into a smaller PDL.  Algorithms typically work on a single dimension
+and thread over other dimensions, producing a threaded table of
+compressed values if more than one dimension is fed in.</p>
+<p>The Rice algorithm, in particular, is designed to be identical to the 
+RICE_1 algorithm used in internal FITS-file compression (see PDL::IO::FITS).</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Compression</pre>
+<pre>
+ ($b,$asize) = $a-&gt;rice_compress();
+ $c = $b-&gt;rice_expand($asize);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="methods">METHODS</a></h1>
+<p>
+</p>
+<h2><a name="rice_compress">rice_compress</a></h2>
+<pre>
+  Signature: (in(n); [o]out(m); int[o]len(); lbuf(n); int blocksize)</pre>
+<p>Squishes an input PDL along the 0 dimension by Rice compression.  In
+scalar context, you get back only the compressed PDL; in list context,
+you also get back ancillary information that is required to uncompress
+the data with rice_uncompress.</p>
+<p>Multidimensional data are threaded over - each row is compressed
+separately, and the returned PDL is squished to the maximum compressed
+size of any row.  If any of the streams could not be compressed (the
+algorithm produced longer output), the corresponding length is set to -1
+and the row is treated as if it had length 0.</p>
+<p>Rice compression only works on integer data types -- if you have
+floating point data you must first quantize them.</p>
+<p>The underlying algorithm is identical to the Rice compressor used in
+CFITSIO (and is used by PDL::IO::FITS to load and save compressed FITS
+images).</p>
+<p>The optional blocksize indicates how many samples are to be compressed
+as a unit; it defaults to 32.</p>
+<p>How it works:</p>
+<p>Rice compression is a subset of Golomb compression, and works on data sets
+where variation between adjacent samples is typically small compared to the
+dynamic range of each sample.  In this implementation (originally written
+by Richard White and contributed to CFITSIO in 1999), the data are divided
+into blocks of samples (by default 32 samples per block).  Each block 
+has a running difference applied, and the difference is bit-folded to make
+it positive definite.  High order bits of the difference stream are discarded,
+and replaced with a unary representation; low order bits are preserved.  Unary
+representation is very efficient for small numbers, but large jumps could
+give rise to ludicrously large bins in a plain Golomb code; such large jumps
+(&quot;high entropy&quot; samples) are simply recorded directly in the output stream.</p>
+<p>Working on astronomical or solar image data, typical compression ratios of 
+2-3 are achieved.</p>
+<pre>
+  $out = $pdl-&gt;rice_compress($blocksize);
+  ($out, $len, $blocksize, $dim0) = $pdl-&gt;rice_compress;</pre>
+<pre>
+  $new = $out-&gt;rice_expand;</pre>
+<p>rice_compress ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="rice_expand">rice_expand</a></h2>
+<pre>
+  Signature: (in(n); [o]out(m); lbuf(n); int blocksize)</pre>
+<p>Unsquishes a PDL that has been squished by rice_expand.</p>
+<pre>
+     ($out, $len, $blocksize, $dim0) = $pdl-&gt;rice_compress;
+     $copy = $out-&gt;rice_expand($dim0, $blocksize);</pre>
+<p>rice_expand ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Copyright (C) 2010 Craig DeForest.
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+<p>The Rice compression library is derived from the similar library in
+the CFITSIO 3.24 release, and is licensed under yet more more lenient
+terms than PDL itself; that notice is present in the file &quot;ricecomp.c&quot;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<ul>
+<li><strong><a name="currently_headers_are_ignored" class="item">Currently headers are ignored.</a></strong>
+
+</li>
+<li><strong><a name="currently_there_is_only_one_compression_algorithm" class="item">Currently there is only one compression algorithm.</a></strong>
+
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<ul>
+<li><strong><a name="add_object_encapsulation" class="item">Add object encapsulation</a></strong>
+
+</li>
+<li><strong><a name="add_test_suite" class="item">Add test suite</a></strong>
+
+</li>
+</ul>
+
+</body>
+
+</html>

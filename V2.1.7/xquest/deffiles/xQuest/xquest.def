@@ -1,0 +1,166 @@
+digestdef #don't change this
+############################ enzyme and peptide settings #######################
+database /path/to/database/database.fasta
+database_dc /path/to/decoy-database/database.fasta
+copydb2resdir 1 			# copy the database to the resultdirectory, also makes a new db folder in the resultdirectory (don't change)
+enzyme_num 1				# for other enzymes see keys below (enzyme reference)
+missed_cleavages	2 		# maximal missed cleavages
+requiredmissed_cleavages 0	# minimal number of missed cleavages set to 0 if looking for monolinks also
+tryptic_termini 2 			# Not functional yet
+mindigestlength 5 			# Minimal peptide size in AA
+maxdigestlength 50 			# Maximal peptide size in AA
+nocutatxlink 1 				# If set the enzyme will not cut at the crosslinkerposition
+variable_mod 0 				# K,57.02146 # M,15.99491	# 0: no variable modification  example: M,15.99491 one variable modification can be defined
+nvariable_mod 1				# No. of variable modifications per peptide
+ionseries 010010  			# abcxyz consider ionseries (1)
+ioncharge_common 1,2,3		# z for common ions
+ioncharge_xlink 2,3,4,5		# z for xlink ions
+xlinktypes 1111 			# Defines types of ions to search for in enumeration mode monolink:intralink:intraprotein-x-link:interprotein-x-link (only applicable in enumeration mode)
+ntermxlinkable 0 			# If (1) modifies the first peptide of a protein, add then also amino acid Z to AArequired
+ctermxlinkable 0			# If (1) modifies the last peptide of a protein, add then also amino acid O to AArequired
+
+########################## crosslinker settings ####################
+AArequired K:K						# Aminoacid that is cross-linked, for more than one AA indicate AAs separated by comma e.g K,Y,S; to perform analysis with heterobifunctional linkers use colons to separate members of a pair, e.g. K:D,K:E,K:K indicates K can cross-link with D, E, and K, but D and E cannot cross-link with themselves or each other
+xkinkerID DSS 						# Xlinker name
+xlinkermw 138.0680796 				# Mass shift for intra or inter-peptide cross-links
+monolinkmw 156.0786443,155.0946287 	# Mass shift for monolinked peptides, separated by comma
+
+########################### special search-modes if not set ion-index matching is used ################
+Iontagmode	1		# Search in iontagmode (overrides other mode settings)
+RuntimeDecoys 1     # Search in target-decoy mode (decoy db has to be specified in database_dc)
+enumerate	0		# Uses enumeration index to combine each peptide with each other, this index needs to be created before
+
+################ iontag-mode specific settings ########################
+minhits	1						# Minimum number of total hits to be considered as candidate peptide (includes also hits from iontag_match_xlinkions)
+miniontaghits	1				# Minimum number of hits to iontags be considered as candidate peptide (not including hits from iontag_match_xlinkions)
+maxiontaghits 0 				# Only for testing, removes single pep candidates (0 is inactivated)!
+Iontag_charges_for_index 1
+uselossionsformatching 0		# Use loss-ions for matching for initial candidate search
+search_maxcandidate_peps 1000 	# Limit candidates to n best (single pep canditates!)
+usenprescores 100				# Filter for the second pass, only n best candidates are searched (xl prescore), if not set, default is 100
+ntestions 100 					# Number of ions to search in ionindex
+testionspick intensity 			# Select ions descending in intensity
+picktolerance_measure Da		# Measure for picktolerance (ppm or Da)
+picktolerance 0.2 				# Tolerance for MS2 peak picking from ionindex
+minionintensity 1				# Minimum ion intensity, leave to 1 and change this setgting in compare peak options
+iontag_match_xlinkions 1 		# Use x-link ions for pre-macthing
+printcandidatepeps 0 			# Show candidate peptides in ion-index mode
+Iontag_writeaftern 1200
+
+#########################enumeration mode specific settings ##################
+intprecision 10 				 # Precision for enumeration database (1/intprecision)
+enumeration_index_mode smarthash # Smarthash or bigmem. bigmem is for up to 100 proteins only
+writetodiskaftern 100000000
+
+
+######################### MS settings ###########################
+tolerancemeasure ppm 	 		# Da or ppm
+ms1tolerance 10 				# Tolerance for parentmass matching MS1
+ms1tol_minborder -10			# Defines assymetric borders for matching; tolerances unit is tolerancemeasure
+ms1tol_maxborder 10				# 
+tolerancemeasure_ms2 Da			# Da or ppm
+ms2tolerance 0.2				# Tolerance for peak matching on MS2 for common-ions
+xlink_ms2tolerance 0.3 			# Tolerance for MS2 matching for xlink-link ions
+CID_match2ndisotope 1 			# Allow matching of 2nd isotope
+minionsize 200					# Minimum ion size in MS2 mode to be considered
+maxionsize 2000					# Maximum ion size in MS2 mode to be considered
+
+######################## Output settings ###############################
+drawspectra 0		# Draw spectrum-plots
+drawlogscale 0		# Draw in logscale
+printtables 0		# Print x-correlation tables
+printpeptides 1		# Print peptides into file
+printdigestpeps 0	# When making new indexes all peptides are shown (very verbose for large databases)
+reportnbesthits 5	# Report only n best hits
+
+##### spectrum comparison options (compare_peaks) ##############
+cp_threshold	1			# Minimum peak intensity
+cp_tolerancemeasure Da 		# Da or ppm
+cp_tolerance	0.2			# Maximum deviation in amu or ppm for peak matching of common ions
+cp_tolerancexl	0.3			# Maximum deviation in amu or ppm for peak matching of cross-linker ions
+cp_peakratio	0.3			# Required peak-intensity ratio lower peak/higher peak to be considered the same peak 
+cp_isotopediff	12.075321 	# for DSS use 12.075321 for DSG use 6.03705
+cp_nhighest		100			# Use only n highest peaks after spectrum comparison
+cp_minpeaknumber 25			# Minimum number of common-ions to be considered as a spectrum for the search
+cp_scaleintensity 1			# normalize intensities (dont't change)
+cp_scaleby max 				# max or top5 max is default
+cp_dynamic_range 1000		# Do not use peaks that have lower intensities than (maximum intensity/cp_dynamic_range)
+
+#################### scoring settings ################
+waterloss 0  			# Take waterloss into account for MS2 matching
+nh3loss 0				# Take nh3-loss into account
+realintensities4xcorr 0
+xcorrprecision 0.2
+xcorrdelay 5
+xcorr_tolerance_window	0
+normxcorr 1 			# Normalize xcoor by autocorr
+
+## Scoring function settings
+xcorrxweight 2.488
+xcorrbweight 21.279
+matchoddsweight 1.973
+wTICweight 12.829
+intsumweight 0.018
+
+xlinkxcorrweigth 10
+commonxcorrweigth 10
+commonlossxcorrweigth 3
+poolisotopes 0
+verbose 0
+
+####################### don't change these basic system settings ##########################
+ionindexintprecision 10 #1/binning size for ionindex 
+averageMS2 0
+outputpath test
+crosslinkername DSS
+experiment BSAtest
+redundant_peps 0
+
+############### ion reference ############################3
+a_ion	-26.9870904
+b_ion	1.0078246
+c_ion	18.0343724
+x_ion	44.9976546
+y_ion	19.0183888
+z_ion	2.9998388
+fwd_ions a|b|c
+rev_ions x|y|z
+
+############### enzyme reference ############################
+enzymedef # don't change this
+0.  No_Enzyme              0      -           -
+1.  Trypsin                1      KR          P
+2.  Chymotrypsin           1      FWY         P
+3.  GluC                   1      DE          P
+9.  Trypsin_R              1      R           P
+10. AspN                   0      DE          -
+14. LysC                   1      K           P
+15. Trypsin-AspN           1      DKR         P
+16. Chymotrypsin_lowspec   1      FWYML       P
+17. Trypsin_lowspec        1      KR          -
+18. Trypsin_highspec       1      KR          PC
+20. LysN                   0      K           -
+
+
+
+modifications fixed
+G	0
+A	0
+S	0
+P	0
+V	0
+T	0
+C	57.02146
+I	0
+L	0
+N	0
+D	0
+Q	0
+K	0
+E	0
+M	0
+H	0
+F	0
+R	0
+Y	0
+W	0

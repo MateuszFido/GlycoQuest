@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 320" font-family="system-ui, sans-serif" font-size="12">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569"/>
+    </marker>
+    <style>
+      .box { fill: #f1f5f9; stroke: #64748b; stroke-width: 1.5; rx: 6; }
+      .gq { fill: #dbeafe; stroke: #2563eb; }
+      .xq { fill: #fef3c7; stroke: #d97706; }
+      .out { fill: #dcfce7; stroke: #16a34a; }
+      .title { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .label { fill: #334155; }
+    </style>
+  </defs>
+  <text x="20" y="24" class="title">GlycoQuest pipeline</text>
+  <!-- Inputs -->
+  <rect class="box" x="20" y="44" width="90" height="36"/><text x="35" y="66" class="label">mzXML</text>
+  <rect class="box" x="20" y="88" width="90" height="36"/><text x="35" y="110" class="label">FASTA</text>
+  <rect class="box" x="20" y="132" width="90" height="36"/><text x="28" y="154" class="label">Glycan lib</text>
+  <!-- Prefilter -->
+  <rect class="gq" x="140" y="60" width="120" height="100" rx="6"/>
+  <text x="155" y="82" class="label" font-weight="600">Prefilter</text>
+  <text x="150" y="100" class="label">Diagnostic ions</text>
+  <text x="150" y="116" class="label">Isotope pairs</text>
+  <text x="150" y="132" class="label">Glycan pruning</text>
+  <text x="150" y="148" class="label">’ spectra/</text>
+  <!-- Jobs -->
+  <rect class="gq" x="290" y="72" width="110" height="76" rx="6"/>
+  <text x="305" y="94" class="label" font-weight="600">Job gen</text>
+  <text x="300" y="112" class="label">xquest.def</text>
+  <text x="300" y="128" class="label">matchlist</text>
+  <text x="300" y="144" class="label">run.sh</text>
+  <!-- xQuest -->
+  <rect class="xq" x="430" y="60" width="120" height="100" rx="6"/>
+  <text x="455" y="82" class="label" font-weight="600">xQuest</text>
+  <text x="445" y="100" class="label">Index DB</text>
+  <text x="445" y="116" class="label">compare_peaks</text>
+  <text x="445" y="132" class="label">xquest.pl</text>
+  <text x="445" y="148" class="label">’ xquest.xml</text>
+  <!-- Consolidate -->
+  <rect class="gq" x="580" y="60" width="120" height="100" rx="6"/>
+  <text x="595" y="82" class="label" font-weight="600">Consolidate</text>
+  <text x="590" y="100" class="label">Annotate glycan</text>
+  <text x="590" y="116" class="label">Post-filter</text>
+  <text x="590" y="132" class="label">Deduplicate</text>
+  <!-- Outputs -->
+  <rect class="out" x="730" y="44" width="70" height="28" rx="4"/><text x="738" y="62" class="label">CSV</text>
+  <rect class="out" x="730" y="80" width="70" height="28" rx="4"/><text x="732" y="98" class="label">report</text>
+  <rect class="out" x="730" y="116" width="70" height="28" rx="4"/><text x="732" y="134" class="label">viewer</text>
+  <rect class="out" x="730" y="152" width="70" height="28" rx="4"/><text x="732" y="170" class="label">network CSV</text>
+  <!-- Arrows -->
+  <line x1="110" y1="80" x2="138" y2="95" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="110" y1="106" x2="138" y2="110" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="110" y1="150" x2="138" y2="125" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="260" y1="110" x2="288" y2="110" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="400" y1="110" x2="428" y2="110" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="550" y1="110" x2="578" y2="110" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="700" y1="95" x2="728" y2="58" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="700" y1="105" x2="728" y2="94" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="700" y1="115" x2="728" y2="130" stroke="#475569" marker-end="url(#arrow)"/>
+  <line x1="700" y1="125" x2="728" y2="166" stroke="#475569" marker-end="url(#arrow)"/>
+  <!-- Legend -->
+  <rect class="gq" x="20" y="200" width="16" height="16" rx="2"/><text x="44" y="212" class="label">GlycoQuest</text>
+  <rect class="xq" x="140" y="200" width="16" height="16" rx="2"/><text x="164" y="212" class="label">xQuest</text>
+  <rect class="out" x="220" y="200" width="16" height="16" rx="2"/><text x="244" y="212" class="label">Results</text>
+  <text x="20" y="250" class="label" fill="#64748b">Dry-run stops after job generation. Full run executes xQuest per job (parallel with --jobs).</text>
+</svg>

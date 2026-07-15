@@ -1,0 +1,161 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Tutorials - A guide to PDL's tutorial documentation.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#migration">MIGRATION</a></li>
+	<li><a href="#foundation">FOUNDATION</a></li>
+	<li><a href="#intermediate">INTERMEDIATE</a></li>
+	<li><a href="#advanced">ADVANCED</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Tutorials - A guide to PDL's tutorial documentation.</p>
+<p>
+</p>
+<hr />
+<h1><a name="migration">MIGRATION</a></h1>
+<p>These are our migration guides for users familiar with other types
+of numerical analysis software.</p>
+<dl>
+<dt><strong><a name="pdl_matlab_pdl_matlab" class="item"><a href="./MATLAB.html">PDL::MATLAB</a></a></strong></dt>
+
+<dd>
+<p>Migration guide for MATLAB users. This page explains the key differences
+between MATLAB and PDL from the point of view of a MATLAB user.</p>
+</dd>
+<dt><strong><a name="pdl_scilab_pdl_scilab" class="item"><a href="./Scilab.html">PDL::Scilab</a></a></strong></dt>
+
+<dd>
+<p>Migration guide for Scilab users. This page explains the key differences
+between Scilab and PDL from the point of view of a Scilab user.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="foundation">FOUNDATION</a></h1>
+<dl>
+<dt><strong><a name="pdl_philosophy_pdl_philosophy" class="item"><a href="./Philosophy.html">PDL::Philosophy</a></a></strong></dt>
+
+<dd>
+<p>Why did we write PDL? This document explains some of the history and
+motivation behind the Perl Data Language. It is an attempt to answer
+the question &quot;Why PDL?&quot;.</p>
+</dd>
+<dt><strong><a name="pdl_quickstart_pdl_quickstart" class="item"><a href="./QuickStart.html">PDL::QuickStart</a></a></strong></dt>
+
+<dd>
+<p>Quick introduction to PDL features. A hands-on guide suitable for
+complete beginners. This page assumes no previous knowledge of Perl
+or PDL.</p>
+</dd>
+<dt><strong><a name="pdl_indexing_pdl_indexing2" class="item"><a href="./Indexing.html">PDL::Indexing</a></a></strong></dt>
+
+<dd>
+<p>After you have read the QuickStart guide, you should follow up with
+this document. This guide goes more deeply into the concepts of
+&quot;indexing&quot; and &quot;slicing&quot; and how they form the core of numerical
+analysis with PDL.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="intermediate">INTERMEDIATE</a></h1>
+<dl>
+<dt><strong><a name="pdl_threading_pdl_threading2" class="item"><a href="./Threading.html">PDL::Threading</a></a></strong></dt>
+
+<dd>
+<p><strong>Threading</strong> is one of PDL's most powerful features. If you know MATLAB,
+you've heard of &quot;vectorizing&quot;. Well, <strong>threading</strong> is like &quot;vectorizing on
+steroids&quot;. It lets you make very fast and compact code by avoiding
+nested loops. All vector-based languages do this, but PDL generalizes
+the technique to all sorts of applications.</p>
+<p>This tutorial introduces PDL's threading feature, and it shows an example
+implementing Conway's Game of Life in 10 lines and 80 times faster than
+a classical implementation.</p>
+</dd>
+<dt><strong><a name="pdl_badvalues_pdl_badvalues" class="item"><a href="./BadValues.html">PDL::BadValues</a></a></strong></dt>
+
+<dd>
+<p>Sometimes it is useful to specify that a certain value is &quot;bad&quot; or
+&quot;missing&quot;. Scientific instruments some times include portions of
+invalid data. For example, a CCD camera might produce an image with
+over-exposed pixels. PDL's &quot;bad values&quot; feature gives you an easy way
+to deal with this sort of imperfect data.</p>
+</dd>
+<dt><strong><a name="pdl_tips_pdl_tips" class="item"><a href="./Tips.html">PDL::Tips</a></a></strong></dt>
+
+<dd>
+<p>Tips and suggestions for using PDL. This page is an assorted collection
+of programming tidbits that some PDL users have found useful. Some of
+these tips might be of help when you write your programs.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="advanced">ADVANCED</a></h1>
+<dl>
+<dt><strong><a name="pdl_pp_pdl_pp2" class="item"><a href="./PP.html">PDL::PP</a></a></strong></dt>
+
+<dd>
+<p>PDL's Pre-Processor is one of PDL's most powerful features. You
+write a function definition in special markup and the preprocessor
+generates real C code which can be compiled. With PDL:PP you get the
+full speed of native C code without having to deal with the full
+complexity of the C language.</p>
+</dd>
+<dt><strong><a name="pdl_api_pdl_api" class="item"><a href="./API.html">PDL::API</a></a></strong></dt>
+
+<dd>
+<p>A simple cookbook explaining how to create piddle manually, either
+from Perl or from C/XS code. This page covers the PDL core routines
+that comprise the PDL API. If you need to access piddles from C/XS,
+this is the document for you.</p>
+</dd>
+<dt><strong><a name="pdl_internals_pdl_internals" class="item"><a href="./Internals.html">PDL::Internals</a></a></strong></dt>
+
+<dd>
+<p>Description of the inner workings of the PDL module. Very few people
+need to see this. This page is mainly for PDL developers, or people
+interested in debugging PDL or changing the internals of PDL. If you
+can read this document and understand all of it, and you additionally
+understand <a href="./PP.html">PDL::PP</a>, you will be awarded the title of
+&quot;PDL Guru&quot;.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2010 Daniel Carrera (<a href="mailto:dcarrera@gmail.com">dcarrera@gmail.com</a>) You can distribute
+and/or modify this document under the same terms as the current Perl
+license.</p>
+<p>See: <a href="http://dev.perl.org/licenses/">http://dev.perl.org/licenses/</a></p>
+
+</body>
+
+</html>

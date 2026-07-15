@@ -1,0 +1,96 @@
+/* DATEI: selfhtml.css */
+
+/* Wenn die Schriftgroessen von SELFHTML fuer Sie schwer lesbar sind */
+/* und Sie SELFHTML lokal lesen, benennen Sie diese Datei */
+/* um in selfnormal.css */
+/* und benennen Sie die Datei selfnosize.css im src-Verzeichnis */
+/* um in selfhtml.css */
+
+
+
+h1,h2,h3,h4,p,ul,ol,li,div,td,th,address,blockquote,nobr,b,tr,th { }
+
+body { margin-left:10px;}
+
+h1 { font-size:32px; margin-top:1em; margin-bottom:18px;color:#B3D5FB;font-family:Impact,sans-serif;  }
+
+h2 { color:#005984; font-style:bold;font-size:21px; margin-bottom:18px; }
+
+
+h3,h3.xmp,h3.xpl,h3.inf,h3.tip,h3.akt { font-size:16px;color:#005984 }
+
+h4 { font-size:13px; }
+
+p,ul,ol,li,div,td,th,address,blockquote { font-size:13px; font-family:Helvetica,sans-serif; }
+
+hr {color:#808080 ;size:8}
+
+li { margin-top:3px; margin-left:8px; }
+
+table{bgcolor:#666666 }
+
+em {color:#666666;font-size:12px; font-style:bold} 
+
+pre { font-family:Courier New,Courier; font-size:13px; color:#0000C0; }
+
+code,kbd,tt { font-family:Courier New,Courier; color:#0000C0; }
+
+var { font-style:normal; color:#0000C0; }
+
+tr {font-family:Impact,sans-serif; font-size:9px;bgcolor:#808080;}
+
+th {font-family:Helvetica,sans-serif; font-size:10px;bgcolor:#808080;}
+
+blockquote,cite { font-style:italic; }
+
+.xmpcode { border-width:10px; border-style:solid; border-color:#EEEEEE; background-color:#EFEFEF; }
+
+.code { background-color:#FFFFE0; }
+
+.tabxpl { background-color:#E4EEFF; }
+
+.doc { background-color:#EEEEEE; }
+
+.nav { background-color:#FFEEDD; }
+
+.qbar { background-color:#FFFFE0; font-size:13px; font-family:Arial,sans-serif; }
+.redbox {text-align:center; padding:20px; border:thin solid red; margin:25px}
+
+.orangebox {text-align:left; padding:10px;  margin:15px;background-color:#FFE1C4;border:thin solid white }
+.orange{text-align:left; padding:2px;  margin:2px;background-color:#F2EA7B}
+.red{text-align:left; padding:2px;  margin:2px;background-color:#FF0000 }
+.green{text-align:left; padding:2px;  margin:2px;background-color:#00FF00 }
+.blue{text-align:left; padding:2px;  margin:2px;background-color:#0000FF ;color:#FFFFFF}
+.lightblue{text-align:left; padding:2px;  margin:2px;background-color:#CEE7FF ;color:#000000}
+.bluebox {text-align:left; padding:10px;  margin:15px; background-color:#F0F0FF}
+.greybox {text-align:left; border-width:10px;  border-style:solid; padding:10px;  margin:15px; background-color:#F3F5F5; }
+.whitebox {text-align:left; padding:10px;  margin:15px; margin-right:20px;color:#005984;background-color:#EFEFEF}
+.blueback {text-align:left; padding:2px;  margin:3px; background-color:#F0F0FF;border:thin solid grey }
+.textblock {text-align:justify; padding:4px; width:800px; margin:4px;color:#005984;}
+.smallfont{text-align:center;font-family:Helvetica,sans-serif; font-size:9px}
+.redtext{ color:#FF0000 ; font-style:bold;font-size:16px; margin-bottom:18px}
+.tabletext {text-align:justify; padding:4px; margin:4px;color:#005984;}
+
+.rosabox { background-color:#FFDDDD; padding:1px; margin:0px; }
+.rosa { background-color:#FFDDDD; }
+.gelbbox { background-color:#FFFF66; padding:6px; margin:0px; }
+.gelb { #FFFF66; }
+{background-color:#FFE1C4; margin:0px;}
+
+
+pre.normal { color:#000000; }
+
+
+a:link { color:#B3D5FB; text-decoration:underline ; }
+
+a:visited { color:#772200; text-decoration:underline; }
+
+a:active { color:#000000; text-decoration:none; }
+
+a.an { text-decoration:none; }
+
+.unicode { font-size:15px; font-family:Arial Unicode MS,Arial,sans-serif }
+
+ins { color:#009900; font-weight:bold; text-decoration:none; }
+
+del { color:#990000; font-weight:bold; text-decoration:line-through; }

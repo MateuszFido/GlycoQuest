@@ -12,6 +12,7 @@ use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::glyco::GlycanLibrary;
 use crate::mzxml::{self, Ms2Scan};
+use crate::progress::PhaseProgress;
 
 pub use diagnostic::{DiagnosticMatch, MatchedIon};
 pub use isotope::{IsotopePair, ScanRef};
@@ -59,7 +60,7 @@ pub struct GlycanPruningRow {
     pub matched_families: Vec<String>,
 }
 
-#[derive(Debug, Clone, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default, serde::Deserialize)]
 pub struct PrefilterStats {
     pub scans_total: usize,
     pub diagnostic_positive: usize,
@@ -83,13 +84,50 @@ pub fn run_prefilter(
     settings: &Settings,
     crosslinker: &CrosslinkerProfile,
 ) -> Result<PrefilterResult, String> {
+    run_prefilter_with_progress(files, library, settings, crosslinker, None)
+}
+
+pub(crate) fn run_prefilter_with_progress(
+    files: &[PathBuf],
+    library: &GlycanLibrary,
+    settings: &Settings,
+    crosslinker: &CrosslinkerProfile,
+    progress: Option<&PhaseProgress>,
+) -> Result<PrefilterResult, String> {
     let mut rejected = Vec::new();
     let mut diagnostic_positive = Vec::new();
     let mut stats = PrefilterStats::default();
 
-    for file in files {
+    if let Some(progress) = progress.filter(|progress| progress.enabled()) {
+        progress.set_message("counting MS2 scans");
+        let total = files.iter().try_fold(0usize, |total, file| {
+            mzxml::count_ms2_scans(file).map(|count| total + count)
+        })?;
+        progress.make_determinate(total as u64);
+    }
+
+    let mut processed = 0u64;
+
+    for (file_index, file) in files.iter().enumerate() {
+        if let Some(progress) = progress {
+            progress.set_message(format!(
+                "reading file {}/{} · {}",
+                file_index + 1,
+                files.len(),
+                display_name(file)
+            ));
+        }
         let scans = mzxml::parse_scans(file)?;
         stats.scans_total += scans.len();
+
+        if let Some(progress) = progress {
+            progress.set_message(format!(
+                "filtering file {}/{} · {}",
+                file_index + 1,
+                files.len(),
+                display_name(file)
+            ));
+        }
 
         for scan in scans {
             let diag = diagnostic::match_diagnostic_ions(
@@ -97,6 +135,10 @@ pub fn run_prefilter(
                 library,
                 settings.diagnostic_tolerance_ppm,
             );
+            processed += 1;
+            if let Some(progress) = progress {
+                progress.set_position(processed);
+            }
             if !diag.passes {
                 rejected.push(RejectedSpectrum {
                     source_file: file.clone(),
@@ -120,6 +162,9 @@ pub fn run_prefilter(
     let mut pruning = Vec::new();
 
     if crosslinker.requires_isotope_pair_prefilter() {
+        if let Some(progress) = progress {
+            progress.set_message("matching light/heavy isotope pairs");
+        }
         apply_isotope_pair_filter(
             &diagnostic_positive,
             settings,
@@ -131,18 +176,14 @@ pub fn run_prefilter(
             library,
         )?;
     } else {
-        pass_diagnostic_positive(
-            &diagnostic_positive,
-            &mut filtered,
-            &mut pruning,
-            library,
-        )?;
+        pass_diagnostic_positive(&diagnostic_positive, &mut filtered, &mut pruning, library)?;
         stats.filtered_scans = filtered.len();
     }
 
     stats.rejected = rejected.len();
 
-    if settings.max_pruned_spectra > 0 && stats.filtered_scans > settings.max_pruned_spectra as usize
+    if settings.max_pruned_spectra > 0
+        && stats.filtered_scans > settings.max_pruned_spectra as usize
     {
         return Err(format!(
             "retained spectra ({}) exceed max_pruned_spectra ({})",
@@ -157,6 +198,12 @@ pub fn run_prefilter(
         pruning,
         stats,
     })
+}
+
+fn display_name(path: &Path) -> String {
+    path.file_name()
+        .map(|name| name.to_string_lossy().into_owned())
+        .unwrap_or_else(|| path.display().to_string())
 }
 
 fn apply_isotope_pair_filter(
@@ -224,7 +271,9 @@ fn find_entry<'a>(
     file: &Path,
     scan_number: u32,
 ) -> Option<&'a ScanWithMatch> {
-    entries.iter().find(|e| e.source_file == file && e.scan.scan_number == scan_number)
+    entries
+        .iter()
+        .find(|e| e.source_file == file && e.scan.scan_number == scan_number)
 }
 
 fn append_filtered_and_pruning(
@@ -233,9 +282,10 @@ fn append_filtered_and_pruning(
     entry: &ScanWithMatch,
     library: &GlycanLibrary,
 ) -> Result<(), String> {
-    if filtered.iter().any(|f| {
-        f.source_file == entry.source_file && f.scan_number == entry.scan.scan_number
-    }) {
+    if filtered
+        .iter()
+        .any(|f| f.source_file == entry.source_file && f.scan_number == entry.scan.scan_number)
+    {
         return Ok(());
     }
 
@@ -362,10 +412,19 @@ fn write_glycan_pruning(path: &Path, rows: &[GlycanPruningRow]) -> Result<(), St
 fn format_matched_ions(ions: &[MatchedIon]) -> String {
     ions.iter()
         .map(|ion| {
+            let base = format!(
+                "{}@{:.4}|{:.4}|{}|{:.4}|{:.3}",
+                ion.family,
+                ion.observed_mz,
+                ion.expected_mz,
+                ion.peak_index,
+                ion.intensity,
+                ion.error_ppm
+            );
             if ion.loss_label.is_empty() {
-                format!("{}@{:.4}", ion.family, ion.observed_mz)
+                base
             } else {
-                format!("{}@{:.4}[{}]", ion.family, ion.observed_mz, ion.loss_label)
+                format!("{base}[{}]", ion.loss_label)
             }
         })
         .collect::<Vec<_>>()
@@ -373,9 +432,8 @@ fn format_matched_ions(ions: &[MatchedIon]) -> String {
 }
 
 fn tsv_writer(path: &Path) -> Result<BufWriter<File>, String> {
-    let file = File::create(path).map_err(|err| {
-        format!("cannot write output file {}: {err}", path.display())
-    })?;
+    let file = File::create(path)
+        .map_err(|err| format!("cannot write output file {}: {err}", path.display()))?;
     Ok(BufWriter::new(file))
 }
 
@@ -431,8 +489,7 @@ mod tests {
         let library = load_glycan_database("nglyc309").unwrap();
         let settings = Settings::defaults();
         let files = vec![fixture("hexnac_positive.mzXML")];
-        let result =
-            run_prefilter(&files, &library, &settings, &unlabeled_profile()).unwrap();
+        let result = run_prefilter(&files, &library, &settings, &unlabeled_profile()).unwrap();
         assert_eq!(result.stats.diagnostic_positive, 1);
         assert_eq!(result.stats.isotope_pairs, 0);
         assert_eq!(result.filtered.len(), 1);
@@ -446,10 +503,8 @@ mod tests {
         let files = vec![fixture("dss_pair.mzXML")];
         let result = run_prefilter(&files, &library, &settings, &dss_profile()).unwrap();
 
-        let out = std::env::temp_dir().join(format!(
-            "glycoquest_prefilter_out_{}",
-            std::process::id()
-        ));
+        let out =
+            std::env::temp_dir().join(format!("glycoquest_prefilter_out_{}", std::process::id()));
         fs::create_dir_all(&out).unwrap();
         write_outputs(&out, &result).unwrap();
 

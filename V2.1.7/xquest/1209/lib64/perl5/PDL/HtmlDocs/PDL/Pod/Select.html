@@ -1,0 +1,105 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>podselect - function to extract selected sections of pod documentation</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#podselect___options___filelist_">podselect(\%options, @filelist)</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>podselect - function to extract selected sections of pod documentation</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use PDL::Pod::Select;
+    podselect (@filelist);
+    podselect ({OUTPUT =&gt; &quot;tmp.out&quot;}, @filelist):
+    podselect ({SELECT =&gt; [&quot;NAME|SYNOPSIS&quot;, &quot;OPTIONS&quot;]}, @filelist):
+    podselect ({OUTPUT =&gt; &quot;&gt;&amp;STDERR&quot;, SELECT =&gt; [&quot;DESCRIPTION&quot;]}, &quot;-&quot;);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>podselect()</strong> is a function which will extract specified sections of
+pod documentation from an input stream. This ability is already provided
+in the <strong>PDL::Pod::Parser</strong> module. Subclasses of <strong>PDL::Pod::Parser</strong> that wish to
+take advantage of this feature do <em>not</em> need to derive from
+<strong>PDL::Pod::Select</strong>. <strong>PDL::Pod::Select</strong> merely provides a single function named
+<strong>podselect()</strong> which provides this capability in function form (as
+opposed to object form) for extracting the raw pod docs.</p>
+<p>
+</p>
+<h2><a name="podselect___options___filelist_">podselect(\%options, @filelist)</a></h2>
+<p><strong>podselect</strong> will print the raw (untranslated) pod documentation of all
+pod sections in the given input files specified by <code>@filelist</code>
+according to the given options.</p>
+<p>If any argument to <strong>podselect</strong> is a reference to a hash
+(associative array) then the values with the following keys are
+processed as follows:</p>
+<dl>
+<dt><strong><a name="output2" class="item"><a href="#output"><code>OUTPUT</code></a></a></strong></dt>
+
+<dd>
+<p>A string corresponding to the desired output file (or &quot;&gt;&amp;STDOUT&quot;
+or &quot;&gt;&amp;STDERR&quot;). The default is to use standard output.</p>
+</dd>
+<dt><strong><a name="select" class="item"><code>SELECT</code></a></strong></dt>
+
+<dd>
+<p>A reference to an array of sections specifications (as described in
+<a href="./Parser.html#section_specifications">SECTION SPECIFICATIONS in the PDL::Pod::Parser manpage</a>) which indicate the desired set of pod
+sections and subsections to be selected from input. If no section
+specifications are given, then all sections of pod documentation are
+used.</p>
+</dd>
+</dl>
+<p>All other arguments should correspond to the names of input files
+containing pod documentation. A file name of &quot;-&quot; or &quot;&lt;&amp;STDIN&quot; will
+be interpeted to mean standard input (which is the default if no
+filenames are given).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="./Parser.html">the PDL::Pod::Parser manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Brad Appleton &lt;<a href="mailto:Brad_Appleton-GBDA001@email.mot.com">Brad_Appleton-GBDA001@email.mot.com</a>&gt;</p>
+<p>Based on code for <strong>pod2text</strong> written by
+Tom Christiansen &lt;<a href="mailto:tchrist@mox.perl.com">tchrist@mox.perl.com</a>&gt;</p>
+
+</body>
+
+</html>

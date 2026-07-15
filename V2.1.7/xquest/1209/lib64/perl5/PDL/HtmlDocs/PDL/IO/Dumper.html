@@ -1,0 +1,225 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::IO::Dumper -- data dumping for structs with PDLs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#bugs">Bugs</a></li>
+	<li><a href="#author__copyright__no_warranty">Author, copyright, no warranty</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#sdump">sdump</a></li>
+		<li><a href="#fdump">fdump</a></li>
+		<li><a href="#frestore">frestore</a></li>
+		<li><a href="#deep_copy">deep_copy</a></li>
+		<li><a href="#pdl__io__dumper__big_pdl">PDL::IO::Dumper::big_PDL</a></li>
+		<li><a href="#pdl__io__dumper__stringify_pdl">PDL::IO::Dumper::stringify_PDL</a></li>
+		<li><a href="#pdl__io__dumper__uudecode_pdl">PDL::IO::Dumper::uudecode_PDL</a></li>
+		<li><a href="#pdl__io__dumper__find_pdls">PDL::IO::Dumper::find_PDLs</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::IO::Dumper -- data dumping for structs with PDLs</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package allows you cleanly to save and restore complex data structures
+which include PDLs, as ASCII strings and/or transportable ASCII files.  It
+exports four functions into your namespace: sdump, fdump, frestore, and
+deep_copy.</p>
+<p>PDL::IO::Dumper traverses the same types of structure that Data::Dumper
+knows about, because it uses a call to Data::Dumper.  Unlike Data::Dumper
+it doesn't crash when accessing PDLs.</p>
+<p>The PDL::IO::Dumper routines have a slightly different syntax than
+Data::Dumper does: you may only dump a single scalar perl expression
+rather than an arbitrary one.  Of course, the scalar may be a ref to
+whatever humongous pile of spaghetti you want, so that's no big loss.</p>
+<p>The output string is intended to be about as readable as Dumper's
+output is for non-PDL expressions. To that end, small PDLs (up to 8
+elements) are stored as inline perl expressions, midsized PDLs (up to
+200 elements) are stored as perl expressions above the main data
+structure, and large PDLs are stored as FITS files that are uuencoded
+and included in the dump string. (You have to have access to either 
+<code>uuencode(1)</code> or the CPAN module Convert::UU for this to work).</p>
+<p>No attempt is made to shrink the output string -- for example, inlined
+PDL expressions all include explicit <code>reshape()</code> and typecast commands,
+and uuencoding expands stuff by a factor of about 1.5.  So your data
+structures will grow when you dump them.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">Bugs</a></h1>
+<p>It's still possible to break this code and cause it to dump core, for
+the same reason that Data::Dumper crashes.  In particular, other
+external-hook variables aren't recognized (for that a more universal
+Dumper would be needed) and will still exercise the Data::Dumper crash.  
+This is by choice:  (A) it's difficult to recognize which objects
+are actually external, and (B) most everyday objects are quite safe.</p>
+<p>Another shortfall of Data::Dumper is that it doesn't recognize tied objects.
+This might be a Good Thing or a Bad Thing depending on your point of view, 
+but it means that PDL::IO::Dumper includes a kludge to handle the tied
+Astro::FITS::Header objects associated with FITS headers (see the rfits 
+documentation in PDL::IO::Misc for details).</p>
+<p>There's currently no reference recursion detection, so a non-treelike
+reference topology will cause Dumper to buzz forever.  That will
+likely be fixed in a future version.  Meanwhile a warning message finds
+likely cases.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author__copyright__no_warranty">Author, copyright, no warranty</a></h1>
+<p>Copyright 2002, Craig DeForest.</p>
+<p>This code may be distributed under the same terms as Perl itself
+(license available at <a href="http://ww.perl.org">http://ww.perl.org</a>).  Copying, reverse
+engineering, distribution, and modification are explicitly allowed so
+long as this notice is preserved intact and modified versions are
+clearly marked as such.</p>
+<p>This package comes with NO WARRANTY.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<ul>
+<li><strong><a name="1_0_initial_release" class="item">1.0: initial release</a></strong>
+
+</li>
+<li><strong><a name="1" class="item">1.1 (26-Feb-2002): Shorter form for short PDLs; more readability</a></strong>
+
+</li>
+<li><strong><a name="2" class="item">1.2 (28-Feb-2002): Added <code>deep_copy()</code> -- exported convenience function
+  for &quot;eval sdump&quot;</a></strong>
+
+</li>
+<li><strong><a name="3" class="item">1.3 (15-May-2002): Added checking for tied objects in <code>gethdr()</code>
+  [workaround for hole in Data::Dumper]</a></strong>
+
+</li>
+<li><strong><a name="4" class="item">1.4 (15-Jan-2003): Added support for Convert::UU as well as
+  command-line uu{en|de}code</a></strong>
+
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="sdump">sdump</a></h2>
+<p>Dump a data structure to a string.</p>
+<pre>
+  use PDL::IO::Dumper;
+  $s = sdump(&lt;VAR&gt;);
+  ...
+  &lt;VAR&gt; = eval $s;</pre>
+<p>sdump dumps a single complex data structure into a string.  You restore
+the data structure by eval-ing the string.  Since eval is a builtin, no
+convenience routine exists to use it.</p>
+<p>
+</p>
+<h2><a name="fdump">fdump</a></h2>
+<p>Dump a data structure to a file</p>
+<pre>
+  use PDL::IO::Dumper;
+  fdump(&lt;VAR&gt;,$filename);
+  ...
+  &lt;VAR&gt; = frestore($filename);</pre>
+<p>fdump dumps a single complex data structure to a file.  You restore the
+data structure by eval-ing the perl code put in the file.  A convenience
+routine (frestore) exists to do it for you.</p>
+<p>I suggest using the extension '.pld' or (for non-broken OS's) '.pdld'
+to distinguish Dumper files.  That way they are reminiscent of .pl
+files for perl, while still looking a little different so you can pick
+them out.  You can certainly feed a dump file straight into perl (for
+syntax checking) but it will not do much for you, just build your data
+structure and exit.</p>
+<p>
+</p>
+<h2><a name="frestore">frestore</a></h2>
+<p>Restore a dumped file</p>
+<pre>
+  use PDL::IO::Dumper;
+  fdump(&lt;VAR&gt;,$filename);
+  ...
+  &lt;VAR&gt; = frestore($filename);</pre>
+<p><code>frestore()</code> is a convenience function that just reads in the named
+file and executes it in an eval.  It's paired with <code>fdump()</code>.</p>
+<p>
+</p>
+<h2><a name="deep_copy">deep_copy</a></h2>
+<p>Convenience function copies a complete perl data structure by the
+brute force method of &quot;eval sdump&quot;.</p>
+<p>
+</p>
+<h2><a name="pdl__io__dumper__big_pdl">PDL::IO::Dumper::big_PDL</a></h2>
+<p>Identify whether a PDL is ``big'' [Internal routine]</p>
+<p>Internal routine takes a PDL and returns a boolean indicating whether
+it's small enough for direct insertion into the dump string.  If 0, 
+it can be inserted.  Larger numbers yield larger scopes of PDL.  
+1 implies that it should be broken out but can be handled with a couple
+of perl commands; 2 implies full uudecode treatment.</p>
+<p>PDLs with Astro::FITS::Header objects as headers are taken to be FITS
+files and are always treated as huge, regardless of size.</p>
+<p>
+</p>
+<h2><a name="pdl__io__dumper__stringify_pdl">PDL::IO::Dumper::stringify_PDL</a></h2>
+<p>Turn a PDL into a 1-part perl expr [Internal routine]</p>
+<p>Internal routine that takes a PDL and returns a perl string that evals to the
+PDL.  It should be used with care because it doesn't dump headers and 
+it doesn't check number of elements.  The point here is that numbers are
+dumped with the correct precision for their storage class.  Things we
+don't know about get stringified element-by-element by their builtin class,
+which is probably not a bad guess.</p>
+<p>
+</p>
+<h2><a name="pdl__io__dumper__uudecode_pdl">PDL::IO::Dumper::uudecode_PDL</a></h2>
+<p>Recover a PDL from a uuencoded string [Internal routine]</p>
+<p>This routine encapsulates uudecoding of the dumped string for large piddles. 
+It's separate to encapsulate the decision about which method of uudecoding
+to try (both the built-in Convert::UU and the shell command <code>uudecode(1)</code> 
+are supported).</p>
+<p>Generate 1- or 2-part expr for a PDL [Internal routine]</p>
+<p>Internal routine that produces commands defining a PDL.  You supply
+(&lt;PDL&gt;, &lt;name&gt;) and get back two strings: a prepended command string and an
+expr that evaluates to the final PDL.  PDL is the PDL you want to dump.  
+&lt;inline&gt; is a flag whether dump_PDL is being called inline or before
+the inline dump string (0 for before; 1 for in).  &lt;name&gt; is the
+name of the variable to be assigned (for medium and large PDLs,
+which are defined before the dump string and assigned unique IDs).</p>
+<p>
+</p>
+<h2><a name="pdl__io__dumper__find_pdls">PDL::IO::Dumper::find_PDLs</a></h2>
+<p>Walk a data structure and dump PDLs [Internal routine]</p>
+<p>Walks the original data structure and generates appropriate exprs
+for each PDL.  The exprs are inserted into the Data::Dumper output
+string.  You shouldn't call this unless you know what you're doing.
+(see sdump, above).</p>
+
+</body>
+
+</html>

@@ -1,0 +1,144 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::AutoLoader - MatLab style AutoLoader for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#auto_scanning">AUTO-SCANNING</a></li>
+		<li><a href="#sample_file_">Sample file:</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<ul>
+
+		<li><a href="#pdl__autoloader__expand_path">PDL::AutoLoader::expand_path</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::AutoLoader - MatLab style AutoLoader for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::AutoLoader;
+ $a = func1(...);   # Load file func1.pdl
+ $b = func2(...);   # Load file func2.pdl</pre>
+<pre>
+ $PDL::AutoLoader::Rescan = 1; # Enable re-scanning</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module implements a MatLab style AutoLoader for PDL. If an unknown
+function <code>func()</code> is called, PDL looks for a file called <code>func.pdl</code>.
+If it finds one, it compiles the file and calls the function <code>func</code>.</p>
+<p>The list of directories to search in is given by the shell environment
+variable <code>PDLLIB</code>. This is a colon-separated list of directories. On
+MSWindows systems, is it a <em>semicolon</em> -separated list of directories.</p>
+<p>For example, in csh:</p>
+<pre>
+  setenv PDLLIB &quot;/home/joe/pdllib:/local/pdllib&quot;</pre>
+<p><strong>Note</strong>: This variable is unrelated to Perl's <code>PERL5LIB</code>.</p>
+<p>If you add a leading '+' on a directory name, PDL will search the
+entire directory tree below that point. Internally, PDL stores the
+dirctory list in the variable <code>@PDLLIB</code>, which can be modified at
+run time.</p>
+<p>For example, in csh:</p>
+<pre>
+  setenv PDLLIB &quot;+/home/joe/PDL&quot;</pre>
+<p>will search /home/joe/PDL and all its subdirectories for .pdl files.</p>
+<p>
+</p>
+<h2><a name="auto_scanning">AUTO-SCANNING</a></h2>
+<p>The variable <code>$PDL::AutoLoader::Rescan</code> controls whether files
+are automatically re-scanned for changes at the <code>perldl</code> or
+<code>pdl2</code> command line.</p>
+<p>If <code>$PDL::AutoLoader::Rescan == 1</code> and the file is changed
+then the new definition is reloaded auto-matically before
+executing the <code>perldl</code> or <code>pdl2</code> command line. Which means
+in practice you can edit files, save changes and have <code>perldl</code>
+or <code>pdl2</code> see the changes automatically.</p>
+<p>The default is '0' - i.e. to have this feature disabled.</p>
+<p>As this feature is only pertinent to the PDL shell it imposes
+no overhead on PDL scripts. Yes Bob you can have your cake and
+eat it too!</p>
+<p>Note: files are only re-evaled if they are determined to have
+been changed according to their date/time stamp.</p>
+<p>No doubt this interface could be improved upon some more. :-)</p>
+<p>
+</p>
+<h2><a name="sample_file_">Sample file:</a></h2>
+<pre>
+ sub foo { # file 'foo.pdl' - define the 'foo' function
+   my $x=shift;
+   return sqrt($x**2 + $x**3 + 2);
+ }
+ 1; # File returns true (i.e. loaded successfully)</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright(C) 1997 Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>)
+several extensions by Craig DeForest (<a href="mailto:deforest@boulder.swri.edu">deforest@boulder.swri.edu</a>)
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>No doubt this interface could be improved upon some more. :-)</p>
+<p>Will probably be quite slow if <code>$PDL::AutoLoader::Rescan == 1</code>
+and thousands of functions have been autoloaded.</p>
+<p>There could be a race condition in which the file changes
+while the internal autoloader code is being executed but it
+should be harmless.</p>
+<p>Probably has not been tested enough!</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>For an alternative approach to managing a personal collaction of 
+modules and functions, see <a href="../local/lib.html">the local::lib manpage</a>.</p>
+<p>
+</p>
+<h2><a name="pdl__autoloader__expand_path">PDL::AutoLoader::expand_path</a></h2>
+<p>Expand a compactified path into a dir list</p>
+<p>You supply a pathlist and leading '+' and '~' characters get expanded into
+full directories.  Normally you don't want to use this -- it's internal to the
+autoloader -- but some utilities, like the online documentation searcher, need
+to be able to use it.</p>
+
+</body>
+
+</html>

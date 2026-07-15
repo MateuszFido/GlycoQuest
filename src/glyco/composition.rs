@@ -1,8 +1,8 @@
 //! Parse Byonic-style glycan composition strings such as `HexNAc(2)Hex(5)Fuc(1)`.
 
 use std::collections::BTreeMap;
-use std::path::Path;
 use std::collections::HashMap;
+use std::path::Path;
 
 /// Parsed residue counts, keyed by the canonical residue name.
 pub type Composition = BTreeMap<String, u32>;
@@ -44,7 +44,13 @@ pub fn load_masses(path: &Path) -> Result<Masses, String> {
         let mut fields = line.split('\t');
         let name = fields
             .next()
-            .ok_or_else(|| format!("malformed residue line {} in {}", line_no + 1, path.display()))?
+            .ok_or_else(|| {
+                format!(
+                    "malformed residue line {} in {}",
+                    line_no + 1,
+                    path.display()
+                )
+            })?
             .trim();
         let mass_str = fields.next().ok_or_else(|| {
             format!(
@@ -106,7 +112,6 @@ pub fn composition_mass(composition: &Composition, masses: &Masses) -> Result<f6
     Ok(total)
 }
 
-
 /// One composition string per non-empty line; duplicates keep the first occurrence.
 pub fn read_compositions(path: &Path) -> Result<Vec<String>, String> {
     let content = std::fs::read_to_string(path)
@@ -136,7 +141,10 @@ pub fn read_compositions(path: &Path) -> Result<Vec<String>, String> {
     }
 
     if compositions.is_empty() {
-        return Err(format!("no glycan compositions found in {}", path.display()));
+        return Err(format!(
+            "no glycan compositions found in {}",
+            path.display()
+        ));
     }
 
     if duplicate_count > 0 {
@@ -170,7 +178,9 @@ pub fn parse_composition(line: &str) -> Result<Composition, String> {
 
         let residue = rest[..open].trim();
         if residue.is_empty() {
-            return Err(format!("invalid glycan composition (empty residue): {line}"));
+            return Err(format!(
+                "invalid glycan composition (empty residue): {line}"
+            ));
         }
 
         let count_str = rest[open + 1..close].trim();
@@ -178,7 +188,9 @@ pub fn parse_composition(line: &str) -> Result<Composition, String> {
             .parse()
             .map_err(|_| format!("invalid residue count in composition: {line}"))?;
         if count == 0 {
-            return Err(format!("residue count must be positive in composition: {line}"));
+            return Err(format!(
+                "residue count must be positive in composition: {line}"
+            ));
         }
 
         let canonical = canonical_residue(residue).to_string();
@@ -201,19 +213,15 @@ pub fn contains_family(glycan: &Composition, family: &str) -> bool {
 
 /// True when `glycan` has enough counts to supply `needed`.
 pub fn can_supply(glycan: &Composition, needed: &Composition) -> bool {
-    needed.iter().all(|(residue, needed_count)| {
-        glycan
-            .get(residue)
-            .copied()
-            .unwrap_or(0)
-            >= *needed_count
-    })
+    needed
+        .iter()
+        .all(|(residue, needed_count)| glycan.get(residue).copied().unwrap_or(0) >= *needed_count)
 }
 
 #[cfg(test)]
 mod tests {
-    use std::io::Write;
     use super::*;
+    use std::io::Write;
 
     #[test]
     fn skips_hash_header_and_loads_masses() {
@@ -286,20 +294,21 @@ mod tests {
     fn rejects_zero_count() {
         assert!(parse_composition("HexNAc(0)").is_err());
     }
-    
+
     #[test]
     fn dedupes_duplicate_compositions() {
-        let path = std::env::temp_dir().join(format!(
-            "glycoquest_glyc_test_{}.glyc",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("glycoquest_glyc_test_{}.glyc", std::process::id()));
         let mut file = std::fs::File::create(&path).unwrap();
         writeln!(file, "HexNAc(1)").unwrap();
         writeln!(file, "HexNAc(2)").unwrap();
         writeln!(file, "HexNAc(1)").unwrap();
 
         let compositions = read_compositions(&path).unwrap();
-        assert_eq!(compositions, vec!["HexNAc(1)".to_string(), "HexNAc(2)".to_string()]);
+        assert_eq!(
+            compositions,
+            vec!["HexNAc(1)".to_string(), "HexNAc(2)".to_string()]
+        );
         let _ = std::fs::remove_file(path);
     }
 }

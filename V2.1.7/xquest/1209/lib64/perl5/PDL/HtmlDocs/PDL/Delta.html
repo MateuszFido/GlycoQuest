@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Delta - PDL changes between V1.0 and V2.0</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#core_changes">Core Changes</a></li>
+	<ul>
+
+		<li><a href="#piddles_are_not_hashes_any_more_">Piddles are not hashes any more:</a></li>
+		<li><a href="#incompatible_changes_vs_1_11">Incompatible Changes vs 1.11</a></li>
+	</ul>
+
+	<li><a href="#documentation_changes">Documentation Changes</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#history">HISTORY</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Delta - PDL changes between V1.0 and V2.0</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This file is an attempt to list the major user-visible changes
+between PDL versions 1.0 and 2.0.</p>
+<p>
+</p>
+<hr />
+<h1><a name="core_changes">Core Changes</a></h1>
+<p>
+</p>
+<h2><a name="piddles_are_not_hashes_any_more_">Piddles are not hashes any more:</a></h2>
+<pre>
+    $a = zeroes 10,10;
+    $$a{FOO} = &quot;bar&quot;</pre>
+<p>doesn't work. They are currently scalar references (to opaque
+C structures in finer terms) because of speed as well as
+syntactic issues. If you want to have a hash, use</p>
+<pre>
+    $a-&gt;hdr()</pre>
+<p>which returns a reference to an anonymous hash. Also,
+subclassing works if you store a piddle in the hash member ``PDL''.</p>
+<p>There are also many core enhancements to support Dataflow and
+Slicing tricks, but these do not introduce any incompatibilities.</p>
+<p>
+</p>
+<h2><a name="incompatible_changes_vs_1_11">Incompatible Changes vs 1.11</a></h2>
+<dl>
+<dt><strong><a name="rgrep" class="item">rgrep</a></strong></dt>
+
+<dd>
+<p>Order of the arguments has changed.</p>
+</dd>
+<dt><strong><a name="copy_method" class="item">copy method</a></strong></dt>
+
+<dd>
+<p>No longer copies the header. This may not be a misfeature.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="documentation_changes">Documentation Changes</a></h1>
+<p>Many of the base and library pods were updated.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p>The <em class="file">Changes</em> file for exhaustive details on what changed.</p>
+<p>The <em class="file">INSTALL</em> file for how to build PDL.</p>
+<p>The <em class="file">README</em> file for general stuff.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>pdldelta was inspired by <em>perldelta</em>  man page in the Perl
+5.004 distribution.</p>
+
+</body>
+
+</html>

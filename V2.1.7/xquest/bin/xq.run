@@ -1,0 +1,3 @@
+echo "Submitting runxq*.sh files to queue"
+find `pwd` -type f -name runxq*.sh
+find `pwd` -type f -name runxq*.sh -exec qsub '{}' \;

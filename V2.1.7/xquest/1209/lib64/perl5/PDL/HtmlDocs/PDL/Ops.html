@@ -1,0 +1,548 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Ops - Fundamental mathematical operators</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#plus">plus</a></li>
+		<li><a href="#mult">mult</a></li>
+		<li><a href="#minus">minus</a></li>
+		<li><a href="#divide">divide</a></li>
+		<li><a href="#gt">gt</a></li>
+		<li><a href="#lt">lt</a></li>
+		<li><a href="#le">le</a></li>
+		<li><a href="#ge">ge</a></li>
+		<li><a href="#eq">eq</a></li>
+		<li><a href="#ne">ne</a></li>
+		<li><a href="#shiftleft">shiftleft</a></li>
+		<li><a href="#shiftright">shiftright</a></li>
+		<li><a href="#or2">or2</a></li>
+		<li><a href="#and2">and2</a></li>
+		<li><a href="#xor">xor</a></li>
+		<li><a href="#bitnot">bitnot</a></li>
+		<li><a href="#power">power</a></li>
+		<li><a href="#atan2">atan2</a></li>
+		<li><a href="#modulo">modulo</a></li>
+		<li><a href="#spaceship">spaceship</a></li>
+		<li><a href="#sqrt">sqrt</a></li>
+		<li><a href="#abs">abs</a></li>
+		<li><a href="#sin">sin</a></li>
+		<li><a href="#cos">cos</a></li>
+		<li><a href="#not">not</a></li>
+		<li><a href="#exp">exp</a></li>
+		<li><a href="#log">log</a></li>
+		<li><a href="#log10">log10</a></li>
+		<li><a href="#assgn">assgn</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Ops - Fundamental mathematical operators</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides the functions used by PDL to
+overload the basic mathematical operators (<code>+ - / *</code>
+etc.) and functions (<code>sin sqrt</code> etc.)</p>
+<p>It also includes the function <code>log10</code>, which should
+be a perl function so that we can overload it!</p>
+<p>Matrix multiplication (the operator <code>x</code>) is handled
+by the module <a href="./Primitive.html">PDL::Primitive</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>none</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="plus">plus</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>add two piddles</p>
+<pre>
+   $c = plus $a, $b, 0;     # explicit call with trailing 0
+   $c = $a + $b;           # overloaded call
+   $a-&gt;inplace-&gt;plus($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>+</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>plus does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="mult">mult</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>multiply two piddles</p>
+<pre>
+   $c = mult $a, $b, 0;     # explicit call with trailing 0
+   $c = $a * $b;           # overloaded call
+   $a-&gt;inplace-&gt;mult($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>*</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>mult does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="minus">minus</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>subtract two piddles</p>
+<pre>
+   $c = minus $a, $b, 0;     # explicit call with trailing 0
+   $c = $a - $b;           # overloaded call
+   $a-&gt;inplace-&gt;minus($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>-</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>minus does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="divide">divide</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>divide two piddles</p>
+<pre>
+   $c = divide $a, $b, 0;     # explicit call with trailing 0
+   $c = $a / $b;           # overloaded call
+   $a-&gt;inplace-&gt;divide($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>/</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>divide does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="gt">gt</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>the binary &gt; (greater than) operation</p>
+<pre>
+   $c = gt $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &gt; $b;           # overloaded call
+   $a-&gt;inplace-&gt;gt($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&gt;</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>gt does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="lt">lt</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>the binary &lt; (less than) operation</p>
+<pre>
+   $c = lt $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &lt; $b;           # overloaded call
+   $a-&gt;inplace-&gt;lt($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&lt;</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>lt does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="le">le</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>the binary &lt;= (less equal) operation</p>
+<pre>
+   $c = le $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &lt;= $b;           # overloaded call
+   $a-&gt;inplace-&gt;le($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&lt;=</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>le does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="ge">ge</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>the binary &gt;= (greater equal) operation</p>
+<pre>
+   $c = ge $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &gt;= $b;           # overloaded call
+   $a-&gt;inplace-&gt;ge($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&gt;=</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>ge does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="eq">eq</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>binary <em>equal to</em> operation (<code>==</code>)</p>
+<pre>
+   $c = eq $a, $b, 0;     # explicit call with trailing 0
+   $c = $a == $b;           # overloaded call
+   $a-&gt;inplace-&gt;eq($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>==</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>eq does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="ne">ne</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>binary <em>not equal to</em> operation (<code>!=</code>)</p>
+<pre>
+   $c = ne $a, $b, 0;     # explicit call with trailing 0
+   $c = $a != $b;           # overloaded call
+   $a-&gt;inplace-&gt;ne($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>!=</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>ne does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="shiftleft">shiftleft</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>leftshift <code>a$</code> by <code>$b</code></p>
+<pre>
+   $c = shiftleft $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &lt;&lt; $b;           # overloaded call
+   $a-&gt;inplace-&gt;shiftleft($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&lt;&lt;</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>shiftleft does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="shiftright">shiftright</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>leftshift <code>a$</code> by <code>$b</code></p>
+<pre>
+   $c = shiftright $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &gt;&gt; $b;           # overloaded call
+   $a-&gt;inplace-&gt;shiftright($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&gt;&gt;</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>shiftright does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="or2">or2</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>binary <em>or</em> of two piddles</p>
+<pre>
+   $c = or2 $a, $b, 0;     # explicit call with trailing 0
+   $c = $a | $b;           # overloaded call
+   $a-&gt;inplace-&gt;or2($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>|</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>or2 does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="and2">and2</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>binary <em>and</em> of two piddles</p>
+<pre>
+   $c = and2 $a, $b, 0;     # explicit call with trailing 0
+   $c = $a &amp; $b;           # overloaded call
+   $a-&gt;inplace-&gt;and2($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&amp;</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>and2 does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="xor">xor</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>binary <em>exclusive or</em> of two piddles</p>
+<pre>
+   $c = xor $a, $b, 0;     # explicit call with trailing 0
+   $c = $a ^ $b;           # overloaded call
+   $a-&gt;inplace-&gt;xor($b,0);  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>^</code> operator.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>xor does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="bitnot">bitnot</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>unary bit negation</p>
+<pre>
+   $b = ~ $a;
+   $a-&gt;inplace-&gt;bitnot;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>~</code> operator/function.</p>
+<p>bitnot does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="power">power</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>raise piddle <code>$a</code> to the power <code>b</code></p>
+<pre>
+   $c = $a-&gt;power($b,0); # explicit function call
+   $c = $a ** $b;    # overloaded use
+   $a-&gt;inplace-&gt;power($b,0);     # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>**</code> function.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>power does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="atan2">atan2</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>elementwise <code>atan2</code> of two piddles</p>
+<pre>
+   $c = $a-&gt;atan2($b,0); # explicit function call
+   $c = atan2 $a, $b;    # overloaded use
+   $a-&gt;inplace-&gt;atan2($b,0);     # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>atan2</code> function.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>atan2 does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="modulo">modulo</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>elementwise <code>modulo</code> operation</p>
+<pre>
+   $c = $a-&gt;modulo($b,0); # explicit function call
+   $c = $a % $b;    # overloaded use
+   $a-&gt;inplace-&gt;modulo($b,0);     # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>%</code> function.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>modulo does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="spaceship">spaceship</a></h2>
+<pre>
+  Signature: (a(); b(); [o]c(); int swap)</pre>
+<p>elementwise &quot;&lt;=&gt;&quot; operation</p>
+<pre>
+   $c = $a-&gt;spaceship($b,0); # explicit function call
+   $c = $a &lt;=&gt; $b;    # overloaded use
+   $a-&gt;inplace-&gt;spaceship($b,0);     # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the binary <code>&lt;=&gt;</code> function.
+Note that when calling this function explicitly you need to supply
+a third argument that should generally be zero (see first example).
+This restriction is expected to go away in future releases.</p>
+<p>spaceship does handle bad values.
+The state of the bad-value flag of the output piddles is unknown.</p>
+<p>
+</p>
+<h2><a name="sqrt">sqrt</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>elementwise square root</p>
+<pre>
+   $b = sqrt $a;
+   $a-&gt;inplace-&gt;sqrt;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>sqrt</code> operator/function.</p>
+<p>sqrt does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="abs">abs</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>elementwise absolute value</p>
+<pre>
+   $b = abs $a;
+   $a-&gt;inplace-&gt;abs;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>abs</code> operator/function.</p>
+<p>abs does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="sin">sin</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the sin function</p>
+<pre>
+   $b = sin $a;
+   $a-&gt;inplace-&gt;sin;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>sin</code> operator/function.</p>
+<p>sin does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cos">cos</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the cos function</p>
+<pre>
+   $b = cos $a;
+   $a-&gt;inplace-&gt;cos;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>cos</code> operator/function.</p>
+<p>cos does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="not">not</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the elementwise <em>not</em> operation</p>
+<pre>
+   $b = ! $a;
+   $a-&gt;inplace-&gt;not;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>!</code> operator/function.</p>
+<p>not does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="exp">exp</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the exponential function</p>
+<pre>
+   $b = exp $a;
+   $a-&gt;inplace-&gt;exp;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>exp</code> operator/function.</p>
+<p>exp does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="log">log</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the natural logarithm</p>
+<pre>
+   $b = log $a;
+   $a-&gt;inplace-&gt;log;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>log</code> operator/function.</p>
+<p>log does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="log10">log10</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>the base 10 logarithm</p>
+<pre>
+   $b = log10 $a;
+   $a-&gt;inplace-&gt;log10;  # modify $a inplace</pre>
+<p>It can be made to work inplace with the <code>$a-&gt;inplace</code> syntax.
+This function is used to overload the unary <code>log10</code> operator/function.</p>
+<p>log10 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="assgn">assgn</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Plain numerical assignment. This is used to implement the &quot;.=&quot; operator</p>
+<p>assgn does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Tuomas J. Lukka (<a href="mailto:lukka@fas.harvard.edu">lukka@fas.harvard.edu</a>),
+Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>), 
+Doug Hunt (<a href="mailto:dhunt@ucar.edu">dhunt@ucar.edu</a>), 
+Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>),
+Doug Burke (<a href="mailto:burke@ifa.hawaii.edu">burke@ifa.hawaii.edu</a>),
+and Craig DeForest (<a href="mailto:deforest@boulder.swri.edu">deforest@boulder.swri.edu</a>)</p>
+
+</body>
+
+</html>

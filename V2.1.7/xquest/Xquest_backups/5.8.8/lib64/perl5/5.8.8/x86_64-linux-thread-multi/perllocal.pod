@@ -1,0 +1,22 @@
+=head2 Mon Oct 26 17:30:15 2009: C<Module> L<HTML::Parser|HTML::Parser>
+
+=over 4
+
+=item *
+
+C<installed into: /cluster/home/biol/wathomas/perl/lib/perl5/site_perl/5.8.8/lib/perl5/site_perl/5.8.8>
+
+=item *
+
+C<LINKTYPE: dynamic>
+
+=item *
+
+C<VERSION: 3.64>
+
+=item *
+
+C<EXE_FILES: >
+
+=back
+

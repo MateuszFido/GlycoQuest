@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Filter::LinPred - Linear predictive filtering</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Filter::LinPred - Linear predictive filtering</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        $a = new PDL::Filter::LinPred(
+                {NLags =&gt; 10,
+                 LagInterval =&gt; 2,
+                 LagsBehind =&gt; 2,
+                 Data =&gt; $dat});</pre>
+<pre>
+        ($pd,$corrslic) = $a-&gt;predict($dat);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>A filter by doing linear prediction: tries to predict the next value
+in a data stream as accurately as possible. The filtered data is the
+predicted value. The parameters are</p>
+<dl>
+<dt><strong><a name="nlags" class="item">NLags</a></strong></dt>
+
+<dd>
+<p>Number of time lags used for prediction</p>
+</dd>
+<dt><strong><a name="laginterval" class="item">LagInterval</a></strong></dt>
+
+<dd>
+<p>How many points each lag should be</p>
+</dd>
+<dt><strong><a name="lagsbehind" class="item">LagsBehind</a></strong></dt>
+
+<dd>
+<p>If, for some strange reason, you wish to predict not the next but
+the one after that (i.e. usually f(t) is predicted from f(t-1) and f(t-2)
+etc., but with LagsBehind =&gt; 2, f(t) is predicted from f(t-2) and f(t-3)).</p>
+</dd>
+<dt><strong><a name="data" class="item">Data</a></strong></dt>
+
+<dd>
+<p>The input data, which may contain other dimensions past the first (time).
+The extraneous dimensions are assumed to represent epochs so the data
+is just concatenated.</p>
+</dd>
+<dt><strong><a name="autocovar" class="item">AutoCovar</a></strong></dt>
+
+<dd>
+<p>As an alternative to <strong>Data</strong>, you can just give the temporal autocorrelation
+function.</p>
+</dd>
+<dt><strong><a name="smooth" class="item">Smooth</a></strong></dt>
+
+<dd>
+<p>Don't do prediction or filtering but smoothing.</p>
+</dd>
+</dl>
+<p>The method <strong>predict</strong> gives a prediction for some data plus a corresponding
+slice of the data, if evaluated in list context. This slice is given
+so that you may, if you wish, easily plot them atop each other.</p>
+<p>The rest of the documentation is under lazy evaluation.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) Tuomas J. Lukka 1997.
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

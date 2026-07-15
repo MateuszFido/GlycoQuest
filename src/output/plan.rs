@@ -108,11 +108,7 @@ fn json_str(value: &str) -> String {
 }
 
 fn json_bool(value: bool) -> &'static str {
-    if value {
-        "true"
-    } else {
-        "false"
-    }
+    if value { "true" } else { "false" }
 }
 
 pub fn build_run_plan_document(

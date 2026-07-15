@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::ParallelCPU - Parallel Processor MultiThreading Support in PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#terminology">Terminology</a></li>
+	<li><a href="#functions_that_control_pdl_pthreads">Functions that control PDL PThreads</a></li>
+	<li><a href="#global_control_of_pdl_pthreading_using_environment_variables">Global Control of PDL PThreading using Environment Variables</a></li>
+	<li><a href="#how_it_works">How It Works</a></li>
+	<li><a href="#limitations">Limitations</a></li>
+	<ul>
+
+		<li><a href="#must_have_posix_threads_enabled">Must have POSIX Threads Enabled</a></li>
+		<li><a href="#non_threadsafe_code">Non-Threadsafe Code</a></li>
+		<li><a href="#size_of_pdl_dimensions_and_pthread_target">Size of PDL Dimensions and PThread Target</a></li>
+		<li><a href="#speed_improvement_might_be_less_than_you_expect_">Speed improvement might be less than you expect.</a></li>
+	</ul>
+
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::ParallelCPU - Parallel Processor MultiThreading Support in PDL (Experimental)</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>PDL has support (currently experimental) for splitting up numerical processing
+between multiple parallel processor threads (or pthreads) using the <em>set_autopthread_targ</em>
+and <em>set_autopthread_size</em> functions.
+This can improve processing performance (by greater than 2-4X in most cases)
+by taking advantage of multi-core and/or multi-processor machines.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use PDL;
+  
+  # Set target of 4 parallel pthreads to create, with a lower limit of
+  #  5Meg elements for splitting processing into parallel pthreads.
+  set_autopthread_targ(4);
+  set_autopthread_size(5);
+  
+  $a = zeroes(5000,5000); # Create 25Meg element array
+  
+  $b = $a + 5; # Processing will be split up into multiple pthreads
+  
+  # Get the actual number of pthreads for the last
+  #  processing operation.
+  $actualPthreads = get_autopthread_actual();</pre>
+<p>
+</p>
+<hr />
+<h1><a name="terminology">Terminology</a></h1>
+<p>The use of the term <em>threading</em> can be confusing with PDL, because it can refer to <em>PDL threading</em>,
+as defined in the <a href="./Threading.html">the PDL::Threading manpage</a> docs, or to <em>processor multi-threading</em>.</p>
+<p>To reduce confusion with the existing PDL threading terminology, this document uses 
+<strong>pthreading</strong> to refer to <em>processor multi-threading</em>, which is the use of multiple processor threads
+to split up numerical processing into parallel operations.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions_that_control_pdl_pthreads">Functions that control PDL PThreads</a></h1>
+<p>This is a brief listing and description of the PDL pthreading functions, see the <a href="./Core.html">the PDL::Core manpage</a> docs
+for detailed information.</p>
+<dl>
+<dt><strong><a name="set_autopthread_targ" class="item">set_autopthread_targ</a></strong></dt>
+
+<dd>
+<p>Set the target number of processor-threads (pthreads) for multi-threaded processing. Setting auto_pthread_targ
+to 0 means that no pthreading will occur.</p>
+<p>See <a href="#set_autopthread_targ">PDL::Core</a> for details.</p>
+</dd>
+<dt><strong><a name="set_autopthread_size" class="item">set_autopthread_size</a></strong></dt>
+
+<dd>
+<p>Set the minimum size (in Meg-elements or 2**20 elements) of the largest PDL involved in a function where auto-pthreading will
+be performed. For small PDLs, it probably isn't worth starting multiple pthreads, so this function
+is used to define a minimum threshold where auto-pthreading won't be attempted.</p>
+<p>See <a href="#set_autopthread_size">PDL::Core</a> for details.</p>
+</dd>
+<dt><strong><a name="get_autopthread_actual" class="item">get_autopthread_actual</a></strong></dt>
+
+<dd>
+<p>Get the actual number of pthreads executed for the last pdl processing function.</p>
+<p>See <a href="./get_autopthread_actual.html">the PDL::get_autopthread_actual manpage</a> for details.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="global_control_of_pdl_pthreading_using_environment_variables">Global Control of PDL PThreading using Environment Variables</a></h1>
+<p>PDL PThreading can be globally turned on, without modifying existing code by setting 
+environment variables <strong>PDL_AUTOPTHREAD_TARG</strong> and <strong>PDL_AUTOPTHREAD_SIZE</strong> before running a PDL script.
+These environment variables are checked when PDL starts up and calls to <em>set_autopthread_targ</em> and
+<em>set_autopthread_size</em> functions made with the environment variable's values.</p>
+<p>For example, if the environment var <strong>PDL_AUTOPTHREAD_TARG</strong> is set to 3, and <strong>PDL_AUTOPTHREAD_SIZE</strong> is
+set to 10, then any pdl script will run as if the following lines were at the top of the file:</p>
+<pre>
+ set_autopthread_targ(3);
+ set_autopthread_size(10);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="how_it_works">How It Works</a></h1>
+<p>The auto-pthreading process works by analyzing threaded array dimensions in PDL operations
+and splitting up processing based on the thread dimension sizes and desired number of 
+pthreads (i.e. the pthread target or pthread_targ). The offsets and increments that PDL uses to step
+thru the data in memory are modified for each pthread so each one sees a different set of data when
+performing processing.</p>
+<p><strong>Example</strong></p>
+<pre>
+ $a = sequence(20,4,3); # Small 3-D Array, size 20,4,3
+ 
+ # Setup auto-pthreading:
+ set_autopthread_targ(2); # Target of 2 pthreads
+ set_autopthread_size(0); # Zero so that the small PDLs in this example will be pthreaded</pre>
+<pre>
+ # This will be split up into 2 pthreads
+ $c = maximum($a);</pre>
+<p>For the above example, the <em>maximum</em> function has a signature of <code>(a(n); [o]c())</code>, which means that the first
+dimension of $a (size 20) is a <em>Core</em> dimension of the <em>maximum</em> function. The other dimensions of $a (size 4,3)
+are <em>threaded</em> dimensions (i.e. will be threaded-over in the <em>maximum</em> function.</p>
+<p>The auto-pthreading algorithm examines the threaded dims of size (4,3) and picks the 4 dimension, 
+since it is evenly divisible by the autopthread_targ of 2. The processing of the maximum function is then 
+split into two pthreads on the size-4 dimension, with dim indexes 0,2 processed by one pthread
+ and dim indexes 1,3 processed by the other pthread.</p>
+<p>
+</p>
+<hr />
+<h1><a name="limitations">Limitations</a></h1>
+<p>
+</p>
+<h2><a name="must_have_posix_threads_enabled">Must have POSIX Threads Enabled</a></h2>
+<p>Auto-PThreading only works if your PDL installation was compiled with POSIX threads enabled. This is normally
+the case if you are running on linux, or other unix variants.</p>
+<p>
+</p>
+<h2><a name="non_threadsafe_code">Non-Threadsafe Code</a></h2>
+<p>Not all the libraries that PDL intefaces to are thread-safe, i.e. they aren't written to operate
+in a multi-threaded environment without crashing or causing side-effects. Some examples in the PDL
+core is the <em>fft</em> function and the <em>pnmout</em> functions.</p>
+<p>To operate properly with these types of functions, the PPCode flag <strong>NoPthread</strong> has been introduced to indicate
+a function as <em>not</em> being pthread-safe. See <a href="./PP.html">the PDL::PP manpage</a> docs for details.</p>
+<p>
+</p>
+<h2><a name="size_of_pdl_dimensions_and_pthread_target">Size of PDL Dimensions and PThread Target</a></h2>
+<p>Due to the way a PDL is split-up for operation using multiple pthreads, the size of a dimension
+must be evenly divisible by the pthread target. For example, if a PDL has threaded dimension sizes
+of (4,3,3) and the <em>auto_pthread_targ</em> has been set to 2, then the first threaded dimension (size 4) will
+be picked to be split up into two pthreads of size 2 and 2. However, if the threaded dimension sizes are
+(3,3,3) and the <em>auto_pthread_targ</em> is still 2, then pthreading won't occur, because no threaded dimensions
+are divisible by 2.</p>
+<p>The algorithm that picks the actual number of pthreads has some smarts (but could probably be improved) 
+to adjust down from the <em>auto_pthread_targ</em> to get a number of pthreads that can evenly divide one of the
+threaded dimensions. For example, if a PDL has threaded dimension sizes of (9,2,2) and the
+<em>auto_pthread_targ</em> is 4, the algorithm will see that no dimension is divisible by 4, then adjust
+down the target to 3, resulting in splitting up the first threaded dimension (size 9) into 3 pthreads.</p>
+<p>
+</p>
+<h2><a name="speed_improvement_might_be_less_than_you_expect_">Speed improvement might be less than you expect.</a></h2>
+<p>If you have a 8 core machine and call <em>auto_pthread_targ</em> with 8 to generate 8 parallel pthreads, you
+probably won't get a 8X improvement in speed, due to memory bandwidth issues. Even though you have 8 separate
+CPUs crunching away on data, you will have (for most common machine architectures) common RAM that now becomes
+your bottleneck. For simple calculations (e.g simple additions) you can run into a performance limit at about
+ 4 pthreads. For more complex calculations the limit will be higher.</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>Copyright 2011 John Cerney. You can distribute and/or
+modify this document under the same terms as the current Perl license.</p>
+<p>See: <a href="http://dev.perl.org/licenses/">http://dev.perl.org/licenses/</a></p>
+
+</body>
+
+</html>

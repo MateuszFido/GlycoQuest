@@ -1,0 +1,158 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::ELLINT - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_ellint_kcomp">gsl_sf_ellint_Kcomp</a></li>
+		<li><a href="#gsl_sf_ellint_ecomp">gsl_sf_ellint_Ecomp</a></li>
+		<li><a href="#gsl_sf_ellint_f">gsl_sf_ellint_F</a></li>
+		<li><a href="#gsl_sf_ellint_e">gsl_sf_ellint_E</a></li>
+		<li><a href="#gsl_sf_ellint_p">gsl_sf_ellint_P</a></li>
+		<li><a href="#gsl_sf_ellint_d">gsl_sf_ellint_D</a></li>
+		<li><a href="#gsl_sf_ellint_rc">gsl_sf_ellint_RC</a></li>
+		<li><a href="#gsl_sf_ellint_rd">gsl_sf_ellint_RD</a></li>
+		<li><a href="#gsl_sf_ellint_rf">gsl_sf_ellint_RF</a></li>
+		<li><a href="#gsl_sf_ellint_rj">gsl_sf_ellint_RJ</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::ELLINT - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_kcomp">gsl_sf_ellint_Kcomp</a></h2>
+<pre>
+  Signature: (double k(); double [o]y(); double [o]e())</pre>
+<p>Legendre form of complete elliptic integrals K(k) = Integral[1/Sqrt[1 - k^2 Sin[t]^2], {t, 0, Pi/2}].</p>
+<p>gsl_sf_ellint_Kcomp does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_ecomp">gsl_sf_ellint_Ecomp</a></h2>
+<pre>
+  Signature: (double k(); double [o]y(); double [o]e())</pre>
+<p>Legendre form of complete elliptic integrals E(k) = Integral[  Sqrt[1 - k^2 Sin[t]^2], {t, 0, Pi/2}]</p>
+<p>gsl_sf_ellint_Ecomp does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_f">gsl_sf_ellint_F</a></h2>
+<pre>
+  Signature: (double phi(); double k(); double [o]y(); double [o]e())</pre>
+<p>Legendre form of incomplete elliptic integrals F(phi,k)   = Integral[1/Sqrt[1 - k^2 Sin[t]^2], {t, 0, phi}]</p>
+<p>gsl_sf_ellint_F does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_e">gsl_sf_ellint_E</a></h2>
+<pre>
+  Signature: (double phi(); double k(); double [o]y(); double [o]e())</pre>
+<p>Legendre form of incomplete elliptic integrals E(phi,k)   = Integral[  Sqrt[1 - k^2 Sin[t]^2], {t, 0, phi}]</p>
+<p>gsl_sf_ellint_E does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_p">gsl_sf_ellint_P</a></h2>
+<pre>
+  Signature: (double phi(); double k(); double n();
+              double [o]y(); double [o]e())</pre>
+<p>Legendre form of incomplete elliptic integrals P(phi,k,n) = Integral[(1 + n Sin[t]^2)^(-1)/Sqrt[1 - k^2 Sin[t]^2], {t, 0, phi}]</p>
+<p>gsl_sf_ellint_P does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_d">gsl_sf_ellint_D</a></h2>
+<pre>
+  Signature: (double phi(); double k(); double n();
+              double [o]y(); double [o]e())</pre>
+<p>Legendre form of incomplete elliptic integrals D(phi,k,n)</p>
+<p>gsl_sf_ellint_D does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_rc">gsl_sf_ellint_RC</a></h2>
+<pre>
+  Signature: (double x(); double yy(); double [o]y(); double [o]e())</pre>
+<p>Carlsons symmetric basis of functions RC(x,y)   = 1/2 Integral[(t+x)^(-1/2) (t+y)^(-1)], {t,0,Inf}</p>
+<p>gsl_sf_ellint_RC does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_rd">gsl_sf_ellint_RD</a></h2>
+<pre>
+  Signature: (double x(); double yy(); double z(); double [o]y(); double [o]e())</pre>
+<p>Carlsons symmetric basis of functions RD(x,y,z) = 3/2 Integral[(t+x)^(-1/2) (t+y)^(-1/2) (t+z)^(-3/2), {t,0,Inf}]</p>
+<p>gsl_sf_ellint_RD does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_rf">gsl_sf_ellint_RF</a></h2>
+<pre>
+  Signature: (double x(); double yy(); double z(); double [o]y(); double [o]e())</pre>
+<p>Carlsons symmetric basis of functions RF(x,y,z) = 1/2 Integral[(t+x)^(-1/2) (t+y)^(-1/2) (t+z)^(-1/2), {t,0,Inf}]</p>
+<p>gsl_sf_ellint_RF does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_ellint_rj">gsl_sf_ellint_RJ</a></h2>
+<pre>
+  Signature: (double x(); double yy(); double z(); double p(); double [o]y(); double [o]e())</pre>
+<p>Carlsons symmetric basis of functions RJ(x,y,z,p) = 3/2 Integral[(t+x)^(-1/2) (t+y)^(-1/2) (t+z)^(-1/2) (t+p)^(-1), {t,0,Inf}]</p>
+<p>gsl_sf_ellint_RJ does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;,
+2002 Christian Soeller.
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

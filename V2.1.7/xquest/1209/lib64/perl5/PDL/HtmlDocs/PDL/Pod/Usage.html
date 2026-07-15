@@ -1,0 +1,141 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>pod2usage - print a usage message using a script's embedded pod documentation</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#example">EXAMPLE</a></li>
+	<li><a href="#caveats">CAVEATS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>pod2usage - print a usage message using a script's embedded pod documentation</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use PDL::Pod::Usage;
+    pod2usage();
+    pod2usage(2);
+    pod2usage({EXIT =&gt; 2});
+    pod2usage({EXIT =&gt; 2, VERBOSE =&gt; 0});
+    pod2usage(EXIT =&gt; 1, VERBOSE =&gt; 2, OUTPUT=\*STDERR);
+    pod2usage(VERBOSE =&gt; 2);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>pod2usage</strong> will print a usage message for the invoking script (using
+its embedded pod documentation) and then exit the script with the
+specified exit value. It takes a single argument which is either a
+numeric value corresponding to the desired exit status (which defaults
+to 2), or a reference to a hash. If more than one argument is given then
+the entire argument list is assumed to be a hash. If a hash is supplied
+it should contain elements with one or more of the following keys:</p>
+<dl>
+<dt><strong><a name="exit" class="item"><code>EXIT</code></a></strong></dt>
+
+<dd>
+<p>The desired exit status to pass to the <strong>exit()</strong> function.</p>
+</dd>
+<dt><strong><a name="verbose" class="item"><code>VERBOSE</code></a></strong></dt>
+
+<dd>
+<p>The desired level of &quot;verboseness&quot; to use when printing the usage
+message. If the corresponding value is 0, then only the &quot;SYNOPSIS&quot;
+section of the pod documentation is printed. If the corresponding value
+is 1, then the &quot;SYNOPSIS&quot; section, along with any section entitled
+&quot;OPTIONS&quot;, &quot;ARGUMENTS&quot;, or &quot;OPTIONS AND ARGUMENTS&quot; is printed.  If the
+corresponding value is 2 or more then the entire manpage is printed.</p>
+</dd>
+<dt><strong><a name="output" class="item"><code>OUTPUT</code></a></strong></dt>
+
+<dd>
+<p>A reference to a filehandle, or the pathname of a file to which the
+usage message should be written. The default is <code>\*STDERR</code> unless the
+exit value is less than 2 (in which case the default is <code>\*STDOUT</code>).</p>
+</dd>
+<dt><strong><a name="input" class="item"><code>INPUT</code></a></strong></dt>
+
+<dd>
+<p>A reference to a filehandle, or the pathname of a file from which the
+invoking script's pod documentation should be read.  It defaults to the
+file indicated by <code>$0</code> (<code>$PROGRAM_NAME</code> for <code>use English;</code> users).</p>
+</dd>
+</dl>
+<p>If neither the exit value nor the verbose level is specified, then the
+default is to use an exit value of 2 with a verbose level of 0.</p>
+<p>If an exit value is specified but the verbose level is not, then the
+verbose level will default to 1 if the exit value is less than 2 and
+will default to 0 otherwise.</p>
+<p>If a verbose level is specified but an exit value is not, then the exit
+value will default to 2 if the verbose level is 0 and will default to 1
+otherwise.</p>
+<p>
+</p>
+<hr />
+<h1><a name="example">EXAMPLE</a></h1>
+<p>Most scripts should print some type of usage message to STDERR when a
+command line syntax error is detected. They should also provide an
+option (usually <code>-h</code> or <code>-help</code>) to print a (possibly more verbose)
+usage message to STDOUT. Some scripts may even wish to go so far as to
+provide a means of printing their complete documentation to STDOUT
+(perhaps by allowing a <code>-man</code> option). The following example uses
+<strong>pod2usage</strong> in combination with <strong>Getopt::Long</strong> to do all of these
+things:</p>
+<pre>
+    use PDL::Pod::Usage;
+    use Getopt::Long;</pre>
+<pre>
+    GetOptions(&quot;help&quot;, &quot;man&quot;)  ||  pod2usage(2);
+    pod2usage(1)  if ($opt_help);
+    pod2usage(VERBOSE =&gt; 2)  if ($opt_man);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="caveats">CAVEATS</a></h1>
+<p>By default, <strong>pod2usage()</strong> will use <code>$0</code> as the path to the pod input
+file.  Unfortunately, not all systems on which Perl runs will set <code>$0</code>
+properly (although if <code>$0</code> isn't found, <strong>pod2usage()</strong> will search
+<code>$ENV{PATH}</code>).  If this is the case for your system, you may need to
+explicitly specify the path to the pod docs for the invoking script
+using something similar to the following:</p>
+<ul>
+<li>
+<p><code>pod2usage(EXIT =&gt; 2, INPUT =&gt; &quot;/path/to/your/pod/docs&quot;);</code></p>
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Brad Appleton &lt;<a href="mailto:Brad_Appleton-GBDA001@email.mot.com">Brad_Appleton-GBDA001@email.mot.com</a>&gt;</p>
+<p>Based on code for <strong>Pod::Text::pod2text()</strong> written by
+Tom Christiansen &lt;<a href="mailto:tchrist@mox.perl.com">tchrist@mox.perl.com</a>&gt;</p>
+
+</body>
+
+</html>

@@ -60,7 +60,9 @@ impl CrosslinkerPreset {
 
     pub fn by_name(name: &str) -> Option<&'static CrosslinkerPreset> {
         let key = name.trim().to_ascii_lowercase();
-        Self::PRESETS.iter().find(|p| p.id.eq_ignore_ascii_case(&key))
+        Self::PRESETS
+            .iter()
+            .find(|p| p.id.eq_ignore_ascii_case(&key))
     }
 
     pub fn to_profile(self) -> CrosslinkerProfile {

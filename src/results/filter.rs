@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use crate::cli::settings::Settings;
 use crate::crosslinker::CrosslinkerProfile;
 use crate::jobs::{JobManifest, VarModPlan};
-use crate::prefilter::{FilteredSpectrum, PrefilterResult};
+use crate::prefilter::{FilteredSpectrum, MatchedIon, PrefilterResult};
 use crate::results::extract::XQuestHit;
 
 /// A hit annotated with its glycan, originating spectrum, and post-filter outcome.
@@ -21,8 +21,11 @@ pub struct AnnotatedHit {
     pub loss_label: Option<String>,
     pub glyco_residue: Option<char>,
     pub glyco_peptide: Option<u8>,
+    pub glyco_sites: Vec<GlycoSite>,
+    pub all_sites_plausible: bool,
     pub n_glycan_pseudo: usize,
     pub matched_families: Vec<String>,
+    pub matched_ions: Vec<MatchedIon>,
     pub matched_ion_count: usize,
     pub sequon_present: Option<bool>,
     pub charge_plausible: bool,
@@ -31,12 +34,23 @@ pub struct AnnotatedHit {
     pub postfilter_status: PostfilterStatus,
 }
 
+/// One decoded glycan attachment site. Peptide positions are 1-based.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct GlycoSite {
+    pub peptide: u8,
+    pub peptide_position: usize,
+    pub residue: char,
+    pub sequon_present: Option<bool>,
+    pub plausible: bool,
+}
+
 /// Result of the hard (pass/fail) post-filter requirements.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HardStatus {
     Pass,
     FailNoXlink,
-    FailGlycanCount,
+    FailNoGlycan,
+    FailGlycanLimit,
     FailNoDiagnostic,
     FailPrecursorError,
     FailScore,
@@ -47,7 +61,8 @@ impl HardStatus {
         match self {
             Self::Pass => "pass",
             Self::FailNoXlink => "fail_no_xlink",
-            Self::FailGlycanCount => "fail_glycan_count",
+            Self::FailNoGlycan => "fail_no_glycan",
+            Self::FailGlycanLimit => "fail_glycan_limit",
             Self::FailNoDiagnostic => "fail_no_diagnostic",
             Self::FailPrecursorError => "fail_precursor_error",
             Self::FailScore => "fail_score",
@@ -73,9 +88,7 @@ impl PostfilterStatus {
 /// Annotate and post-filter xQuest hits.
 ///
 /// `hits` are `(job_id, hit)` pairs; the manifest supplies the glycan searched by
-/// each job, and the prefilter supplies diagnostic-ion evidence per scan. When the
-/// manifest is absent (e.g. `--resume`), annotation falls back to the job id and
-/// prefilter-dependent checks are skipped.
+/// each job, and the prefilter supplies diagnostic-ion evidence per scan.
 pub fn apply_postfilters(
     hits: Vec<(String, XQuestHit)>,
     settings: &Settings,
@@ -115,9 +128,14 @@ fn annotate_hit(
         .map(|plan| count_glycan_pseudos(&hit.seq1, &hit.seq2, plan))
         .unwrap_or_else(|| fallback_glycan_pseudo_count(&hit.seq1, &hit.seq2));
 
-    let site = plan.and_then(|plan| glyco_site(&hit.seq1, &hit.seq2, plan));
-    let glyco_peptide = site.map(|(peptide, _, _)| peptide);
-    let glyco_residue = site.map(|(_, _, residue)| residue);
+    let glyco_sites = plan
+        .map(|plan| glyco_sites(&hit.seq1, &hit.seq2, plan))
+        .unwrap_or_default();
+    let glyco_peptide = glyco_sites.first().map(|site| site.peptide);
+    let glyco_residue = glyco_sites.first().map(|site| site.residue);
+    let all_sites_plausible = glyco_sites.len() == n_glycan_pseudo
+        && !glyco_sites.is_empty()
+        && glyco_sites.iter().all(|site| site.plausible);
 
     let scan = parse_scan(&hit.spectrum_id);
     let source_file = entry.map(|e| e.source_file.clone());
@@ -126,16 +144,18 @@ fn annotate_hit(
     let matched_families = spectrum
         .map(|spec| spec.matched_families.clone())
         .unwrap_or_default();
-    let matched_ion_count = spectrum.map(|spec| spec.matched_ions.len()).unwrap_or(0);
+    let matched_ions = spectrum
+        .map(|spec| spec.matched_ions.clone())
+        .unwrap_or_default();
+    let matched_ion_count = matched_ions.len();
 
-    let sequon_present = site.and_then(|(peptide, pos, residue)| {
-        if residue == 'N' {
-            let seq = if peptide == 1 { &hit.seq1 } else { &hit.seq2 };
-            Some(has_sequon(seq, pos, plan))
-        } else {
-            None
-        }
-    });
+    let n_sites: Vec<&GlycoSite> = glyco_sites
+        .iter()
+        .filter(|site| site.residue == 'N')
+        .collect();
+    let sequon_present =
+        (!n_sites.is_empty()).then(|| n_sites.iter().all(|site| site.sequon_present == Some(true)));
+    let plausible_glycan_count = glyco_sites.iter().filter(|site| site.plausible).count();
 
     let charge_plausible = charge_plausible(hit.charge);
 
@@ -143,13 +163,14 @@ fn annotate_hit(
         &hit,
         settings,
         n_glycan_pseudo,
+        &glyco_sites,
         spectrum.is_some(),
         manifest.is_some(),
     );
 
     let soft_score = soft_score(
         &hit,
-        sequon_present,
+        plausible_glycan_count,
         charge_plausible,
         matched_ion_count,
     );
@@ -171,8 +192,11 @@ fn annotate_hit(
         loss_label,
         glyco_residue,
         glyco_peptide,
+        glyco_sites,
+        all_sites_plausible,
         n_glycan_pseudo,
         matched_families,
+        matched_ions,
         matched_ion_count,
         sequon_present,
         charge_plausible,
@@ -186,15 +210,24 @@ fn hard_status(
     hit: &XQuestHit,
     settings: &Settings,
     n_glycan_pseudo: usize,
+    glyco_sites: &[GlycoSite],
     diagnostic_positive: bool,
     have_manifest: bool,
 ) -> HardStatus {
     if hit.xlink_position.trim().is_empty() && hit.topology.trim().is_empty() {
         return HardStatus::FailNoXlink;
     }
-    // V1 class: peptide-glycopeptide crosslink requires exactly one glycan.
-    if n_glycan_pseudo != 1 {
-        return HardStatus::FailGlycanCount;
+    if n_glycan_pseudo == 0 {
+        return HardStatus::FailNoGlycan;
+    }
+    let max = settings.max_glycans_per_peptide as usize;
+    let peptide_1 = glyco_sites.iter().filter(|site| site.peptide == 1).count();
+    let peptide_2 = glyco_sites.iter().filter(|site| site.peptide == 2).count();
+    let decoded_all_sites = glyco_sites.len() == n_glycan_pseudo;
+    if (decoded_all_sites && (peptide_1 > max || peptide_2 > max))
+        || (!decoded_all_sites && n_glycan_pseudo > 2 * max)
+    {
+        return HardStatus::FailGlycanLimit;
     }
     // Diagnostic-ion evidence in the originating spectrum is a hard requirement,
     // but only checkable when prefilter state is available (a normal run).
@@ -212,14 +245,12 @@ fn hard_status(
 
 fn soft_score(
     hit: &XQuestHit,
-    sequon_present: Option<bool>,
+    plausible_glycan_count: usize,
     charge_plausible: bool,
     matched_ion_count: usize,
 ) -> f64 {
     let mut score = hit.score;
-    if sequon_present == Some(true) {
-        score += 1.0;
-    }
+    score += plausible_glycan_count as f64;
     if charge_plausible {
         score += 0.5;
     }
@@ -239,9 +270,10 @@ pub fn count_glycan_pseudos(seq1: &str, seq2: &str, plan: &VarModPlan) -> usize 
         .count()
 }
 
-/// The peptide (1 or 2), 0-based position, and source residue of the single glycan site.
-pub fn glyco_site(seq1: &str, seq2: &str, plan: &VarModPlan) -> Option<(u8, usize, char)> {
+/// Decode every glycan pseudo-residue across both peptide sequences.
+pub fn glyco_sites(seq1: &str, seq2: &str, plan: &VarModPlan) -> Vec<GlycoSite> {
     let glycan_pseudos = plan.glycan_pseudos();
+    let mut sites = Vec::new();
     for (peptide, seq) in [(1u8, seq1), (2u8, seq2)] {
         for (pos, ch) in seq.chars().enumerate() {
             if glycan_pseudos.contains(&ch) {
@@ -249,11 +281,23 @@ pub fn glyco_site(seq1: &str, seq2: &str, plan: &VarModPlan) -> Option<(u8, usiz
                     .entry_for_pseudo(ch)
                     .map(|entry| entry.source_residue)
                     .unwrap_or(ch);
-                return Some((peptide, pos, residue));
+                let sequon_present = (residue == 'N').then(|| has_sequon(seq, pos, Some(plan)));
+                let plausible = match residue {
+                    'N' => sequon_present == Some(true),
+                    'S' | 'T' => true,
+                    _ => false,
+                };
+                sites.push(GlycoSite {
+                    peptide,
+                    peptide_position: pos + 1,
+                    residue,
+                    sequon_present,
+                    plausible,
+                });
             }
         }
     }
-    None
+    sites
 }
 
 /// Is there an N-glycosylation sequon (N-X-S/T, X != P) at `pos` in the peptide?
@@ -333,7 +377,10 @@ fn glycan_from_job_id(job_id: &str) -> (Option<String>, Option<String>) {
             return (Some(stem.trim_end_matches('_').to_string()), Some(loss));
         }
     }
-    (Some(job_id.trim_end_matches('_').to_string()), Some("none".to_string()))
+    (
+        Some(job_id.trim_end_matches('_').to_string()),
+        Some("none".to_string()),
+    )
 }
 
 /// Without a manifest we cannot know the pseudo-residue set, so use xQuest's
@@ -347,6 +394,444 @@ fn fallback_glycan_pseudo_count(seq1: &str, seq2: &str) -> usize {
         .count()
 }
 
+/// Read annotated rows from `glycoquest_xquest.csv`.
+#[cfg(test)]
+pub fn read_annotated_csv(path: &std::path::Path) -> Result<Vec<AnnotatedHit>, String> {
+    let content = std::fs::read_to_string(path).map_err(|err| err.to_string())?;
+    let mut lines = content.lines();
+    let header = lines
+        .next()
+        .ok_or_else(|| format!("empty annotated CSV: {}", path.display()))?;
+    let cols: Vec<&str> = header.split('\t').collect();
+    let index = |name: &str| -> Result<usize, String> {
+        cols.iter()
+            .position(|col| *col == name)
+            .ok_or_else(|| format!("missing column {name} in {}", path.display()))
+    };
+    let i_source = index("source_file")?;
+    let i_scan = index("scan")?;
+    let i_glycan_name = index("glycan_name")?;
+    let i_glycan_composition = index("glycan_composition")?;
+    let i_glycan_mass = index("glycan_mass")?;
+    let i_loss = index("loss_label")?;
+    let i_glyco_residue = index("glyco_residue")?;
+    let i_glyco_peptide = index("glyco_peptide")?;
+    let i_glyco_sites = cols.iter().position(|col| *col == "glyco_sites");
+    let i_all_sites_plausible = cols.iter().position(|col| *col == "all_sites_plausible");
+    let i_n_pseudo = index("n_glycan_pseudo")?;
+    let i_sequon = index("sequon_present")?;
+    let i_charge = index("charge")?;
+    let i_charge_ok = index("charge_plausible")?;
+    let i_families = index("matched_families")?;
+    let i_ion_count = index("matched_ion_count")?;
+    let i_matched_ions = cols.iter().position(|col| *col == "matched_ions");
+    let i_link_type = cols.iter().position(|col| *col == "link_type");
+    let i_seq1 = index("seq1")?;
+    let i_seq2 = index("seq2")?;
+    let i_prot1 = index("prot1")?;
+    let i_prot2 = index("prot2")?;
+    let i_topology = index("topology")?;
+    let i_precursor = index("precursor_mz")?;
+    let i_mr = index("mr")?;
+    let i_ppm = index("precursor_error_ppm")?;
+    let i_xlink = index("xlink_position")?;
+    let i_xlinker_mass = cols.iter().position(|col| *col == "xlinker_mass");
+    let i_xquest_version = cols.iter().position(|col| *col == "xquest_version");
+    let i_xlinkions = cols.iter().position(|col| *col == "xlinkions_matched");
+    let i_backboneions = cols.iter().position(|col| *col == "backboneions_matched");
+    let i_xquest_matched_ions = cols.iter().position(|col| *col == "xquest_matched_ions");
+    let i_score = index("score")?;
+    let i_hard = index("hard_status")?;
+    let i_soft = index("soft_score")?;
+    let i_status = index("postfilter_status")?;
+
+    let mut rows = Vec::new();
+    for (line_no, line) in lines.enumerate() {
+        if line.trim().is_empty() {
+            continue;
+        }
+        let fields: Vec<&str> = line.split('\t').collect();
+        if fields.len() < cols.len() {
+            return Err(format!(
+                "row {} in {} has {} columns, expected {}",
+                line_no + 2,
+                path.display(),
+                fields.len(),
+                cols.len()
+            ));
+        }
+        let composition = fields[i_glycan_composition].to_string();
+        let loss_label = fields[i_loss].to_string();
+        let job_id = job_id_from_composition_and_loss(&composition, &loss_label);
+        let scan = parse_optional_u32(fields[i_scan]);
+        let link_type = i_link_type
+            .and_then(|idx| fields.get(idx))
+            .and_then(|value| non_empty(value))
+            .unwrap_or_else(|| infer_link_type(fields[i_seq2], fields[i_prot2]));
+        let glyco_sites = i_glyco_sites
+            .and_then(|idx| fields.get(idx))
+            .map(|value| parse_glyco_sites(value))
+            .unwrap_or_default();
+        let all_sites_plausible = i_all_sites_plausible
+            .and_then(|idx| fields.get(idx))
+            .and_then(|value| parse_optional_bool(value))
+            .unwrap_or_else(|| {
+                !glyco_sites.is_empty() && glyco_sites.iter().all(|site| site.plausible)
+            });
+        rows.push(AnnotatedHit {
+            hit: XQuestHit {
+                spectrum_id: scan.map(|s| s.to_string()).unwrap_or_default(),
+                search_hit_rank: 0,
+                link_type,
+                score: parse_f64(fields[i_score]),
+                seq1: fields[i_seq1].to_string(),
+                seq2: fields[i_seq2].to_string(),
+                prot1: fields[i_prot1].to_string(),
+                prot2: fields[i_prot2].to_string(),
+                topology: fields[i_topology].to_string(),
+                charge: parse_u8(fields[i_charge]),
+                precursor_mz: parse_f64(fields[i_precursor]),
+                mr: parse_f64(fields[i_mr]),
+                precursor_error_ppm: parse_f64(fields[i_ppm]),
+                xlink_position: fields[i_xlink].to_string(),
+                xlinker_mass: i_xlinker_mass
+                    .and_then(|idx| fields.get(idx))
+                    .and_then(|value| parse_optional_f64(value)),
+                xquest_version: i_xquest_version
+                    .and_then(|idx| fields.get(idx))
+                    .and_then(|value| non_empty(value)),
+                xlinkions_matched: i_xlinkions
+                    .and_then(|idx| fields.get(idx))
+                    .and_then(|value| non_empty(value)),
+                backboneions_matched: i_backboneions
+                    .and_then(|idx| fields.get(idx))
+                    .and_then(|value| non_empty(value)),
+                matched_ions: i_xquest_matched_ions
+                    .and_then(|idx| fields.get(idx))
+                    .map(|value| parse_xquest_matched_ions(value))
+                    .unwrap_or_default(),
+                ..Default::default()
+            },
+            job_id,
+            source_file: non_empty(fields[i_source]).map(PathBuf::from),
+            scan,
+            glycan_name: non_empty(fields[i_glycan_name]),
+            glycan_composition: non_empty(&composition),
+            glycan_mass: parse_optional_f64(fields[i_glycan_mass]),
+            loss_label: non_empty(&loss_label),
+            glyco_residue: fields[i_glyco_residue].chars().next(),
+            glyco_peptide: parse_optional_u8(fields[i_glyco_peptide]),
+            glyco_sites,
+            all_sites_plausible,
+            n_glycan_pseudo: parse_usize(fields[i_n_pseudo]),
+            matched_families: fields[i_families]
+                .split(';')
+                .filter(|part| !part.is_empty())
+                .map(str::to_string)
+                .collect(),
+            matched_ions: i_matched_ions
+                .and_then(|idx| fields.get(idx))
+                .map(|value| parse_matched_ions(value))
+                .unwrap_or_default(),
+            matched_ion_count: parse_usize(fields[i_ion_count]),
+            sequon_present: parse_optional_bool(fields[i_sequon]),
+            charge_plausible: fields[i_charge_ok].eq_ignore_ascii_case("true"),
+            hard_status: hard_status_from_str(fields[i_hard], parse_usize(fields[i_n_pseudo])),
+            soft_score: parse_f64(fields[i_soft]),
+            postfilter_status: if fields[i_status] == "pass" {
+                PostfilterStatus::Pass
+            } else {
+                PostfilterStatus::Fail
+            },
+        });
+    }
+    Ok(rows)
+}
+
+#[cfg(test)]
+fn infer_link_type(seq2: &str, prot2: &str) -> String {
+    if seq2.trim().is_empty() && prot2.trim().is_empty() {
+        "monolink".to_string()
+    } else {
+        "crosslink".to_string()
+    }
+}
+
+#[cfg(test)]
+fn job_id_from_composition_and_loss(composition: &str, loss_label: &str) -> String {
+    let mut stem = String::new();
+    let re = regex_lite_composition(composition);
+    for (name, count) in re {
+        stem.push_str(&name);
+        stem.push('_');
+        stem.push_str(&count);
+        stem.push('_');
+    }
+    match loss_label {
+        "" | "none" => stem,
+        label if label.starts_with('-') => format!("{stem}_{}", &label[1..]),
+        label => format!("{stem}_{label}"),
+    }
+}
+
+#[cfg(test)]
+fn regex_lite_composition(composition: &str) -> Vec<(String, String)> {
+    let mut out = Vec::new();
+    let bytes = composition.as_bytes();
+    let mut i = 0;
+    while i < bytes.len() {
+        let start = i;
+        while i < bytes.len() && bytes[i].is_ascii_alphabetic() {
+            i += 1;
+        }
+        if start == i || i >= bytes.len() || bytes[i] != b'(' {
+            break;
+        }
+        let name = composition[start..i].to_string();
+        i += 1;
+        let count_start = i;
+        while i < bytes.len() && bytes[i].is_ascii_digit() {
+            i += 1;
+        }
+        if count_start == i || i >= bytes.len() || bytes[i] != b')' {
+            break;
+        }
+        let count = composition[count_start..i].to_string();
+        i += 1;
+        out.push((name, count));
+    }
+    out
+}
+
+#[cfg(test)]
+pub(crate) fn parse_matched_ions(value: &str) -> Vec<MatchedIon> {
+    value
+        .split(';')
+        .filter_map(|part| {
+            let part = part.trim();
+            if part.is_empty() {
+                return None;
+            }
+            let (family, rest) = part.split_once('@')?;
+            let (mz_text, loss_label) = match rest.split_once('[') {
+                Some((mz, loss)) => (mz, loss.trim_end_matches(']').to_string()),
+                None => (rest, String::new()),
+            };
+            let pieces: Vec<&str> = mz_text.split('|').collect();
+            let observed_mz = pieces.first()?.parse::<f64>().ok()?;
+            let expected_mz = pieces
+                .get(1)
+                .and_then(|value| value.parse::<f64>().ok())
+                .unwrap_or(observed_mz);
+            let peak_index = pieces
+                .get(2)
+                .and_then(|value| value.parse::<usize>().ok())
+                .unwrap_or(0);
+            let intensity = pieces
+                .get(3)
+                .and_then(|value| value.parse::<f64>().ok())
+                .unwrap_or(0.0);
+            let error_ppm = pieces
+                .get(4)
+                .and_then(|value| value.parse::<f64>().ok())
+                .unwrap_or_else(|| {
+                    if expected_mz == 0.0 {
+                        0.0
+                    } else {
+                        ((observed_mz - expected_mz) / expected_mz) * 1_000_000.0
+                    }
+                });
+            Some(MatchedIon {
+                family: family.to_string(),
+                expected_mz,
+                observed_mz,
+                loss_label,
+                peak_index,
+                intensity,
+                error_ppm,
+            })
+        })
+        .collect()
+}
+
+fn format_matched_ions(ions: &[MatchedIon]) -> String {
+    ions.iter()
+        .map(|ion| {
+            let base = format!(
+                "{}@{:.4}|{:.4}|{}|{:.4}|{:.3}",
+                ion.family,
+                ion.observed_mz,
+                ion.expected_mz,
+                ion.peak_index,
+                ion.intensity,
+                ion.error_ppm
+            );
+            if ion.loss_label.is_empty() {
+                base
+            } else {
+                format!("{base}[{}]", ion.loss_label)
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+pub(crate) fn format_glyco_sites(sites: &[GlycoSite]) -> String {
+    sites
+        .iter()
+        .map(|site| {
+            format!(
+                "pep{}:{}:{}:{}:{}",
+                site.peptide,
+                site.peptide_position,
+                site.residue,
+                opt_bool(site.sequon_present),
+                site.plausible
+            )
+        })
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+#[cfg(test)]
+fn parse_glyco_sites(value: &str) -> Vec<GlycoSite> {
+    value
+        .split(';')
+        .filter_map(|part| {
+            let fields: Vec<&str> = part.split(':').collect();
+            if fields.len() != 5 {
+                return None;
+            }
+            Some(GlycoSite {
+                peptide: fields[0].strip_prefix("pep")?.parse().ok()?,
+                peptide_position: fields[1].parse().ok()?,
+                residue: fields[2].chars().next()?,
+                sequon_present: parse_optional_bool(fields[3]),
+                plausible: fields[4].eq_ignore_ascii_case("true"),
+            })
+        })
+        .collect()
+}
+
+#[cfg(test)]
+fn parse_xquest_matched_ions(value: &str) -> Vec<crate::results::extract::XQuestMatchedIon> {
+    value
+        .split(';')
+        .filter_map(|part| {
+            let fields: Vec<&str> = part.split('|').collect();
+            if fields.len() < 6 {
+                return None;
+            }
+            Some(crate::results::extract::XQuestMatchedIon {
+                label: non_empty(fields[0]),
+                ion_type: fields[1].to_string(),
+                position: non_empty(fields[2]),
+                theoretical_mz: parse_f64(fields[3]),
+                observed_mz: parse_f64(fields[4]),
+                delta_mz: parse_optional_f64(fields[5]),
+                delta_ppm: fields.get(6).and_then(|value| parse_optional_f64(value)),
+                intensity: fields.get(7).and_then(|value| parse_optional_f64(value)),
+            })
+        })
+        .collect()
+}
+
+fn format_xquest_matched_ions(ions: &[crate::results::extract::XQuestMatchedIon]) -> String {
+    ions.iter()
+        .map(|ion| {
+            [
+                ion.label.clone().unwrap_or_default(),
+                ion.ion_type.clone(),
+                ion.position.clone().unwrap_or_default(),
+                format!("{:.4}", ion.theoretical_mz),
+                format!("{:.4}", ion.observed_mz),
+                opt_f64(ion.delta_mz),
+                opt_f64(ion.delta_ppm),
+                opt_f64(ion.intensity),
+            ]
+            .join("|")
+        })
+        .collect::<Vec<_>>()
+        .join(";")
+}
+
+#[cfg(test)]
+fn hard_status_from_str(value: &str, n_glycan_pseudo: usize) -> HardStatus {
+    match value {
+        "pass" => HardStatus::Pass,
+        "fail_no_xlink" => HardStatus::FailNoXlink,
+        "fail_no_glycan" => HardStatus::FailNoGlycan,
+        "fail_glycan_limit" => HardStatus::FailGlycanLimit,
+        // Compatibility for annotated CSV files written before the outcome was split.
+        "fail_glycan_count" if n_glycan_pseudo == 0 => HardStatus::FailNoGlycan,
+        "fail_glycan_count" | "fail_multiple_glycans" => HardStatus::FailGlycanLimit,
+        "fail_no_diagnostic" => HardStatus::FailNoDiagnostic,
+        "fail_precursor_error" => HardStatus::FailPrecursorError,
+        "fail_score" => HardStatus::FailScore,
+        _ => HardStatus::FailScore,
+    }
+}
+
+#[cfg(test)]
+fn non_empty(value: &str) -> Option<String> {
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.to_string())
+    }
+}
+
+#[cfg(test)]
+fn parse_optional_u32(value: &str) -> Option<u32> {
+    if value.is_empty() {
+        None
+    } else {
+        value.parse().ok()
+    }
+}
+
+#[cfg(test)]
+fn parse_optional_u8(value: &str) -> Option<u8> {
+    if value.is_empty() {
+        None
+    } else {
+        value.parse().ok()
+    }
+}
+
+#[cfg(test)]
+fn parse_optional_f64(value: &str) -> Option<f64> {
+    if value.is_empty() {
+        None
+    } else {
+        value.parse().ok()
+    }
+}
+
+#[cfg(test)]
+fn parse_optional_bool(value: &str) -> Option<bool> {
+    if value.is_empty() {
+        None
+    } else {
+        Some(value.eq_ignore_ascii_case("true"))
+    }
+}
+
+#[cfg(test)]
+fn parse_u8(value: &str) -> u8 {
+    value.parse().unwrap_or(0)
+}
+
+#[cfg(test)]
+fn parse_usize(value: &str) -> usize {
+    value.parse().unwrap_or(0)
+}
+
+#[cfg(test)]
+fn parse_f64(value: &str) -> f64 {
+    value.parse().unwrap_or(0.0)
+}
+
 pub fn write_annotated_csv(path: &std::path::Path, rows: &[AnnotatedHit]) -> Result<(), String> {
     let mut lines = vec![
         [
@@ -358,12 +843,16 @@ pub fn write_annotated_csv(path: &std::path::Path, rows: &[AnnotatedHit]) -> Res
             "loss_label",
             "glyco_residue",
             "glyco_peptide",
+            "glyco_sites",
+            "all_sites_plausible",
             "n_glycan_pseudo",
             "sequon_present",
             "charge",
             "charge_plausible",
             "matched_families",
             "matched_ion_count",
+            "matched_ions",
+            "link_type",
             "seq1",
             "seq2",
             "prot1",
@@ -373,6 +862,17 @@ pub fn write_annotated_csv(path: &std::path::Path, rows: &[AnnotatedHit]) -> Res
             "mr",
             "precursor_error_ppm",
             "xlink_position",
+            "xlinker_mass",
+            "xquest_version",
+            "xlinkions_matched",
+            "backboneions_matched",
+            "num_matched_ions_alpha",
+            "num_matched_ions_beta",
+            "num_matched_common_ions_alpha",
+            "num_matched_common_ions_beta",
+            "num_matched_xlink_ions_alpha",
+            "num_matched_xlink_ions_beta",
+            "xquest_matched_ions",
             "score",
             "hard_status",
             "soft_score",
@@ -393,12 +893,16 @@ pub fn write_annotated_csv(path: &std::path::Path, rows: &[AnnotatedHit]) -> Res
                 row.loss_label.clone().unwrap_or_default(),
                 opt_char(row.glyco_residue),
                 opt_u8(row.glyco_peptide),
+                format_glyco_sites(&row.glyco_sites),
+                row.all_sites_plausible.to_string(),
                 row.n_glycan_pseudo.to_string(),
                 opt_bool(row.sequon_present),
                 hit.charge.to_string(),
                 row.charge_plausible.to_string(),
                 row.matched_families.join(";"),
                 row.matched_ion_count.to_string(),
+                format_matched_ions(&row.matched_ions),
+                hit.normalized_link_type(),
                 hit.seq1.clone(),
                 hit.seq2.clone(),
                 hit.prot1.clone(),
@@ -408,6 +912,17 @@ pub fn write_annotated_csv(path: &std::path::Path, rows: &[AnnotatedHit]) -> Res
                 format!("{}", hit.mr),
                 format!("{}", hit.precursor_error_ppm),
                 hit.xlink_position.clone(),
+                opt_f64(hit.xlinker_mass),
+                hit.xquest_version.clone().unwrap_or_default(),
+                hit.xlinkions_matched.clone().unwrap_or_default(),
+                hit.backboneions_matched.clone().unwrap_or_default(),
+                opt_u32(hit.num_matched_ions_alpha),
+                opt_u32(hit.num_matched_ions_beta),
+                opt_u32(hit.num_matched_common_ions_alpha),
+                opt_u32(hit.num_matched_common_ions_beta),
+                opt_u32(hit.num_matched_xlink_ions_alpha),
+                opt_u32(hit.num_matched_xlink_ions_beta),
+                format_xquest_matched_ions(&hit.matched_ions),
                 format!("{}", hit.score),
                 row.hard_status.as_str().to_string(),
                 format!("{:.3}", row.soft_score),
@@ -450,7 +965,7 @@ fn opt_bool(value: Option<bool>) -> String {
 mod tests {
     use super::*;
     use crate::crosslinker::CrosslinkerProfile;
-    use crate::jobs::{build_varmod_plan, GlycanVariant, JobManifestEntry, SpectrumKey};
+    use crate::jobs::{GlycanVariant, JobManifestEntry, SpectrumKey, build_varmod_plan};
     use crate::prefilter::{FilteredSpectrum, MatchedIon};
 
     fn n_glycan_plan() -> VarModPlan {
@@ -501,6 +1016,9 @@ mod tests {
                     expected_mz: 204.0866,
                     observed_mz: 204.0867,
                     loss_label: String::new(),
+                    peak_index: 0,
+                    intensity: 5000.0,
+                    error_ppm: 0.49,
                 }],
             }],
             isotope_pairs: vec![],
@@ -511,7 +1029,7 @@ mod tests {
     }
 
     #[test]
-    fn multiple_glycan_pseudo_residues_fail_glycan_count() {
+    fn multiple_occurrences_of_searched_glycan_pass_by_default() {
         let settings = Settings::defaults();
         let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
         let source = PathBuf::from("run.mzXML");
@@ -520,17 +1038,132 @@ mod tests {
         let hits = vec![(
             "HexNAc_1_".to_string(),
             XQuestHit {
-                seq1: "AXCXDE".into(),
-                seq2: "PEPXIDE".into(),
+                seq1: "XATCXAT".into(),
+                seq2: "PEPKIDE".into(),
                 xlink_position: "2-1".into(),
                 charge: 4,
                 spectrum_id: "42".into(),
                 ..Default::default()
             },
         )];
-        let annotated = apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
-        assert_eq!(annotated[0].hard_status, HardStatus::FailGlycanCount);
-        assert_eq!(annotated[0].postfilter_status, PostfilterStatus::Fail);
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        assert_eq!(annotated[0].hard_status, HardStatus::Pass);
+        assert_eq!(annotated[0].glyco_sites.len(), 2);
+        assert_eq!(annotated[0].postfilter_status, PostfilterStatus::Pass);
+    }
+
+    #[test]
+    fn soft_score_adds_one_point_per_plausible_glycan_site() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                seq1: "XATK".into(),
+                seq2: "PEPKXPA".into(),
+                xlink_position: "4-4".into(),
+                charge: 4,
+                spectrum_id: "42".into(),
+                score: 10.0,
+                ..Default::default()
+            },
+        )];
+
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        let row = &annotated[0];
+        assert_eq!(row.hard_status, HardStatus::Pass);
+        assert_eq!(row.glyco_sites.len(), 2);
+        assert!(!row.all_sites_plausible);
+        assert_eq!(row.glyco_sites[0].peptide_position, 1);
+        assert_eq!(row.glyco_sites[1].peptide_position, 5);
+        assert!((row.soft_score - 11.6).abs() < 1e-6);
+    }
+
+    #[test]
+    fn implausible_n_glycan_site_does_not_fail_postfilter() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                seq1: "XPAK".into(),
+                seq2: "PEPKIDE".into(),
+                xlink_position: "4-4".into(),
+                charge: 4,
+                spectrum_id: "42".into(),
+                score: 10.0,
+                ..Default::default()
+            },
+        )];
+
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        assert_eq!(annotated[0].hard_status, HardStatus::Pass);
+        assert!(!annotated[0].all_sites_plausible);
+        assert!((annotated[0].soft_score - 10.6).abs() < 1e-6);
+    }
+
+    #[test]
+    fn per_peptide_glycan_cap_is_enforced() {
+        let mut settings = Settings::defaults();
+        settings.max_glycans_per_peptide = 3;
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                seq1: "XATXATXATXATK".into(),
+                seq2: "PEPKIDE".into(),
+                xlink_position: "13-4".into(),
+                charge: 4,
+                spectrum_id: "42".into(),
+                score: 10.0,
+                ..Default::default()
+            },
+        )];
+
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        assert_eq!(annotated[0].hard_status, HardStatus::FailGlycanLimit);
+        assert_eq!(annotated[0].glyco_sites.len(), 4);
+        assert!(annotated[0].all_sites_plausible);
+    }
+
+    #[test]
+    fn three_glycans_on_each_peptide_pass_at_default_cap() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                seq1: "XATXATXATK".into(),
+                seq2: "XASXASXASK".into(),
+                xlink_position: "10-10".into(),
+                charge: 6,
+                spectrum_id: "42".into(),
+                score: 10.0,
+                ..Default::default()
+            },
+        )];
+
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        assert_eq!(annotated[0].hard_status, HardStatus::Pass);
+        assert_eq!(annotated[0].glyco_sites.len(), 6);
+        assert_eq!(annotated[0].postfilter_status, PostfilterStatus::Pass);
     }
 
     #[test]
@@ -543,7 +1176,7 @@ mod tests {
         let hits = vec![(
             "HexNAc_1_".to_string(),
             XQuestHit {
-                seq1: "AXCDE".into(),
+                seq1: "XATDE".into(),
                 seq2: "PEPKIDE".into(),
                 xlink_position: "3-1".into(),
                 charge: 4,
@@ -552,7 +1185,8 @@ mod tests {
                 ..Default::default()
             },
         )];
-        let annotated = apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
         let row = &annotated[0];
         assert_eq!(row.hard_status, HardStatus::Pass);
         assert_eq!(row.glycan_composition.as_deref(), Some("HexNAc(1)"));
@@ -563,7 +1197,84 @@ mod tests {
     }
 
     #[test]
-    fn non_glycosylated_pair_fails_glycan_count() {
+    fn glycosylated_monolink_passes_without_second_peptide() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                link_type: "monolink".into(),
+                seq1: "XATK".into(),
+                seq2: "".into(),
+                prot1: "FETUA_BOVIN".into(),
+                prot2: "".into(),
+                xlink_position: "4".into(),
+                xlinker_mass: Some(156.07864),
+                charge: 4,
+                spectrum_id: "42".into(),
+                score: 5.0,
+                ..Default::default()
+            },
+        )];
+
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        let row = &annotated[0];
+
+        assert_eq!(row.hard_status, HardStatus::Pass);
+        assert_eq!(row.postfilter_status, PostfilterStatus::Pass);
+        assert_eq!(row.hit.link_type, "monolink");
+        assert_eq!(row.hit.seq2, "");
+        assert_eq!(row.hit.prot2, "");
+        assert_eq!(row.glyco_peptide, Some(1));
+        assert_eq!(row.n_glycan_pseudo, 1);
+    }
+
+    #[test]
+    fn annotated_csv_roundtrips_monolink_fields() {
+        let settings = Settings::defaults();
+        let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let source = PathBuf::from("run.mzXML");
+        let manifest = manifest_with("HexNAc_1_", source.clone());
+        let prefilter = prefilter_with_scan(source, 42);
+        let hits = vec![(
+            "HexNAc_1_".to_string(),
+            XQuestHit {
+                link_type: "monolink".into(),
+                seq1: "XATK".into(),
+                prot1: "FETUA_BOVIN".into(),
+                xlink_position: "4".into(),
+                xlinker_mass: Some(156.07864),
+                charge: 4,
+                spectrum_id: "42".into(),
+                score: 5.0,
+                ..Default::default()
+            },
+        )];
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        let dir = std::env::temp_dir().join(format!("glycoquest_mono_csv_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("glycoquest_xquest.csv");
+
+        write_annotated_csv(&path, &annotated).unwrap();
+        let roundtrip = read_annotated_csv(&path).unwrap();
+
+        assert_eq!(roundtrip.len(), 1);
+        assert_eq!(roundtrip[0].hit.link_type, "monolink");
+        assert_eq!(roundtrip[0].hit.prot2, "");
+        assert_eq!(roundtrip[0].hit.seq2, "");
+        assert!((roundtrip[0].hit.xlinker_mass.unwrap() - 156.07864).abs() < 1e-6);
+        assert_eq!(roundtrip[0].postfilter_status, PostfilterStatus::Pass);
+        let _ = std::fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn non_glycosylated_pair_reports_no_glycan() {
         let settings = Settings::defaults();
         let crosslinker = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
         let source = PathBuf::from("run.mzXML");
@@ -580,8 +1291,10 @@ mod tests {
                 ..Default::default()
             },
         )];
-        let annotated = apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
-        assert_eq!(annotated[0].hard_status, HardStatus::FailGlycanCount);
+        let annotated =
+            apply_postfilters(hits, &settings, &crosslinker, &prefilter, Some(&manifest));
+        assert_eq!(annotated[0].hard_status, HardStatus::FailNoGlycan);
+        assert_eq!(annotated[0].hard_status.as_str(), "fail_no_glycan");
     }
 
     #[test]

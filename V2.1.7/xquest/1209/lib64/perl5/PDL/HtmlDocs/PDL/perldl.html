@@ -1,0 +1,576 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>perldl - Simple shell for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#reference_manual___online_help">Reference manual &amp; online help</a></li>
+		<li><a href="#history_mechanism">History mechanism</a></li>
+		<li><a href="#command_execution">Command execution</a></li>
+		<li><a href="#terminating_perldl">Terminating <code>perldl</code></a></li>
+		<li><a href="#terminating_commands__ctrl_c_handling_">Terminating commands (Ctrl-C handling)</a></li>
+		<li><a href="#shortcuts_and_aliases">Shortcuts and aliases</a></li>
+		<li><a href="#command_line_options">Command-line options</a></li>
+		<li><a href="#the_startup_file____perldlrc">The startup file <em class="file">~/.perldlrc</em></a></li>
+		<li><a href="#shell_variables">Shell variables</a></li>
+		<li><a href="#executing_scripts_from_the_perldl_prompt">Executing scripts from the <code>perldl</code> prompt</a></li>
+		<li><a href="#executing_perldl_scripts_from_the_command_line">Executing perldl scripts from the command line</a></li>
+		<li><a href="#command_preprocessing">Command preprocessing</a></li>
+		<li><a href="#perldl_and_pdl__niceslice_pdl__niceslice"><code>perldl</code> and <a href="./NiceSlice.html">PDL::NiceSlice</a></a></li>
+		<li><a href="#automatically_execute_your_own_hooks">Automatically execute your own hooks</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>perldl - Simple shell for PDL (see also <a href="./pdl2.html">the pdl2 manpage</a>)</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>Use PDL interactively:</p>
+<pre>
+  bash$ <a href="./perldl.html">perldl</a>
+  pdl&gt; $a = sequence(10) # or any other perl or PDL command
+  
+  bash$ pdl
+  pdl&gt; print &quot;Hello, world!\n&quot;;</pre>
+<p>Run a script:</p>
+<pre>
+  bash$ cat &gt; pdlscript
+  #!/usr/bin/pdl
+  print &quot;Hello, world!\n&quot;;
+  ...</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>The program <strong>perldl</strong> is a simple shell (written in perl) for
+interactive use of PDL.  It consists of a command-line interface that
+supports immediate interpretation of perl commands and expressions.
+Perl expressions, including PDL constructs, can be entered directly at
+the keyboard and are compiled and executed immediately.  The syntax is
+not exactly identical to Perl, in that under most circumstances ending
+a line causes immediate execution of the command entered so far (no
+trailing ';' is required).</p>
+<p>The synonym <strong>pdl</strong> is a compiled executable that is useful as a script
+interpreter using UNIX shebang (<code>#!</code>) syntax.  This is useful for generating
+and re-executing command-journal files from <strong>perldl</strong>.</p>
+<p>The <strong>perldl</strong> shell runs an initial startup file (<code>~/.perldlrc</code>) that can
+be used to pre-load perl modules or configure the global perl environment.  It 
+features a path mechanism for autoloading perl subroutines.  There is a
+command-history mechanism, and several other useful features such as command 
+preprocessing, shortcuts for commonly used commands such as &quot;print&quot;, 
+and the ability to execute arbitrary code whenever a prompt is printed.</p>
+<p>Depending on your configuration settings, <strong>perldl</strong> can be set to
+honor or ignore the ^D (end-of-file) character when sent from a
+terminal, or to attempt to do the Right Thing when a block construct
+spanning multiple lines is encountered.</p>
+<p><strong>perldl</strong> and <strong>pdl</strong> support several command-line options, which are
+discussed near the end of this document.</p>
+<p>
+</p>
+<h2><a name="reference_manual___online_help">Reference manual &amp; online help</a></h2>
+<p>The PDL reference manual and online help are available from within 
+<strong>perldl</strong>, using the <strong>help</strong> and <strong>apropos</strong> commands (which may also
+be abbreviated <strong>?</strong> and <strong>??</strong>.)   The <strong>help</strong> command alone prints a summary of
+help syntax, and <strong>help &lt;module-name</strong> &gt;&gt; will print POD documentation
+from the module you mention (POD is the Perl format for embedding 
+documentation in your perl code; see <em>perlpod</em> for details).</p>
+<p>If you include POD documentation in your autoload subroutines (see
+<strong>path mechanism</strong> below), then both <strong>help</strong> and <strong>apropos</strong> will find it 
+and be able to format and display it on demand.</p>
+<p>
+</p>
+<h2><a name="history_mechanism">History mechanism</a></h2>
+<p>If you have the perl modules ReadLines and ReadKeys installed, then
+<strong>perldl</strong> supports a history and line-editing mechanism using editing
+keys similar to <em>emacs</em>. The last 500 commands are always stored in
+the file <em class="file">.perldl_hist</em> in your home directory between sessions.
+Set <code>$PERLDL::HISTFILESIZE</code> to change the number of lines saved.
+The command <code>l [number]</code> shows you the last <code>number</code> commands you
+typed where <code>number</code> defaults to 20.</p>
+<p>e.g.:</p>
+<pre>
+   bash$ <a href="./perldl.html">perldl</a>
+   ReadLines enabled
+   pdl&gt; $a = rfits &quot;foo.fits&quot;
+   BITPIX =  -32  size = 88504 pixels
+   Reading  354016 bytes
+   BSCALE =  &amp;&amp;  BZERO =</pre>
+<pre>
+   pdl&gt; imag log($a+400)
+   Displaying 299 x 296 image from 4.6939525604248 to 9.67116928100586 ...</pre>
+<p>
+</p>
+<h2><a name="command_execution">Command execution</a></h2>
+<p>If you enter a simple command at the <strong>perldl</strong> command line, it is
+immediately executed in a Perl <code>eval()</code>.  The environment is almost
+identical to that within a perl script, with some important exceptions:</p>
+<ul>
+<li><strong><a name="__" class="item">$_ is not preserved across lines</a></strong>
+
+<p>$_ is used to hold the command line for initial processing, so at the
+beginning of processing of each command line, $_ contains the command itself.
+Use variables other than $_ to store values across lines.</p>
+</li>
+<li><strong><a name="scope_is_not_preserved_across_lines" class="item">Scope is not preserved across lines</a></strong>
+
+<p>Each command line is executed in a separate <code>eval</code> block within perl,
+so scoping commands such as <code>my</code> and <code>local</code> may not perform exactly
+as expected -- in particular, if you declare a variable with <code>my</code>, it
+is local to the particular command line on which you typed the <code>my</code>
+command, which means that it will evaporate before the next prompt is printed.
+(You can use <code>my</code> variables in a multi-line block or to isolate values within 
+a single command line, of course).</p>
+<pre>
+  NOTE: pdl2 preserves lexical scope between lines.</pre>
+</li>
+<li><strong><a name="execution_is_immediate" class="item">Execution is immediate</a></strong>
+
+<p>Under most circumstances, as soon as you end a line of input the line
+is parsed and executed.  This breaks Perl's normal dependence on
+semicolons as command delimiters.  For example, the two-line expression</p>
+<pre>
+  print &quot;Hello &quot;,
+     &quot;world&quot;;</pre>
+<p>prints the phrase <code>Hello world</code> in Perl, but (under most circumstances) 
+<code>Hello </code> in <strong>perldl</strong>.</p>
+</li>
+<li><strong><a name="multi_line_execution" class="item">Multi-line execution</a></strong>
+
+<p>In multiline mode (which is enabled by default, see <strong>Shell
+variables</strong>, below), <strong>perldl</strong> searches for searches for block-like
+constructs with curly braces, parentheses, quotes, and related
+delimiters.  If you leave such a construct open, <strong>perldl</strong> accepts more
+lines of input until you close the construct or explictly end the multi-line
+expression with ^D.   Following the example above, the phrase</p>
+<pre>
+  { print &quot;Hello &quot;,
+       &quot;world&quot;; }</pre>
+<p>will print &quot;Hello world&quot; from either Perl or (in multi-line mode)
+<strong>perldl</strong>.</p>
+<p><strong>Warning</strong>: The multi-line parsing uses Damian Conway's
+<a href="../Text/Balanced.html">the Text::Balanced manpage</a> module, which contains some flaws -- so it can be
+fooled by quote-like operators such as <code>q/.../</code>, included POD
+documentation, multi-line <code>&lt;&lt;</code> quotes, and some
+particularly bizarre-but-valid <code>m/.../</code> matches and <code>s/.../.../</code>
+substitutions.  In such cases, use ^D to close out the multi-line construct and
+force compilation-and-execution.</p>
+</li>
+</ul>
+<p>If you want to preserve this behavior in a script (for example to replay a command
+journal file; see below on how to create one), you can use <strong>pdl</strong> instead of <strong>perl</strong>
+as the interpreter in the script's initial shebang line.</p>
+<p>
+</p>
+<h2><a name="terminating_perldl">Terminating <code>perldl</code></a></h2>
+<p>A <code>perldl</code> session can be terminated with any of the commands
+<code>quit</code>, <code>exit</code> or the shorthands <code>x</code> or <code>q</code>.  If EOF handling is
+switched on (the default) you can also type ^D at the command prompt.</p>
+<p>If the command input is NOT a terminal (for example if you are running
+from a command journal file), then EOF will always terminate <strong>perldl</strong>.</p>
+<p>
+</p>
+<h2><a name="terminating_commands__ctrl_c_handling_">Terminating commands (Ctrl-C handling)</a></h2>
+<p>Commands executed within <code>perldl</code> can be terminated prematurely
+using <code>Ctrl-C</code> (or whichever key sequence sends an INT signal
+to the process on your terminal). Provided your PDL code does not
+ignore <code>sigint</code>s this should throw you back at the <code>perldl</code>
+command prompt:</p>
+<pre>
+  pdl&gt; $result = start_lengthy_computation()
+   &lt;Ctrl-C&gt;
+ Ctrl-C detected</pre>
+<pre>
+  pdl&gt;</pre>
+<p>
+</p>
+<h2><a name="shortcuts_and_aliases">Shortcuts and aliases</a></h2>
+<ul>
+<li>
+<p>The shell aliases <code>p</code> to be a convenient short form of <code>print</code>, e.g.</p>
+<pre>
+   pdl&gt; p ones 5,3</pre>
+<pre>
+   [
+    [1 1 1 1 1]
+    [1 1 1 1 1]
+    [1 1 1 1 1]
+   ]</pre>
+</li>
+<li>
+<p><code>q</code> and <code>x</code> are short-hand for <code>quit</code>.</p>
+</li>
+<li>
+<p><code>l</code> lists the history buffer</p>
+<pre>
+  pdl&gt; l # list last 20 commands</pre>
+<pre>
+  pdl&gt; l 40 # list last 40 commands</pre>
+</li>
+<li>
+<p><code>?</code> is an alias for <a href="Doc/Perldl.html#help">help</a></p>
+<pre>
+  pdl&gt; ? pdl2    # get help for new pdl2 shell</pre>
+</li>
+<li>
+<p><code>??</code> is an alias for <a href="Doc/Perldl.html#apropos">apropos</a></p>
+<pre>
+  pdl&gt; ?? PDL::Doc</pre>
+</li>
+<li>
+<p><a href="Doc/Perldl.html#help">help</a>, <a href="Doc/Perldl.html#apropos">apropos</a>,
+<a href="Doc/Perldl.html#usage">usage</a> and <a href="Doc/Perldl.html#sig">sig</a>:
+all words after these commands are used verbatim and not evaluated
+by perl. So you can write, e.g.,</p>
+<pre>
+  pdl&gt; help help</pre>
+<p>instead of</p>
+<pre>
+  pdl&gt; help 'help'</pre>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="command_line_options">Command-line options</a></h2>
+<p><strong>perldl</strong> and <strong>pdl</strong> support several command-line options to adjust the behavior of the
+session.  Most of them are equivalent to commands that can be entered at the <strong>pdl&gt;</strong>
+prompt.  They are:</p>
+<dl>
+<dt><strong><a name="tk" class="item">-tk</a></strong></dt>
+
+<dd>
+<p>Load Tk when starting the shell (the perl Tk module, which is
+available from CPAN must be installed). This enables readline
+event loop processing.</p>
+</dd>
+<dt><strong><a name="f_file" class="item">-f file</a></strong></dt>
+
+<dd>
+<p>Loads the file before processing any user input. Any errors
+during the execution of the file are fatal.</p>
+</dd>
+<dt><strong><a name="w" class="item">-w</a></strong></dt>
+
+<dd>
+<p>Runs with warning messages (i.e. the normal perl <a href="#w"><code>-w</code></a> warnings)
+turned-on.</p>
+</dd>
+<dt><strong><a name="m_module" class="item">-M module</a></strong></dt>
+
+<dd>
+<p>Loads the module before processing any user input.
+Compare corresponding <code>perl</code> switch.</p>
+</dd>
+<dt><strong><a name="m_module" class="item">-m module</a></strong></dt>
+
+<dd>
+<p>Unloads the module before processing any user input.</p>
+</dd>
+<dt><strong><a name="i_directory" class="item">-I directory</a></strong></dt>
+
+<dd>
+<p>Adds directory to the include path. (i.e. the @INC array)
+Compare corresponding <code>perl</code> switch.</p>
+</dd>
+<dt><strong><a name="v" class="item">-V</a></strong></dt>
+
+<dd>
+<p>Prints a summary of PDL config. This information should
+be included with any PDL bug report. Compare corresponding
+<code>perl</code> switch.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="the_startup_file____perldlrc">The startup file <em class="file">~/.perldlrc</em></a></h2>
+<p>If the file <em class="file">~/.perldlrc</em> is found it is sourced at start-up to load default
+modules, set shell variables, etc. If it is NOT found the distribution file
+<em class="file">PDL/default.perldlrc</em> is read instead. This loads various modules
+considered useful by default, and which ensure compatibility with
+v1.11. If you don't like this and want a more streamlined set of your
+own favourite modules simple create your own <em class="file">~/.perldlrc</em>.  You may
+wish to start from the existing <em class="file">PDL/default.perldlrc</em> as a template
+since it will not be sourced once you replace it with your own version.</p>
+<p>To set even more local defaults the file  <em class="file">local.perldlrc</em> (in the current
+directory) is sourced if found. This lets you load modules and define
+subroutines for the project in the current directory.</p>
+<p>The name is chosen specfically because it was found hidden files were
+NOT wanted in these circumstances.</p>
+<p>The startup file should normally include &quot;use PDL::AutoLoader;&quot;, as 
+many of the nicer interactive features won't work without it.</p>
+<p>
+</p>
+<h2><a name="shell_variables">Shell variables</a></h2>
+<p>Shell variables: (<em>Note</em>: if you don't like the defaults change
+them in <em class="file">~/.perldlrc</em>)</p>
+<ul>
+<li>
+<p>$PERLDL::ESCAPE  - default value '#'</p>
+<p>Any line starting with this character is treated as a shell
+escape. The default value is chosen because it escapes the
+code from the standard perl interpreter.</p>
+</li>
+<li>
+<p>$PERLDL::HISTFILESIZE  - default value 500</p>
+<p>This is the number of lines of perldl shell command history
+to keep.</p>
+</li>
+<li>
+<p>$PERLDL::PAGER - default value <code>more</code></p>
+<p>External program to filter the output of commands.  Using <code>more</code>
+prints output one screenful at a time.  On Unix, setting <code>page(1)</code>
+and $PERLDL::PAGER to <code>tee -a outfile</code> will keep a record of the
+output generated by subsequent perldl commands (without paging).</p>
+</li>
+<li>
+<p>$PERLDL::PROMPT - default value 'pdl&gt; '</p>
+<p>Enough said  But can also be set to a subroutine reference, e.g.
+$PERLDL::PROMPT = sub {join(':',(gmtime)[2,1,0]).'&gt; '} puts the
+current time into the prompt.</p>
+</li>
+<li>
+<p>$PERLDL::MULTI - default value 1</p>
+<p>If this is set to a true value, then perldl will parse multi-line 
+perl blocks: your input will not be executed until you finish a line
+with no outstanding group operators (such as quotes, blocks, parenthesis, or 
+brackets) still active.  Continuation lines have a different prompt that
+shows you what delimiters are still active.</p>
+<p>Note that this is not (yet!) a complete perl parser.  In particular,
+Text::Balanced appears to be able to ignore quoting operatores 
+like <code>q/ ... /</code> within a line, but not to be able to extend them across
+lines.  Likewise, there is no support for the '&lt;&lt;' operator.</p>
+<p>Multiline conventional strings and {}, [], and () groupings are well
+supported.</p>
+</li>
+<li>
+<p>$PERLDL::NO_EOF - default value 0 / 1 on MSWin32</p>
+<p>Protects against accidental use of &quot;^D&quot; from the terminal.  If this is
+set to a true value, then you can't accidentally exit perldl by typing
+&quot;^D&quot;.  If you set it to a value larger than 1 (and PERLDL::MULTI is
+set), then you can't use &quot;^D&quot; to exit multiline commands either.  If
+you're piping commands in from a file or pipe, this variable has no
+effect.</p>
+</li>
+<li>
+<p>$HOME</p>
+<p>The user's home directory</p>
+</li>
+<li>
+<p>$PERLDL::TERM</p>
+<p>This is the Term::ReadLine object associated with the perldl
+shell. It can be used by routines called from perldl if your
+command is interactive.</p>
+</li>
+<li>
+<p>$PDL::toolongtoprint</p>
+<p>The maximal size pdls to print (defaults to 10,000 elements).
+This is not just a <code>perldl</code> or <code>pdl2</code> variable but it is
+something that is usually needed in an interactive debugging
+session.</p>
+</li>
+</ul>
+<p>
+</p>
+<h2><a name="executing_scripts_from_the_perldl_prompt">Executing scripts from the <code>perldl</code> prompt</a></h2>
+<p>A useful idiom for developing perldl scripts or editing functions
+on-line is</p>
+<pre>
+  pdl&gt; # emacs script &amp;
+    -- add <a href="./perldl.html">perldl</a> code to script and save the file
+  
+  pdl&gt; do 'script'</pre>
+<p>-- substitute your favourite window-based editor for 'emacs' (you may
+also need to change the '&amp;' on non-Unix systems).</p>
+<p>Running &quot;do 'script'&quot; again updates any variables and function
+definitions from the current version of 'script'.</p>
+<p>
+</p>
+<h2><a name="executing_perldl_scripts_from_the_command_line">Executing perldl scripts from the command line</a></h2>
+<p>PDL scripts are just perl scripts that happen to use PDL (and
+possibly PDL::NiceSlice).  But for the truly lazy, perldl can be
+invokes as a script interpreter.  Because perldl is itself an interpreted
+perl script, most unices won't allow you to say &quot;#!/usr/bin/perldl&quot; 
+at the top of your script.</p>
+<p>Instead, say &quot;#!/usr/bin/pdl&quot; and your script will be executed exactly
+as if you typed it, line-by-line, into the perldl shell.</p>
+<p>
+</p>
+<h2><a name="command_preprocessing">Command preprocessing</a></h2>
+<p>NOTE: This feature is used by default by <a href="./NiceSlice.html">PDL::NiceSlice</a>.
+See below for more about slicing at the <code>perldl</code> prompt</p>
+<p>In some cases, it is convenient to process commands before they are
+sent to perl for execution. For example, this is the case where the
+shell is being presented to people unfamiliar with perl but who wish
+to take advantage of commands added locally (eg by automatically 
+quoting arguments to certain commands).</p>
+<p>*<em>NOTE</em>*: The preprocessing interface has changed from earlier
+versions! The old way using <code>$PERLDL::PREPROCESS</code> will still
+work but is strongly deprecated and might go away in the future.</p>
+<p>You can enable preprocessing by registering a filter with the
+<code>preproc_add</code> function. <code>preproc_add</code> takes one argument which
+is the filter to be installed. A filter is a Perl code reference (usually
+set in a local configuration file) that will be called, with the
+current command string as argument, just prior to the string being
+executed by the shell. The modified string should be returned. Note
+that you can make <code>perldl</code> completely unusable if you fail to
+return the modified string; quitting is then your only option.</p>
+<p>Filters can be removed from the preprocessing pipeline by calling
+<code>preproc_del</code> with the filter to be removed as argument.  To find out
+if a filter is currently installed in the preprocessing pipeline use
+<code>preproc_registered</code>:</p>
+<pre>
+  pdl&gt; preproc_add $myfilter unless preproc_registered $myfilter;</pre>
+<p>Previous versions of <code>perldl</code> used the variable <code>$PERLDL::PREPROCESS</code>.
+This will still work but should be avoided. Please change your scripts
+to use the <code>preproc_add</code> etc functions.</p>
+<p>The following code would check for a call to function 'mysub'
+and bracket arguments with qw.</p>
+<pre>
+  $filter = preproc_add sub {
+     my $str = shift;
+     $str =~ s/^\s+//;  # Strip leading space
+     if ($str =~ /^mysub/) {
+        my ($command, $arguments) = split(/\s+/,$str, 2);
+        $str = &quot;$command qw( $arguments )&quot; 
+        if (defined $arguments &amp;&amp; $arguments !~ /^qw/);
+     };
+     # Return the input string, modified as required
+     return $str;
+   };</pre>
+<p>This would convert:</p>
+<pre>
+  pdl&gt; mysub arg1 arg2</pre>
+<p>to</p>
+<pre>
+  pdl&gt; mysub qw( arg1 arg2 )</pre>
+<p>which Perl will understand as a list.  Obviously, a little more effort
+is required to check for cases where the caller has supplied a normal
+list (and so does not require automatic quoting) or variable
+interpolation is required.</p>
+<p>You can remove this preprocessor using the <code>preproc_del</code> function
+which takes one argument (the filter to be removed, it must be the
+same coderef that was returned from a previous <code>preproc_add</code> call):</p>
+<pre>
+  pdl&gt; preproc_del $filter;</pre>
+<p>An example of actual usage can be found in the <code>perldl</code> script. Look
+at the function <code>trans</code> to see how the niceslicing preprocessor is
+enabled/disabled.</p>
+<p>
+</p>
+<h2><a name="perldl_and_pdl__niceslice_pdl__niceslice"><code>perldl</code> and <a href="./NiceSlice.html">PDL::NiceSlice</a></a></h2>
+<p><a href="./NiceSlice.html">PDL::NiceSlice</a> introduces a more convenient
+slicing syntax for piddles. In current versions of <code>perldl</code> and
+<code>pdl2</code> niceslicing is enabled by default (if the required CPAN
+modules are installed on your machine).</p>
+<p>At startup <code>perldl</code> will let you
+know if niceslicing is enabled. The startup message will contain
+info to this end, something like this:</p>
+<pre>
+   perlDL shell v1.XX
+    PDL comes with ABSOLUTELY NO WARRANTY. For details, see the file
+    'COPYING' in the PDL distribution. This is free software and you
+    are welcome to redistribute it under certain conditions, see
+    the same file for details.
+   ReadLines, NiceSlice  enabled
+   Reading /home/csoelle/.perldlrc...
+   Type 'demo' for online demos
+   Loaded PDL v2.XX</pre>
+<p>When you get such a message that indicates <code>NiceSlice</code> is enabled
+you can use the enhanced slicing syntax:</p>
+<pre>
+  pdl&gt; $a = sequence 10;
+  pdl&gt; p $a(3:8:2)</pre>
+<p>For details consult <a href="./NiceSlice.html">the PDL::NiceSlice manpage</a>.</p>
+<p><a href="./NiceSlice.html">PDL::NiceSlice</a> installs a filter in the
+preprocessing pipeline (see above) to enable the enhanced slicing
+syntax. You can use a few commands in the <code>perldl</code> shell to
+switch this preprocessing on or off and also explicitly check
+the substitutions that the NiceSlice filter makes.</p>
+<p>You can switch the <a href="./NiceSlice.html">PDL::NiceSlice</a> filter on and off
+by typing</p>
+<pre>
+  pdl&gt; trans # switch niceslicing on</pre>
+<p>and</p>
+<pre>
+  pdl&gt; notrans # switch niceslicing off</pre>
+<p>respectively. The filter is on by default.</p>
+<p>To see how your commands are translated
+switch reporting on:</p>
+<pre>
+  pdl&gt; report 1;
+  pdl&gt; p $a(3:8:2)
+  processed p $a-&gt;nslice([3,8,2])
+  [3 5 7]</pre>
+<p>Similarly, switch reporting off as needed</p>
+<pre>
+  pdl&gt; report 0;
+  pdl&gt;  p $a(3:8:2)
+  [3 5 7]</pre>
+<p>Reporting is off by default.</p>
+<p>
+</p>
+<h2><a name="automatically_execute_your_own_hooks">Automatically execute your own hooks</a></h2>
+<p>The variable @PERLDL::AUTO is a simple list of perl code strings
+and/or code reference. It is used to define code to be
+executed automatically every time the user enters a new line.</p>
+<p>A simple example would be to print the time of each command:</p>
+<pre>
+  pdl&gt; push @PERLDL::AUTO,'print scalar(gmtime),&quot;\n&quot;'
+  
+  pdl&gt; print zeroes(3,3)
+  Sun May  3 04:49:05 1998
+  
+  [
+   [0 0 0]
+   [0 0 0]
+   [0 0 0]
+  ]
+  
+  pdl&gt; print &quot;Boo&quot;
+  Sun May  3 04:49:18 1998
+  Boo
+  pdl&gt;</pre>
+<p>Or to make sure any changes in the file 'local.perldlrc' are
+always picked up :-</p>
+<pre>
+  pdl&gt; push @PERLDL::AUTO,&quot;do 'local.perldlrc'&quot;</pre>
+<p>This code can of course be put *in* 'local.perldlrc', but
+be careful :-) [Hint: add <code>unless ($started++)</code> to above
+to ensure it only gets done once!]</p>
+<p>Another example application is as a hook for Autoloaders
+(e.g. PDL::AutoLoader) to add code too which allows them to
+automatically re-scan their files for changes. This is
+extremely convenient at the interactive command line. Since
+this hook is only in the shell it imposes no inefficiency on
+PDL scripts.</p>
+<p>Finally note this is a very powerful facility - which means
+it should be used with caution!</p>
+
+</body>
+
+</html>

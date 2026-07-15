@@ -1,0 +1,426 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::IO::Pic -- image I/O for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#image_i_o_for_pdl_based_on_the_netpbm_package_">Image I/O for PDL based on the netpbm package.</a></li>
+		<li><a href="#configuration">Configuration</a></li>
+	</ul>
+
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#rpiccan__wpiccan">rpiccan, wpiccan</a></li>
+		<li><a href="#rpic">rpic</a></li>
+		<li><a href="#wpic">wpic</a></li>
+		<li><a href="#rim">rim</a></li>
+		<li><a href="#wim">wim</a></li>
+		<li><a href="#wmpeg">wmpeg</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::IO::Pic -- image I/O for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="image_i_o_for_pdl_based_on_the_netpbm_package_">Image I/O for PDL based on the netpbm package.</a></h2>
+<p>This package implements I/O for a number of popular image formats
+by exploiting the xxxtopnm and pnmtoxxx converters from the netpbm package
+(which is based on the original pbmplus by Jef Poskanzer).</p>
+<p>Netpbm is available at
+<a href="ftp://wuarchive.wustl.edu/graphics/graphics/packages/NetPBM/">ftp://wuarchive.wustl.edu/graphics/graphics/packages/NetPBM/</a>
+Pbmplus (on which netpbm is based) might work as well, I haven't tried it.
+If you want to read/write JPEG images you additionally need the two
+converters cjpeg/djpeg which come with the libjpeg distribution (the
+&quot;official&quot; archive site for this software is <a href="ftp://ftp.uu.net/graphics/jpeg">ftp://ftp.uu.net/graphics/jpeg</a>).</p>
+<p>Image I/O for all formats is established by reading and writing only
+the PNM format directly while the netpbm standalone apps take care of
+the necessary conversions. In accordance with netpbm parlance PNM stands
+here for 'portable any map' meaning any of the PBM/PGM/PPM formats.</p>
+<p>As it appeared to be a reasonable place this package also contains the
+routine wmpeg to write mpeg movies from PDLs representing image
+stacks (the image stack is first written as a sequence of PPM images into some
+temporary directory). For this to work you need the program ffmpeg also.</p>
+<p>
+</p>
+<h2><a name="configuration">Configuration</a></h2>
+<p>The executables from the netpbm package are assumed to be in your path.
+Problems in finding the executables may show up as PNM format
+errors when calling wpic/rpic. If you run into this kind of problem run
+your program with perl <code>-w</code> so that perl prints a message if it can't find
+the filter when trying to open the pipe. [']</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="rpiccan__wpiccan">rpiccan, wpiccan</a></h2>
+<p>Test which image formats can be read/written</p>
+<pre>
+   $im = PDL-&gt;rpic('PDL.jpg') if PDL-&gt;rpiccan('JPEG');
+   @wformats = PDL-&gt;wpiccan();</pre>
+<p>finds out if PDL::IO::Pic can read/write certain image formats.
+When called without arguments returns a list of supported
+formats. When called with an argument returns true if format
+is supported on your computer (requires appropriate filters in
+your path), false otherwise.</p>
+<p>
+</p>
+<h2><a name="rpic">rpic</a></h2>
+<p>Read images in many formats with automatic format detection.</p>
+<pre>
+    $im = rpic $file;
+    $im = PDL-&gt;rpic 'PDL.jpg' if PDL-&gt;rpiccan('JPEG');</pre>
+<p><em>Options</em></p>
+<pre>
+    FORMAT  =&gt;  'JPEG'   # explicitly read this format
+    XTRAFLAGS =&gt; '-nolut'  # additional flags for converter</pre>
+<p>Reads image files in most of the formats supported by netpbm. You can
+explicitly specify a supported format by additionally passing a hash
+containing the FORMAT key as in</p>
+<pre>
+    $im = rpic ($file, {FORMAT =&gt; 'GIF'});</pre>
+<p>This is especially useful if the particular format isn't identified by
+a magic number and doesn't have the 'typical' extension or you want to
+avoid the check of the magic number if your data comes in from a pipe.
+The function returns a pdl of the appropriate type upon completion.
+Option parsing uses the <a href="../Options.html">PDL::Options</a> module and
+therefore supports minimal options matching.</p>
+<p>You can also read directly into an existing pdl that has to have the
+right size(!). This can come in handy when you want to read a sequence
+of images into a datacube, e.g.</p>
+<pre>
+  $stack = zeroes(byte,3,500,300,4);
+  rpic $stack-&gt;slice(':,:,:,(0)'),&quot;PDL.jpg&quot;;</pre>
+<p>reads an rgb image (that had better be of size (500,300)) into the
+first plane of a 3D RGB datacube (=4D pdl datacube). You can also do
+transpose/inversion upon read that way.</p>
+<p>
+</p>
+<h2><a name="wpic">wpic</a></h2>
+<p>Write images in many formats with automatic format selection.</p>
+<pre>
+   Usage: wpic($pdl,$filename[,{ options... }])</pre>
+<pre>
+    wpic $pdl, $file;
+    $im-&gt;wpic('web.gif',{LUT =&gt; $lut});
+    for (@images) {
+      $_-&gt;wpic($name[0],{CONVERTER =&gt; 'ppmtogif'})
+    }</pre>
+<p>Write out an image file. Function will try to guess correct image
+format from the filename extension, e.g.</p>
+<pre>
+    $pdl-&gt;wpic(&quot;image.gif&quot;)</pre>
+<p>will write a gif file. The data written out will be scaled to byte if
+input is of type float/double. Input data that is of a signed integer
+type and contains negative numbers will be rejected (assuming the user
+should have the desired conversion to an unsigned type already). A number
+of options can be specified (as a hash reference) to get more direct control of
+the image format that is being written. Valid options are (key
+=&gt; example_value):</p>
+<pre>
+   CONVERTER  =&gt; 'ppmtogif',   # explicitly specify pbm converter
+   FLAGS      =&gt; '-interlaced -transparent 0',  # flags for converter
+   IFORM      =&gt; 'PGM',        # explicitly specify intermediate format
+   XTRAFLAGS  =&gt; '-imagename iris', # additional flags to defaultflags
+   FORMAT     =&gt; 'PCX',        # explicitly specify output image format
+   COLOR      =&gt; 'bw',         # specify color conversion
+   LUT        =&gt; $lut,         # use color table information</pre>
+<p>Option parsing uses the <a href="../Options.html">PDL::Options</a> module and
+therefore supports minimal options matching. A detailed explanation of
+supported options follows.</p>
+<dl>
+<dt><strong><a name="converter" class="item">CONVERTER</a></strong></dt>
+
+<dd>
+<p>directly specify the converter,
+you had better know what you are doing, e.g.</p>
+<pre>
+  CONVERTER  =&gt; 'ppmtogif',</pre>
+</dd>
+<dt><strong><a name="flags" class="item">FLAGS</a></strong></dt>
+
+<dd>
+<p>flags to use with the converter;
+ignored if !defined($$hints{CONVERTER}), e.g. with the gif format</p>
+<pre>
+  FLAGS      =&gt; '-interlaced -transparent 0',</pre>
+</dd>
+<dt><strong><a name="iform" class="item">IFORM</a></strong></dt>
+
+<dd>
+<p>intermediate PNM/PPM/PGM/PBM format to use;
+you can append the strings 'RAW' or 'ASCII'
+to enforce those modes, eg IFORMAT=&gt;'PGMRAW' or</p>
+<pre>
+  IFORM    =&gt; 'PGM',</pre>
+</dd>
+<dt><strong><a name="xtraflags" class="item">XTRAFLAGS</a></strong></dt>
+
+<dd>
+<p>additional flags to use with an automatically chosen
+converter, this example works when you write SGI
+files (but will give an error otherwise)</p>
+<pre>
+  XTRAFLAGS =&gt; '-imagename iris',</pre>
+</dd>
+<dt><strong><a name="format" class="item">FORMAT</a></strong></dt>
+
+<dd>
+<p>explicitly select the format you want to use. Required if wpic cannot
+figure out the desired format from the file name extension. Supported
+types are currently TIFF,GIF,SGI,PNM,JPEG,PS,RAST(Sun Raster),IFF,PCX,
+e.g.</p>
+<pre>
+   FORMAT     =&gt; 'PCX',</pre>
+</dd>
+<dt><strong><a name="color" class="item">COLOR</a></strong></dt>
+
+<dd>
+<p>you want black and white (value <strong>bw</strong>), other possible value is
+<strong>bwdither</strong> which will write a dithered black&amp;white
+image from the input data, data conversion will be done appropriately,
+e.g.</p>
+<pre>
+   COLOR      =&gt; 'bw',</pre>
+</dd>
+<dt><strong><a name="lut" class="item">LUT</a></strong></dt>
+
+<dd>
+<p>This is a palette image and the value of this key should be a
+pdl containg an RGB lookup table (3,x), e.g.</p>
+<pre>
+   LUT        =&gt; $lut,</pre>
+</dd>
+</dl>
+<p>Using the CONVERTER hint you can also build a pipe and perform
+several netpbm operations to get the special result you like. Using it
+this way the first converter/filecommand in the pipe should be
+specified with the CONVERTER hint and subsequent converters + flags in
+the FLAGS hint. This is because wpic tries to figure out the required
+format to be written by wpnm based on the first converter. Be careful when
+using the PBMBIN var as it will only be prepended to the converter. If more
+converters are in the FLAGS part specify the full path unless they are in
+your PATH anyway.</p>
+<p>Example:</p>
+<pre>
+   $im-&gt;wpic('test.ps',{CONVERTER  =&gt; 'pgmtopbm',
+                    FLAGS =&gt; &quot;-dither8 | pnmtops&quot; })</pre>
+<p>Some of the options may appear silly at the moment and probably
+are. The situation will hopefully improve as people use the code and
+the need for different/modified options becomes clear. The general
+idea is to make the function perl compliant: easy things should be
+easy, complicated tasks possible.</p>
+<p>
+</p>
+<h2><a name="rim">rim</a></h2>
+<pre>
+ Usage: $a = rim($file);
+ or       rim($a,$file);</pre>
+<p>Read images in most formats, with improved RGB handling.</p>
+<p>You specify a filename and get back a PDL with the image data in it.
+Any PNM handled format or FITS will work. In the second form, $a is an
+existing PDL that gets loaded with the image data.</p>
+<p>If the image is in one of the standard RGB formats, then you get back
+data in (&lt;X&gt;,&lt;Y&gt;,&lt;RGB-index&gt;) format -- that is to say, the third dim
+contains the color information.  That allows you to do simple indexing
+into the image without knowing whether it is color or not -- if present,
+the RGB information is silently threaded over.  (Contrast <a href="#rpic">rpic</a>, which
+munges the information by putting the RGB index in the 0th dim, screwing
+up subsequent threading operations).</p>
+<p>If the image is in FITS format, then you get the data back in exactly
+the same order as in the file itself.</p>
+<p>Images with a &quot;.Z&quot; or &quot;.gz&quot; extension are assumed to be compressed with
+UNIX <em>&quot;compress&quot;</em> or <em>&quot;gzip&quot;</em>, respecetively, and are
+automatically uncompressed before reading.</p>
+<p>OPTIONS</p>
+<p>The same as <a href="#rpic">rpic</a>, which is used as an engine:</p>
+<dl>
+<dt><strong><a name="format2" class="item">FORMAT</a></strong></dt>
+
+<dd>
+<p>If you don't specify this then formats are autodetected.  If you do specify
+it then only the specified interpreter is tried.  For example,</p>
+<pre>
+  $a = rim(&quot;foo.gif&quot;,{FORMAT=&gt;&quot;JPEG&quot;})</pre>
+<p>forces JPEG interpretation.</p>
+</dd>
+<dt><strong><a name="xtraflags2" class="item">XTRAFLAGS</a></strong></dt>
+
+<dd>
+<p>Contains extra command line flags for the pnm interpreter.  For example,</p>
+<pre>
+  $a = rim(&quot;foo.jpg&quot;,{XTRAFLAGS=&gt;&quot;-nolut&quot;})</pre>
+<p>prevents use of a lookup table in JPEG images.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="wim">wim</a></h2>
+<p>Write a pdl to an image file with selected type (or using filename extensions)</p>
+<pre>
+  wim $pdl,$file;
+  $pdl-&gt;wim(&quot;foo.gif&quot;,{LUT=&gt;$lut});</pre>
+<p>Write out an image file.  You can specify the format explicitly as an
+option, or the function will try to guess the correct image
+format from the filename extension, e.g.</p>
+<pre>
+  $pdl-&gt;wim(&quot;image.gif&quot;);
+  $pdl-&gt;wim(&quot;image.fits&quot;);</pre>
+<p>will write a gif and a FITS file.  The data written out will be scaled
+to byte if the input if of type float/double.  Input data that is of a
+signed integer type and contains negative numbers will be rejected.</p>
+<p>If you append <code>.gz</code> or <code>.Z</code> to the end of the file name, the final
+file will be automatically compresed with <em>&quot;gzip&quot;</em> |
+<em>&quot;compress&quot;</em>, respectively.</p>
+<p>OPTIONS</p>
+<p>You can pass in a hash ref whose keys are options.  The code uses the
+PDL::Options module so unique abbreviations are accepted.  Accepted
+keys are the same as for <a href="#wpic">wpic</a>, which is used as an engine:</p>
+<dl>
+<dt><strong><a name="converter2" class="item">CONVERTER</a></strong></dt>
+
+<dd>
+<p>Names the converter program to be used by pbmplus (e.g. &quot;ppmtogif&quot; to
+output a gif file)</p>
+</dd>
+<dt><strong><a name="flags2" class="item">FLAGS</a></strong></dt>
+
+<dd>
+<p>Flags that should be passed to the converter (replacing any default flag list)
+e.g. &quot;-interlaced&quot; to make an interlaced GIF</p>
+</dd>
+<dt><strong><a name="iform2" class="item">IFORM</a></strong></dt>
+
+<dd>
+<p>Explicitly specifies the intermediate format (e.g. PGM, PPM, or PNM).</p>
+</dd>
+<dt><strong><a name="xtraflags3" class="item">XTRAFLAGS</a></strong></dt>
+
+<dd>
+<p>Flags that should be passed to the converter (in addition to any default
+flag list).</p>
+</dd>
+<dt><strong><a name="format3" class="item">FORMAT</a></strong></dt>
+
+<dd>
+<p>Explicitly specifies the output image format (allowing pbmplus to pick an
+output converter)</p>
+</dd>
+<dt><strong><a name="color2" class="item">COLOR</a></strong></dt>
+
+<dd>
+<p>Specifies color conversion (e.g. 'bw' converts to black-and-white; see
+<em>pbmplus</em> for details).</p>
+</dd>
+<dt><strong><a name="lut2" class="item">LUT</a></strong></dt>
+
+<dd>
+<p>Use color-table information</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="wmpeg">wmpeg</a></h2>
+<p>Write an image sequence (a (3,x,y,n) byte pdl) as an animation.</p>
+<pre>
+  $piddle-&gt;wmpeg('movie.mpg'); # $piddle is (3,x,y,nframes) byte</pre>
+<p>Writes a stack of RGB images as a movie.  While the
+format generated is nominally MPEG, the file extension
+is used to determine the video encoder type.</p>
+<pre>
+  E.g.:
+    .mpg for MPEG-1 encoding
+    .mp4 for MPEG-4 encoding
+   
+  And even:
+    .gif for GIF animation (uncompressed)</pre>
+<p><code>wmpeg</code> requires a 4-D pdl of type <strong>byte</strong> as
+input.  The first dim <strong>has</strong> to be of size 3 since
+it will be interpreted as RGB pixel data.
+<code>wmpeg</code> returns 1 on success and undef on failure.</p>
+<pre>
+  $anim-&gt;wmpeg(&quot;GreatAnimation.mpg&quot;)
+      or die &quot;can't create mpeg1 output&quot;;</pre>
+<pre>
+  $anim-&gt;wmpeg(&quot;GreatAnimation.mp4&quot;)
+      or die &quot;can't create mpeg4 output&quot;;</pre>
+<p>Some of the input data restrictions will have to
+be relaxed in the future but routine serves as
+a proof of principle at the moment. It uses the
+program ffmpeg to encode the frames into video.
+The arguments and parameters used for ffmpeg have
+not been tuned. This is a first implementation
+replacing mpeg_encode by ffmpeg. Currently, wmpeg
+doesn't allow modification of the parameters
+written through its calling interface. This will
+change in the future as needed.</p>
+<p>In the future it might be much nicer to implement
+a movie perl object that supplies methods for
+manipulating the image stack (insert, cut, append
+commands) and a final movie-&gt;<code>make()</code> call would
+invoke ffmpeg on the picture stack (which will
+only be held on disk). This should get around the
+problem of having to hold a huge amount of data
+in memory to be passed into wmpeg (when you are,
+e.g. writing a large animation from PDL3D rendered
+fly-throughs).</p>
+<p>Having said that, the actual storage requirements
+might not be so big in the future any more if
+you could pass 'virtual' transform pdls into
+wmpeg that will only be actually calculated when
+accessed by the wpic routines, you know what I
+mean...</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Currently only a random selection of converters/formats provided by
+pbmplus/netpbm is supported. It is hoped that the more important formats
+are covered. Other formats can be added as needed. Please send patches to
+the author.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) 1996,1997 Christian Soeller &lt;<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>&gt;
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

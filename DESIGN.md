@@ -114,12 +114,12 @@ Outputs:
   `matched_families`, `matched_ion_count`), and post-filter outcome (`hard_status`,
   `soft_score`, `postfilter_status`). Hits are de-duplicated across per-glycan jobs,
   keeping the highest-scoring copy, and sorted by soft score.
-- `results/xiview.csv`: passing crosslinks in the xiVIEW CSV layout
+- `results/xiview.csv`: passing crosslinks in CLMS-CSV layout
   (`Protein1,PepPos1,PepSeq1,LinkPos1,AbsPos1,Protein2,PepPos2,PepSeq2,LinkPos2,AbsPos2,Score,…`).
   Peptides are resolved from xQuest pseudo-residues via the job manifest and located in
   the FASTA to compute 1-based peptide start (`PepPos*`) and absolute cross-link residue
   (`AbsPos* = PepPos + LinkPos - 1`) positions; glycan annotations are appended as trailing
-  columns. Loads directly at xiview.org for the 2D network view.
+  columns.
 - `results/report.html`: self-contained QC/glycan report (inline CSS + SVG, no network or
   JavaScript) covering the prefilter funnel, post-filter outcome breakdown, xQuest score and
   precursor-error distributions, glycan and glycosylation-site distributions, and a hits table.

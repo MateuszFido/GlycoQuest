@@ -1,0 +1,395 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Basic -- Basic utility functions for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#xvals">xvals</a></li>
+		<li><a href="#yvals">yvals</a></li>
+		<li><a href="#zvals">zvals</a></li>
+		<li><a href="#xlinvals">xlinvals</a></li>
+		<li><a href="#ylinvals">ylinvals</a></li>
+		<li><a href="#zlinvals">zlinvals</a></li>
+		<li><a href="#xlogvals">xlogvals</a></li>
+		<li><a href="#ylogvals">ylogvals</a></li>
+		<li><a href="#zlogvals">zlogvals</a></li>
+		<li><a href="#allaxisvals">allaxisvals</a></li>
+		<li><a href="#ndcoords">ndcoords</a></li>
+		<li><a href="#hist">hist</a></li>
+		<li><a href="#whist">whist</a></li>
+		<li><a href="#sequence">sequence</a></li>
+		<li><a href="#rvals">rvals</a></li>
+		<li><a href="#axisvals">axisvals</a></li>
+		<li><a href="#transpose">transpose</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Basic -- Basic utility functions for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module contains basic utility functions for
+creating and manipulating piddles. Most of these functions
+are simplified interfaces to the more flexible functions in
+the modules 
+<a href="./Primitive.html">PDL::Primitive</a> 
+and 
+<a href="./Slices.html">PDL::Slices</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Basic;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="xvals">xvals</a></h2>
+<p>Fills a piddle with X index values.  Uses similar specifications to
+<em>zeroes</em> and <em>new_from_specification</em>.</p>
+<p>CAVEAT:</p>
+<p>If you use the single argument piddle form (top row
+in the usage table) the output will have the same type as the input;
+this may give surprising results if, e.g., you have a byte array with
+a dimension of size greater than 256.  To force a type, use the third form.</p>
+<pre>
+ $x = xvals($somearray);
+ $x = xvals([OPTIONAL TYPE],$nx,$ny,$nz...);
+ $x = xvals([OPTIONAL TYPE], $somarray-&gt;dims);</pre>
+<p>etc. see <a href="./Core.html#zeroes">zeroes</a>.</p>
+<pre>
+  pdl&gt; print xvals zeroes(5,10)
+  [
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+   [0 1 2 3 4]
+  ]</pre>
+<p>
+</p>
+<h2><a name="yvals">yvals</a></h2>
+<p>Fills a piddle with Y index values.  See the CAVEAT for <a href="#xvals">xvals</a>.</p>
+<pre>
+ $x = yvals($somearray); yvals(inplace($somearray));
+ $x = yvals([OPTIONAL TYPE],$nx,$ny,$nz...);</pre>
+<p>etc. see <a href="./Core.html#zeroes">zeroes</a>.</p>
+<pre>
+ pdl&gt; print yvals zeroes(5,10)
+ [
+  [0 0 0 0 0]
+  [1 1 1 1 1]
+  [2 2 2 2 2]
+  [3 3 3 3 3]
+  [4 4 4 4 4]
+  [5 5 5 5 5]
+  [6 6 6 6 6]
+  [7 7 7 7 7]
+  [8 8 8 8 8]
+  [9 9 9 9 9]
+ ]</pre>
+<p>
+</p>
+<h2><a name="zvals">zvals</a></h2>
+<p>Fills a piddle with Z index values.  See the CAVEAT for <a href="#xvals">xvals</a>.</p>
+<pre>
+ $x = zvals($somearray); zvals(inplace($somearray));
+ $x = zvals([OPTIONAL TYPE],$nx,$ny,$nz...);</pre>
+<p>etc. see <a href="./Core.html#zeroes">zeroes</a>.</p>
+<pre>
+ pdl&gt; print zvals zeroes(3,4,2)
+ [
+  [
+   [0 0 0]
+   [0 0 0]
+   [0 0 0]
+   [0 0 0]
+  ]
+  [
+   [1 1 1]
+   [1 1 1]
+   [1 1 1]
+   [1 1 1]
+  ]
+ ]</pre>
+<p>
+</p>
+<h2><a name="xlinvals">xlinvals</a></h2>
+<p>X axis values between endpoints (see <a href="#xvals">xvals</a>).</p>
+<pre>
+ $a = zeroes(100,100);
+ $x = $a-&gt;xlinvals(0.5,1.5);
+ $y = $a-&gt;ylinvals(-2,-1);
+ # calculate Z for X between 0.5 and 1.5 and
+ # Y between -2 and -1.
+ $z = f($x,$y);</pre>
+<p><code>xlinvals</code>, <code>ylinvals</code> and <code>zlinvals</code> return a piddle with the same shape
+as their first argument and linearly scaled values between the two other
+arguments along the given axis.</p>
+<p>
+</p>
+<h2><a name="ylinvals">ylinvals</a></h2>
+<p>Y axis values between endpoints (see <a href="#yvals">yvals</a>).</p>
+<p>See <a href="#xlinvals">xlinvals</a> for more information.</p>
+<p>
+</p>
+<h2><a name="zlinvals">zlinvals</a></h2>
+<p>Z axis values between endpoints (see <a href="#zvals">zvals</a>).</p>
+<p>See <a href="#xlinvals">xlinvals</a> for more information.</p>
+<p>
+</p>
+<h2><a name="xlogvals">xlogvals</a></h2>
+<p>X axis values logarithmicly spaced between endpoints (see <a href="#xvals">xvals</a>).</p>
+<pre>
+ $a = zeroes(100,100);
+ $x = $a-&gt;xlogvals(1e-6,1e-3);
+ $y = $a-&gt;ylinvals(1e-4,1e3);
+ # calculate Z for X between 1e-6 and 1e-3 and
+ # Y between 1e-4 and 1e3.
+ $z = f($x,$y);</pre>
+<p><code>xlogvals</code>, <code>ylogvals</code> and <code>zlogvals</code> return a piddle with the same shape
+as their first argument and logarithmicly scaled values between the two other
+arguments along the given axis.</p>
+<p>
+</p>
+<h2><a name="ylogvals">ylogvals</a></h2>
+<p>Y axis values logarithmicly spaced between endpoints (see <a href="#yvals">yvals</a>).</p>
+<p>See <a href="#xlogvals">xlogvals</a> for more information.</p>
+<p>
+</p>
+<h2><a name="zlogvals">zlogvals</a></h2>
+<p>Z axis values logarithmicly spaced between endpoints (see <a href="#zvals">zvals</a>).</p>
+<p>See <a href="#xlogvals">xlogvals</a> for more information.</p>
+<p>
+</p>
+<h2><a name="allaxisvals">allaxisvals</a></h2>
+<p>Synonym for <a href="#ndcoords">ndcoords</a> - enumerates all coordinates in a
+PDL or dim list, adding an extra dim on the front to accomodate
+the vector coordinate index (the form expected by <em>indexND</em>,
+<em>range</em>, and <em>interpND</em>).  See <a href="#ndcoords">ndcoords</a> for more detail.</p>
+<p>$indices = <code>allaxisvals($pdl)</code>;
+$indices = <code>allaxisvals(@dimlist)</code>;
+$indices = <code>allaxisvals($type,@dimlist)</code>;</p>
+<p>
+</p>
+<h2><a name="ndcoords">ndcoords</a></h2>
+<p>Enumerate pixel coordinates for an N-D piddle</p>
+<p>Returns an enumerated list of coordinates suitable for use in
+<a href="./Slices.html#indexnd">indexND</a> or <a href="./Slices.html#range">range</a>: you feed
+in a dimension list and get out a piddle whose 0th dimension runs over
+dimension index and whose 1st through Nth dimensions are the
+dimensions given in the input.  If you feed in a piddle instead of a
+perl list, then the dimension list is used, as in <a href="#xvals">xvals</a> etc.</p>
+<p>Unlike <a href="#xvals">xvals</a> etc., if you supply a piddle input, you get 
+out a piddle of the default piddle type: double.   This causes less
+surprises than the previous default of keeping the data type of
+the input piddle since that rarely made sense in most usages.</p>
+<p>$indices = <code>ndcoords($pdl)</code>;
+$indices = <code>ndcoords(@dimlist)</code>;
+$indices = <code>ndcoords($type,@dimlist)</code>;</p>
+<pre>
+  pdl&gt; print ndcoords(2,3)</pre>
+<pre>
+  [
+   [
+    [0 0]
+    [1 0]
+   ]
+   [
+    [0 1]
+    [1 1]
+   ]
+   [
+    [0 2]
+    [1 2]
+   ]
+  ]</pre>
+<pre>
+  pdl&gt; $a = zeroes(byte,2,3);        # $a is a 2x3 byte piddle
+  pdl&gt; $b = ndcoords($a);            # $b inherits $a's type
+  pdl&gt; $c = ndcoords(long,$a-&gt;dims); # $c is a long piddle, same dims as $b
+  pdl&gt; help $b;
+  This variable is   Byte D [2,2,3]              P            0.01Kb
+  pdl&gt; help $c;
+  This variable is   Long D [2,2,3]              P            0.05Kb</pre>
+<p>
+</p>
+<h2><a name="hist">hist</a></h2>
+<p>Create histogram of a piddle</p>
+<pre>
+ $hist = hist($data);
+ ($xvals,$hist) = hist($data);</pre>
+<p>or</p>
+<pre>
+ $hist = hist($data,$min,$max,$step);
+ ($xvals,$hist) = hist($data,[$min,$max,$step]);</pre>
+<p>If <code>hist</code> is run in list context, <code>$xvals</code> gives the computed bin centres</p>
+<p>A nice idiom (with 
+<a href="Graphics/PGPLOT.html">PDL::Graphics::PGPLOT</a>) is</p>
+<pre>
+ bin hist $data;  # Plot histogram</pre>
+<pre>
+ pdl&gt; p $y
+ [13 10 13 10 9 13 9 12 11 10 10 13 7 6 8 10 11 7 12 9 11 11 12 6 12 7]
+ pdl&gt; $h = hist $y,0,20,1; # hist with step 1, min 0 and 20 bins
+ pdl&gt; p $h
+ [0 0 0 0 0 0 2 3 1 3 5 4 4 4 0 0 0 0 0 0]</pre>
+<p>
+</p>
+<h2><a name="whist">whist</a></h2>
+<p>Create a weighted histogram of a piddle</p>
+<pre>
+ $hist = whist($data, $wt, [$min,$max,$step]);
+ ($xvals,$hist) = whist($data, $wt, [$min,$max,$step]);</pre>
+<p>If requested, <code>$xvals</code> gives the computed bin centres.
+<code>$data</code> and <code>$wt</code> should have the same dimensionality and extents.</p>
+<p>A nice idiom (with 
+<a href="Graphics/PGPLOT.html">PDL::Graphics::PGPLOT</a>) is</p>
+<pre>
+ bin whist $data, $wt;  # Plot histogram</pre>
+<pre>
+ pdl&gt; p $y
+ [13 10 13 10 9 13 9 12 11 10 10 13 7 6 8 10 11 7 12 9 11 11 12 6 12 7]
+ pdl&gt; $wt = grandom($y-&gt;nelem)
+ pdl&gt; $h = whist $y, $wt, 0, 20, 1 # hist with step 1, min 0 and 20 bins
+ pdl&gt; p $h                        
+ [0 0 0 0 0 0 -0.49552342  1.7987439 0.39450696  4.0073722 -2.6255299 -2.5084501  2.6458365  4.1671676 0 0 0 0 0 0]</pre>
+<p>
+</p>
+<h2><a name="sequence">sequence</a></h2>
+<p>Create array filled with a sequence of values</p>
+<pre>
+ $a = sequence($b); $a = sequence [OPTIONAL TYPE], @dims;</pre>
+<p>etc. see <a href="./Core.html#zeroes">zeroes</a>.</p>
+<pre>
+ pdl&gt; p sequence(10)
+ [0 1 2 3 4 5 6 7 8 9]
+ pdl&gt; p sequence(3,4)
+ [
+  [ 0  1  2]
+  [ 3  4  5]
+  [ 6  7  8]
+  [ 9 10 11]
+ ]</pre>
+<p>
+</p>
+<h2><a name="rvals">rvals</a></h2>
+<p>Fills a piddle with radial distance values from some centre.</p>
+<pre>
+ $r = rvals $piddle,{OPTIONS};
+ $r = rvals [OPTIONAL TYPE],$nx,$ny,...{OPTIONS};</pre>
+<pre>
+ Options:</pre>
+<pre>
+ Centre =&gt; [$x,$y,$z...] # Specify centre
+ Center =&gt; [$x,$y.$z...] # synonym.</pre>
+<pre>
+ Squared =&gt; 1 # return distance squared (i.e., don't take the square root)</pre>
+<pre>
+ pdl&gt; print rvals long,7,7,{Centre=&gt;[2,2]}
+ [
+  [2 2 2 2 2 3 4]
+  [2 1 1 1 2 3 4]
+  [2 1 0 1 2 3 4]
+  [2 1 1 1 2 3 4]
+  [2 2 2 2 2 3 4]
+  [3 3 3 3 3 4 5]
+  [4 4 4 4 4 5 5]
+ ]</pre>
+<p>If <code>Center</code> is not specified, the midpoint for a given dimension of
+size <code>N</code> is given by <code> int(N/2) </code> so that the midpoint always falls
+on an exact pixel point in the data.  For dimensions of even size,
+that means the midpoint is shifted by 1/2 pixel from the true center
+of that dimension.</p>
+<p>Also note that the calculation for <code>rvals</code> for integer values
+does not promote the datatype so you will have wraparound when
+the value calculated for <code> r**2 </code> is greater than the datatype
+can hold.  If you need exact values, be sure to use large integer
+or floating point datatypes.</p>
+<p>For a more general metric, one can define, e.g.,</p>
+<pre>
+ sub distance {
+   my ($a,$centre,$f) = @_;
+   my ($r) = $a-&gt;allaxisvals-$centre;
+   $f-&gt;($r);
+ }
+ sub l1 { sumover(abs($_[0])); }
+ sub euclid { use PDL::Math 'pow'; pow(sumover(pow($_[0],2)),0.5); }
+ sub linfty { maximum(abs($_[0])); }</pre>
+<p>so now</p>
+<pre>
+ distance($a, $centre, \&amp;euclid);</pre>
+<p>will emulate rvals, while <code>\&amp;l1</code> and <code>\&amp;linfty</code> will generate other
+well-known norms.</p>
+<p>
+</p>
+<h2><a name="axisvals">axisvals</a></h2>
+<p>Fills a piddle with index values on Nth dimension</p>
+<pre>
+ $z = axisvals ($piddle, $nth);</pre>
+<p>This is the routine, for which <a href="#xvals">xvals</a>, <a href="#yvals">yvals</a> etc
+are mere shorthands. <code>axisvals</code> can be used to fill along any dimension,
+using a parameter.</p>
+<p>See also <a href="#allaxisvals">allaxisvals</a>, which generates all axis values 
+simultaneously in a form useful for <em>range</em>, <em>interpND</em>, 
+<em>indexND</em>, etc.</p>
+<p>Note the 'from specification' style (see <a href="./Core.html#zeroes">zeroes</a>) is
+not available here, for obvious reasons.</p>
+<p>
+</p>
+<h2><a name="transpose">transpose</a></h2>
+<p>transpose rows and columns.</p>
+<pre>
+ $b = transpose($a);</pre>
+<pre>
+ pdl&gt; $a = sequence(3,2)
+ pdl&gt; p $a
+ [
+  [0 1 2]
+  [3 4 5]
+ ]                                                                               
+ pdl&gt; p transpose( $a )
+ [
+  [0 3]
+  [1 4]
+  [2 5]                                                                          
+ ]</pre>
+
+</body>
+
+</html>

@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 use base64::Engine;
 use base64::engine::general_purpose::STANDARD;
 
-use crate::mzxml::{parse_scans, Ms2Scan};
+use crate::mzxml::{Ms2Scan, parse_scans};
 use crate::prefilter::FilteredSpectrum;
 
 /// Write `spectra/` containing one reduced mzXML per source file (prefilter-retained scans only).
@@ -61,8 +61,7 @@ fn write_subset_mzxml(source: &Path, dest: &Path, keep: &HashSet<u32>) -> Result
     }
 
     let mut w = BufWriter::new(
-        File::create(dest)
-            .map_err(|err| format!("cannot write {}: {err}", dest.display()))?,
+        File::create(dest).map_err(|err| format!("cannot write {}: {err}", dest.display()))?,
     );
     writeln!(
         w,
@@ -128,10 +127,7 @@ mod tests {
     #[test]
     fn writes_subset_for_dss_pair() {
         let source = fixture("dss_pair.mzXML");
-        let out = std::env::temp_dir().join(format!(
-            "glycoquest_pruned_{}",
-            std::process::id()
-        ));
+        let out = std::env::temp_dir().join(format!("glycoquest_pruned_{}", std::process::id()));
         let _ = fs::remove_dir_all(&out);
         fs::create_dir_all(&out).unwrap();
 

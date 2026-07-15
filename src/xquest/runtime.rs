@@ -12,7 +12,11 @@ pub struct XQuestRuntime {
 
 /// Resolve the xQuest executable from settings or `--xquest-root`.
 pub fn resolve_runtime(xquest_root: &Path, settings: &Settings) -> Result<XQuestRuntime, String> {
-    if let Some(bin) = settings.xquest_bin.as_ref().filter(|path| !path.as_os_str().is_empty()) {
+    if let Some(bin) = settings
+        .xquest_bin
+        .as_ref()
+        .filter(|path| !path.as_os_str().is_empty())
+    {
         let path = if bin.is_absolute() {
             bin.clone()
         } else {
@@ -53,9 +57,8 @@ fn validate_executable(path: &Path, root: &Path) -> Result<XQuestRuntime, String
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;
-        let meta = std::fs::metadata(path).map_err(|err| {
-            format!("cannot read xQuest executable {}: {err}", path.display())
-        })?;
+        let meta = std::fs::metadata(path)
+            .map_err(|err| format!("cannot read xQuest executable {}: {err}", path.display()))?;
         if meta.permissions().mode() & 0o111 == 0 {
             return Err(format!(
                 "xQuest executable is not executable: {}",

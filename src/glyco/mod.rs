@@ -6,17 +6,14 @@ mod diagnostic;
 mod library;
 
 pub use catalog::{glycan_data_dir, resolve_database, supported_glycan_databases};
-pub use library::load_glycan_library_file;
-pub use diagnostic::DiagnosticIon;
 pub use composition::{
-    composition_mass, contains_family, load_masses, parse_composition, read_compositions,
-    Composition,
+    Composition, composition_mass, contains_family, load_masses, parse_composition,
+    read_compositions,
 };
+pub use diagnostic::DiagnosticIon;
+pub use library::load_glycan_library_file;
 
-use catalog::{
-    ensure_data_files, residue_targets,
-    resolve_database as resolve_catalog_entry,
-};
+use catalog::{ensure_data_files, residue_targets, resolve_database as resolve_catalog_entry};
 use diagnostic::{expand_diagnostic_ions, load_diagnostic_catalog};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -102,11 +99,18 @@ mod tests {
         let library = load_glycan_database("nglyc309").expect("bundled nglyc309");
         assert_eq!(library.database_id, "nglyc309");
         assert!(!library.entries.is_empty());
-        assert!(library.entries.iter().all(|entry| !entry.diagnostic_ions.is_empty()));
-        assert!(library
-            .entries
-            .iter()
-            .any(|entry| entry.composition == "HexNAc(1)"));
+        assert!(
+            library
+                .entries
+                .iter()
+                .all(|entry| !entry.diagnostic_ions.is_empty())
+        );
+        assert!(
+            library
+                .entries
+                .iter()
+                .any(|entry| entry.composition == "HexNAc(1)")
+        );
     }
 
     #[test]
@@ -115,10 +119,12 @@ mod tests {
         let library = load_glycan_database("oglyc78").expect("bundled oglyc78");
         assert_eq!(library.database_id, "oglyc78");
         assert_eq!(library.entries.len(), 78);
-        assert!(library
-            .entries
-            .iter()
-            .all(|entry| entry.residue_targets == vec!["S".to_string(), "T".to_string()]));
+        assert!(
+            library
+                .entries
+                .iter()
+                .all(|entry| entry.residue_targets == vec!["S".to_string(), "T".to_string()])
+        );
     }
 
     #[test]

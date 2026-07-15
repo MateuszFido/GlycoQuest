@@ -1,5 +1,5 @@
 #!/bin/sh
-# Serve the GlycoQuest viewer (required: browsers block fetch() on file:// URLs).
+# Serve the GlycoQuest viewer.
 set -euo pipefail
 cd "$(dirname "$0")"
 PORT="${1:-8080}"

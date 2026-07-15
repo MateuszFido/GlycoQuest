@@ -72,7 +72,10 @@ pub fn load_diagnostic_catalog(path: &Path) -> Result<DiagnosticCatalog, String>
                     path.display()
                 )
             })?;
-            let label = fields.get(1).map(|s| s.trim().to_string()).unwrap_or_default();
+            let label = fields
+                .get(1)
+                .map(|s| s.trim().to_string())
+                .unwrap_or_default();
             push_unique_loss(&mut losses, label, delta_da);
             continue;
         }
@@ -86,14 +89,14 @@ pub fn load_diagnostic_catalog(path: &Path) -> Result<DiagnosticCatalog, String>
         }
 
         let family = composition::canonical_residue(fields[0].trim()).to_string();
-        let mz: f64 = fields[1].trim().parse().map_err(|_| {
-            format!(
-                "invalid m/z on line {} in {}",
-                line_no + 1,
-                path.display()
-            )
-        })?;
-        let label = fields.get(2).map(|s| s.trim().to_string()).unwrap_or_default();
+        let mz: f64 = fields[1]
+            .trim()
+            .parse()
+            .map_err(|_| format!("invalid m/z on line {} in {}", line_no + 1, path.display()))?;
+        let label = fields
+            .get(2)
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default();
         let composition = match fields.get(3) {
             Some(comp) if !comp.trim().is_empty() => {
                 Some(composition::parse_composition(comp.trim()).map_err(|err| {
@@ -122,16 +125,10 @@ pub fn load_diagnostic_catalog(path: &Path) -> Result<DiagnosticCatalog, String>
         ));
     }
     if losses.is_empty() {
-        return Err(format!(
-            "no neutral losses found in {}",
-            path.display()
-        ));
+        return Err(format!("no neutral losses found in {}", path.display()));
     }
 
-    Ok(DiagnosticCatalog {
-        templates,
-        losses,
-    })
+    Ok(DiagnosticCatalog { templates, losses })
 }
 
 pub fn expand_diagnostic_ions(
@@ -170,9 +167,7 @@ fn template_eligible(glycan: &Composition, template: &DiagnosticTemplate) -> boo
 
 fn push_unique_ion(out: &mut Vec<DiagnosticIon>, family: String, mz: f64, loss_label: String) {
     if out.iter().any(|ion| {
-        ion.family == family
-            && ion.loss_label == loss_label
-            && (ion.mz - mz).abs() < 1e-4
+        ion.family == family && ion.loss_label == loss_label && (ion.mz - mz).abs() < 1e-4
     }) {
         return;
     }
@@ -191,7 +186,10 @@ fn push_unique_loss(out: &mut Vec<NeutralLoss>, label: String, delta_da: f64) {
     {
         return;
     }
-    out.push(NeutralLoss { label, delta_da: delta });
+    out.push(NeutralLoss {
+        label,
+        delta_da: delta,
+    });
 }
 
 fn round_mz(value: f64) -> f64 {

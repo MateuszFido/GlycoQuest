@@ -1,0 +1,109 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Fit::Polynomial - routines for fitting with polynomials</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#fitpoly1d">fitpoly1d</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Fit::Polynomial - routines for fitting with polynomials</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module contains routines for doing simple
+polynomial fits to data</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    $yfit = fitpoly1d $data;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="fitpoly1d">fitpoly1d</a></h2>
+<p>Fit 1D polynomials to data using min chi^2 (least squares)</p>
+<pre>
+ Usage: ($yfit, [$coeffs]) = fitpoly1d [$xdata], $data, $order, [Options...]</pre>
+<pre>
+  Signature: (x(n); y(n); [o]yfit(n); [o]coeffs(order))</pre>
+<p>Uses a standard matrix inversion method to do a least
+squares/min chi^2 polynomial fit to data. Order=2 is a linear
+fit (two parameters).</p>
+<p>Returns the fitted data and optionally the coefficients.</p>
+<p>One can thread over extra dimensions to do multiple fits (except
+the order can not be threaded over - i.e. it must be one fixed
+scalar number like &quot;4&quot;).</p>
+<p>The data is normalised internally to avoid overflows (using the
+mean of the abs value) which are common in large polynomial
+series but the returned fit, coeffs are in
+unnormalised units.</p>
+<pre>
+  $yfit = fitpoly1d $data,2; # Least-squares line fit
+  ($yfit, $coeffs) = fitpoly1d $x, $y, 4; # Fit a cubic
+  
+  $fitimage = fitpoly1d $image,3  # Fit a quadratic to each row of an image
+  
+  $myfit = fitpoly1d $line, 2, {Weights =&gt; $w}; # Weighted fit</pre>
+<pre>
+  Options:
+     Weights    Weights to use in fit, e.g. 1/$sigma**2 (default=1)</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>May not work too well for data with large dynamic range.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../Slatec.html#polyfit">polyfit in the PDL::Slatec manpage</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999, Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>)
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

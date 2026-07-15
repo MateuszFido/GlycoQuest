@@ -1,0 +1,139 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::ImageRGB -- some utility functions for RGB image data handling</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#cquant">cquant</a></li>
+		<li><a href="#interlrgb">interlrgb</a></li>
+		<li><a href="#rgbtogr">rgbtogr</a></li>
+		<li><a href="#bytescl">bytescl</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::ImageRGB -- some utility functions for RGB image data handling</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Collection of a few commonly used routines involved in handling of RGB, palette
+and grayscale images. Not much more than a start. Should be a good place to
+exercise some of the thread/map/clump PP stuff.</p>
+<p>Other stuff that should/could go here:</p>
+<ul>
+<li><strong><a name="color_space_conversion" class="item">color space conversion</a></strong>
+
+</li>
+<li><strong><a name="common_image_filters" class="item">common image filters</a></strong>
+
+</li>
+<li><strong><a name="image_rebinning" class="item">image rebinning</a></strong>
+
+</li>
+</ul>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::ImageRGB;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="cquant">cquant</a></h2>
+<p>quantize and reduce colours in 8-bit images</p>
+<pre>
+    ($out, $lut) = cquant($image [,$ncols]);</pre>
+<p>This function does color reduction for &lt;=8bit displays and accepts 8bit RGB
+and 8bit palette images. It does this through an interface to the ppm_quant
+routine from the pbmplus package that implements the median cut routine which
+intellegently selects the 'best' colors to represent your image on a &lt;= 8bit
+display (based on the median cut algorithm). Optional args: $ncols sets the
+maximum nunmber of colours used for the output image (defaults to 256).
+There are images where a different color
+reduction scheme gives better results (it seems this is true for images
+containing large areas with very smoothly changing colours).</p>
+<p>Returns a list containing the new palette image (type PDL_Byte) and the RGB
+colormap.</p>
+<p>
+</p>
+<h2><a name="interlrgb">interlrgb</a></h2>
+<p>Make an RGB image from a palette image and its lookup table.</p>
+<pre>
+    $rgb = $palette_im-&gt;interlrgb($lut)</pre>
+<p>Input should be of an integer type and the lookup table (3,x,...). Will perform
+the lookup for any N-dimensional input pdl (i.e. 0D, 1D, 2D, ...). Uses the
+index command but will not dataflow by default. If you want it to dataflow the
+dataflow_forward flag must be set in the $lut piddle (you can do that by saying
+$lut-&gt;set_dataflow_f(1)).</p>
+<p>
+</p>
+<h2><a name="rgbtogr">rgbtogr</a></h2>
+<p>Converts an RGB image to a grey scale using standard transform</p>
+<pre>
+   $gr = $rgb-&gt;rgbtogr</pre>
+<p>Performs a conversion of an RGB input image (3,x,....) to a
+greyscale image (x,.....) using standard formula:</p>
+<pre>
+   Grey = 0.301 R + 0.586 G + 0.113 B</pre>
+<p>
+</p>
+<h2><a name="bytescl">bytescl</a></h2>
+<p>Scales a pdl into a specified data range (default 0-255)</p>
+<pre>
+        $scale = $im-&gt;bytescl([$top])</pre>
+<p>By default $top=255, otherwise you have to give the desired top value as an
+argument to <code>bytescl</code>. Normally <code>bytescl</code> doesn't rescale data that fits
+already in the bounds 0..$top (it only does the type conversion if required).
+If you want to force it to rescale so that the max of the output is at $top and
+the min at 0 you give a negative $top value to indicate this.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>This package doesn't yet contain enough useful functions!</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright 1997 Christian Soeller &lt;<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>&gt;
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

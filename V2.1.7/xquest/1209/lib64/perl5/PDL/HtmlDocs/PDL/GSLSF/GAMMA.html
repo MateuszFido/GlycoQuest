@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::GAMMA - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_lngamma">gsl_sf_lngamma</a></li>
+		<li><a href="#gsl_sf_gamma">gsl_sf_gamma</a></li>
+		<li><a href="#gsl_sf_gammastar">gsl_sf_gammastar</a></li>
+		<li><a href="#gsl_sf_gammainv">gsl_sf_gammainv</a></li>
+		<li><a href="#gsl_sf_lngamma_complex">gsl_sf_lngamma_complex</a></li>
+		<li><a href="#gsl_sf_taylorcoeff">gsl_sf_taylorcoeff</a></li>
+		<li><a href="#gsl_sf_fact">gsl_sf_fact</a></li>
+		<li><a href="#gsl_sf_doublefact">gsl_sf_doublefact</a></li>
+		<li><a href="#gsl_sf_lnfact">gsl_sf_lnfact</a></li>
+		<li><a href="#gsl_sf_lndoublefact">gsl_sf_lndoublefact</a></li>
+		<li><a href="#gsl_sf_lnchoose">gsl_sf_lnchoose</a></li>
+		<li><a href="#gsl_sf_choose">gsl_sf_choose</a></li>
+		<li><a href="#gsl_sf_lnpoch">gsl_sf_lnpoch</a></li>
+		<li><a href="#gsl_sf_poch">gsl_sf_poch</a></li>
+		<li><a href="#gsl_sf_pochrel">gsl_sf_pochrel</a></li>
+		<li><a href="#gsl_sf_gamma_inc_q">gsl_sf_gamma_inc_Q</a></li>
+		<li><a href="#gsl_sf_gamma_inc_p">gsl_sf_gamma_inc_P</a></li>
+		<li><a href="#gsl_sf_lnbeta">gsl_sf_lnbeta</a></li>
+		<li><a href="#gsl_sf_beta">gsl_sf_beta</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::GAMMA - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_lngamma">gsl_sf_lngamma</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]s(); double [o]e())</pre>
+<p>Log[Gamma(x)], x not a negative integer Uses real Lanczos method. Determines the sign of Gamma[x] as well as Log[|Gamma[x]|] for x &lt; 0. So Gamma[x] = sgn * Exp[result_lg].</p>
+<p>gsl_sf_lngamma does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gamma">gsl_sf_gamma</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Gamma(x), x not a negative integer</p>
+<p>gsl_sf_gamma does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gammastar">gsl_sf_gammastar</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Regulated Gamma Function, x &gt; 0 Gamma^*(x) = Gamma(x)/(Sqrt[2Pi] x^(x-1/2) exp(-x)) = (1 + 1/(12x) + ...),  x-&gt;Inf</p>
+<p>gsl_sf_gammastar does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gammainv">gsl_sf_gammainv</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>1/Gamma(x)</p>
+<p>gsl_sf_gammainv does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lngamma_complex">gsl_sf_lngamma_complex</a></h2>
+<pre>
+  Signature: (double zr(); double zi(); double [o]x(); double [o]y(); double [o]xe(); double [o]ye())</pre>
+<p>Log[Gamma(z)] for z complex, z not a negative integer. Calculates: lnr = log|Gamma(z)|, arg = arg(Gamma(z))  in (-Pi, Pi]</p>
+<p>gsl_sf_lngamma_complex does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_taylorcoeff">gsl_sf_taylorcoeff</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>x^n / n!</p>
+<p>gsl_sf_taylorcoeff does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_fact">gsl_sf_fact</a></h2>
+<pre>
+  Signature: (x(); double [o]y(); double [o]e())</pre>
+<p>n!</p>
+<p>gsl_sf_fact does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_doublefact">gsl_sf_doublefact</a></h2>
+<pre>
+  Signature: (x(); double [o]y(); double [o]e())</pre>
+<p>n!! = n(n-2)(n-4)</p>
+<p>gsl_sf_doublefact does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lnfact">gsl_sf_lnfact</a></h2>
+<pre>
+  Signature: (x(); double [o]y(); double [o]e())</pre>
+<p>ln n!</p>
+<p>gsl_sf_lnfact does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lndoublefact">gsl_sf_lndoublefact</a></h2>
+<pre>
+  Signature: (x(); double [o]y(); double [o]e())</pre>
+<p>ln n!!</p>
+<p>gsl_sf_lndoublefact does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lnchoose">gsl_sf_lnchoose</a></h2>
+<pre>
+  Signature: (n(); m(); double [o]y(); double [o]e())</pre>
+<p>log(n choose m)</p>
+<p>gsl_sf_lnchoose does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_choose">gsl_sf_choose</a></h2>
+<pre>
+  Signature: (n(); m(); double [o]y(); double [o]e())</pre>
+<p>n choose m</p>
+<p>gsl_sf_choose does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lnpoch">gsl_sf_lnpoch</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]s(); double [o]e(); double a)</pre>
+<p>Logarithm of Pochammer (Apell) symbol, with sign information. result = log( |(a)_x| ), sgn    = sgn( (a)_x ) where (a)_x := Gamma[a + x]/Gamma[a]</p>
+<p>gsl_sf_lnpoch does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_poch">gsl_sf_poch</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double a)</pre>
+<p>Pochammer (Apell) symbol (a)_x := Gamma[a + x]/Gamma[x]</p>
+<p>gsl_sf_poch does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_pochrel">gsl_sf_pochrel</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double a)</pre>
+<p>Relative Pochammer (Apell) symbol ((a,x) - 1)/x where (a,x) = (a)_x := Gamma[a + x]/Gamma[a]</p>
+<p>gsl_sf_pochrel does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gamma_inc_q">gsl_sf_gamma_inc_Q</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double a)</pre>
+<p>Normalized Incomplete Gamma Function Q(a,x) = 1/Gamma(a) Integral[ t^(a-1) e^(-t), {t,x,Infinity} ]</p>
+<p>gsl_sf_gamma_inc_Q does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gamma_inc_p">gsl_sf_gamma_inc_P</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double a)</pre>
+<p>Complementary Normalized Incomplete Gamma Function P(a,x) = 1/Gamma(a) Integral[ t^(a-1) e^(-t), {t,0,x} ]</p>
+<p>gsl_sf_gamma_inc_P does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_lnbeta">gsl_sf_lnbeta</a></h2>
+<pre>
+  Signature: (double a(); double b(); double [o]y(); double [o]e())</pre>
+<p>Logarithm of Beta Function Log[B(a,b)]</p>
+<p>gsl_sf_lnbeta does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_beta">gsl_sf_beta</a></h2>
+<pre>
+  Signature: (double a(); double b();double [o]y(); double [o]e())</pre>
+<p>Beta Function B(a,b)</p>
+<p>gsl_sf_beta does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

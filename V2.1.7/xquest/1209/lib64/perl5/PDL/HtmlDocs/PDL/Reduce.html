@@ -1,0 +1,135 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Reduce -- a C&lt;reduce&gt; function for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#reduce">reduce</a></li>
+		<li><a href="#canreduce">canreduce</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Reduce -- a <code>reduce</code> function for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Many languages have a <code>reduce</code> function used to reduce
+the rank of an N-D array by one. It works by applying a selected
+operation along a specified dimension. This module implements
+such a function for PDL by providing a simplified interface
+to the existing projection functions (e.g. <code>sumover</code>,
+<code>maximum</code>, <code>average</code>, etc).</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Reduce;
+ $a = sequence 5,5;
+ # reduce by adding all
+ # elements along 2nd dimension
+ $b = $a-&gt;reduce('add',1);
+ @ops = $a-&gt;canreduce; # return a list of all allowed operations</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="reduce">reduce</a></h2>
+<p>reduce dimension of piddle by one by applying an operation
+along the specified dimension</p>
+<pre>
+ $a = sequence 5,5;
+ # reduce by adding all
+ # elements along 2nd dimension
+ $b = $a-&gt;reduce('add',1);
+ $b = $a-&gt;reduce('plus',1);
+ $b = $a-&gt;reduce('+',1);     # three ways to do the same thing</pre>
+<p>[ As an aside: if you are familiar with threading you will see that
+this is actually the same as</p>
+<pre>
+ $b = $a-&gt;mv(1,0)-&gt;sumover</pre>
+<p>]</p>
+<p>NOTE: You should quote the name of the operation (1st arg) that
+you want <code>reduce</code> to perform. This is important since some of the
+names are identical to the names of the actual PDL functions
+which might be imported into your namespace. And you definitely
+want a string as argument, not a function invocation! For example,
+this will probably fail:</p>
+<pre>
+  $b = $a-&gt;reduce(avg,1); # gives an error from invocation of 'avg'</pre>
+<p>Rather use</p>
+<pre>
+  $b = $a-&gt;reduce('avg',1);</pre>
+<p><code>reduce</code> provides a simple and unified interface to the
+<em>projection</em> functions and makes people coming from other
+data/array languages hopefully feel more at home.</p>
+<pre>
+ $result = $pdl-&gt;reduce($operation [,@dims]);</pre>
+<p><code>reduce</code> applies the named operation along the specified
+dimension(s) reducing the input piddle dimension by as many
+dimensions as supplied as arguments. If the
+dimension(s) argument is omitted the operation is applied along the first
+dimension. To get a list of valid operations see <a href="#canreduce">the canreduce manpage</a>.</p>
+<p>NOTE - new power user feature: you can now supply a code
+reference as operation to reduce with.</p>
+<pre>
+  # reduce by summing over dims 0 and 2
+  $result = $pdl-&gt;reduce(\&amp;sumover, 0, 2);</pre>
+<p>It is your responsibility to ensure that this is indeed a
+PDL projection operation that turns vectors into scalars!
+You have been warned.</p>
+<p>
+</p>
+<h2><a name="canreduce">canreduce</a></h2>
+<p>return list of valid named <code>reduce</code> operations
+Some common operations can be accessed using a
+number of names, e.g. <code>'+'</code>, <code>add</code> and <code>plus</code>
+all sum the elements along the chosen dimension.</p>
+<pre>
+  @ops = PDL-&gt;canreduce;</pre>
+<p>This list is useful if you want to make sure which
+operations can be used with <code>reduce</code>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) 2000 Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>) All
+rights reserved. There is no warranty. You are allowed to redistribute
+this software / documentation under certain conditions. For details,
+see the file COPYING in the PDL distribution. If this file is
+separated from the PDL distribution, the copyright notice should be
+included in the file.</p>
+
+</body>
+
+</html>

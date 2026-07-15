@@ -1,0 +1,204 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSL::INTERP - PDL interface to Interpolation routines in GSL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#init__"><code>init()</code></a></li>
+		<li><a href="#eval__"><code>eval()</code></a></li>
+		<li><a href="#deriv__"><code>deriv()</code></a></li>
+		<li><a href="#deriv2__">deriv2()</a></li>
+		<li><a href="#integ__"><code>integ()</code></a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSL::INTERP - PDL interface to Interpolation routines in GSL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the interpolation package present in the 
+GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use PDL;
+   use PDL::GSL::INTERP;</pre>
+<pre>
+   my $x = sequence(10);
+   my $y = exp($x);</pre>
+<pre>
+   my $spl = PDL::GSL::INTERP-&gt;init('cspline',$x,$y);</pre>
+<pre>
+   my $res = $spl-&gt;eval(4.35);
+   $res = $spl-&gt;deriv(4.35);
+   $res = $spl-&gt;deriv2(4.35);
+   $res = $spl-&gt;integ(2.1,7.4);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="init__"><code>init()</code></a></h2>
+<p>The init method initializes a new instance of INTERP. It needs as 
+input an interpolation type and two piddles holding the x and y 
+values to be interpolated. The GSL routines require that x be
+monotonically increasing and a quicksort is performed by default to 
+ensure that. You can skip the quicksort by passing the option 
+{Sort =&gt; 0}.</p>
+<p>The available interpolation types are :</p>
+<dl>
+<dt><strong><a name="linear" class="item">linear</a></strong></dt>
+
+<dt><strong><a name="polynomial" class="item">polynomial</a></strong></dt>
+
+<dt><strong><a name="cspline" class="item">cspline (natural cubic spline)</a></strong></dt>
+
+<dt><strong><a name="cspline_periodic" class="item">cspline_periodic  (periodic cubic spline)</a></strong></dt>
+
+<dt><strong><a name="akima" class="item">akima (natural akima spline)</a></strong></dt>
+
+<dt><strong><a name="akima_periodic" class="item">akima_periodic  (periodic akima spline)</a></strong></dt>
+
+</dl>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+    $blessed_ref = PDL::GSL::INTERP-&gt;init($interp_method,$x,$y,$opt);</pre>
+<p>Example:</p>
+<pre>
+    $x = sequence(10);
+    $y = exp($x);</pre>
+<pre>
+    $spl = PDL::GSL::INTERP-&gt;init('cspline',$x,$y)
+    $spl = PDL::GSL::INTERP-&gt;init('cspline',$x,$y,{Sort =&gt; 1}) #same as above</pre>
+<pre>
+    # no sorting done on x, user is certain that x is monotonically increasing
+    $spl = PDL::GSL::INTERP-&gt;init('cspline',$x,$y,{Sort =&gt; 0});</pre>
+<p>
+</p>
+<h2><a name="eval__"><code>eval()</code></a></h2>
+<p>The function eval returns the interpolating function at a given point. By default
+it will barf if you try to extrapolate, to comply silently if the point to be
+evaluated is out of range pass the option {Extrapolate =&gt; 1}</p>
+<p>Usage:</p>
+<pre>
+    $result = $spl-&gt;eval($points,$opt);</pre>
+<p>Example:</p>
+<pre>
+    my $res = $spl-&gt;eval($x)
+    $res = $spl-&gt;eval($x,{Extrapolate =&gt; 0}) #same as above</pre>
+<pre>
+    # silently comply if $x is out of range
+    $res = $spl-&gt;eval($x,{Extrapolate =&gt; 1})</pre>
+<p>
+</p>
+<h2><a name="deriv__"><code>deriv()</code></a></h2>
+<p>The deriv function returns the derivative of the 
+interpolating function at a given point. By default
+it will barf if you try to extrapolate, to comply silently if the point to be
+evaluated is out of range pass the option {Extrapolate =&gt; 1}</p>
+<p>Usage:</p>
+<pre>
+    $result = $spl-&gt;deriv($points,$opt);</pre>
+<p>Example:</p>
+<pre>
+    my $res = $spl-&gt;deriv($x)
+    $res = $spl-&gt;deriv($x,{Extrapolate =&gt; 0}) #same as above</pre>
+<pre>
+    # silently comply if $x is out of range
+    $res = $spl-&gt;deriv($x,{Extrapolate =&gt; 1})</pre>
+<p>
+</p>
+<h2><a name="deriv2__">deriv2()</a></h2>
+<p>The deriv2 function returns the second derivative 
+of the interpolating function at a given point. By default
+it will barf if you try to extrapolate, to comply silently if the point to be
+evaluated is out of range pass the option {Extrapolate =&gt; 1}</p>
+<p>Usage:</p>
+<pre>
+    $result = $spl-&gt;deriv2($points,$opt);</pre>
+<p>Example:</p>
+<pre>
+    my $res = $spl-&gt;deriv2($x)
+    $res = $spl-&gt;deriv2($x,{Extrapolate =&gt; 0}) #same as above</pre>
+<pre>
+    # silently comply if $x is out of range
+    $res = $spl-&gt;deriv2($x,{Extrapolate =&gt; 1})</pre>
+<p>
+</p>
+<h2><a name="integ__"><code>integ()</code></a></h2>
+<p>The integ function returns the integral 
+of the interpolating function between two points.
+By default it will barf if you try to extrapolate, 
+to comply silently if one of the integration limits
+is out of range pass the option {Extrapolate =&gt; 1}</p>
+<p>Usage:</p>
+<pre>
+    $result = $spl-&gt;integ($a,$b,$opt);</pre>
+<p>Example:</p>
+<pre>
+    my $res = $spl-&gt;integ($a,$b)
+    $res = $spl-&gt;integ($a,$b,{Extrapolate =&gt; 0}) #same as above</pre>
+<pre>
+    # silently comply if $a or $b are out of range
+    $res = $spl-&gt;eval($a,$b,{Extrapolate =&gt; 1})</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Feedback is welcome.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../PDL.html">the PDL manpage</a></p>
+<p>The GSL documentation is online at</p>
+<pre>
+  <a href="http://sources.redhat.com/gsl/ref/gsl-ref_toc.html">http://sources.redhat.com/gsl/ref/gsl-ref_toc.html</a></pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 2003 Andres Jordan &lt;<a href="mailto:andresj@physics.rutgers.edu">andresj@physics.rutgers.edu</a>&gt;
+All rights reserved. There is no warranty. You are allowed to redistribute this 
+software/documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL interpolation module was written by Gerard Jungman.</p>
+
+</body>
+
+</html>

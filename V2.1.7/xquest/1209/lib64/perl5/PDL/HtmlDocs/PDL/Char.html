@@ -1,0 +1,143 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Char -- PDL subclass which allows reading and writing of fixed-length character strings as byte PDLs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#new">new</a></li>
+		<li><a href="#string">string</a></li>
+		<li><a href="#setstr">setstr</a></li>
+		<li><a href="#atstr">atstr</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Char -- PDL subclass which allows reading and writing of fixed-length character strings as byte PDLs</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL;
+ use PDL::Char;</pre>
+<pre>
+ my $pchar = PDL::Char-&gt;new( [['abc', 'def', 'ghi'],['jkl', 'mno', 'pqr']] );
+ 
+ $pchar-&gt;setstr(1,0,'foo');
+ 
+ print $pchar; # 'string' bound to &quot;&quot;, perl stringify function
+ # Prints:
+ # [
+ #  ['abc' 'foo' 'ghi']
+ #  ['jkl' 'mno' 'pqr']
+ # ]</pre>
+<pre>
+ print $pchar-&gt;atstr(2,0);
+ # Prints:
+ # ghi</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This subclass of PDL allows one to manipulate PDLs of 'byte' type as if they were made of fixed
+length strings, not just numbers.</p>
+<p>This type of behavior is useful when you want to work with charactar grids.  The indexing is done
+on a string level and not a character level for the 'setstr' and 'atstr' commands.</p>
+<p>This module is in particular useful for writing NetCDF files that include character data using the
+PDL::NetCDF module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="new">new</a></h2>
+<p>Function to create a byte PDL from a string, list of strings, list of list of strings, etc.</p>
+<pre>
+ # create a new PDL::Char from a perl array of strings
+ $strpdl = PDL::Char-&gt;new( ['abc', 'def', 'ghij'] );</pre>
+<pre>
+ # Convert a PDL of type 'byte' to a PDL::Char
+ $strpdl1 = PDL::Char-&gt;new (sequence (byte, 4, 5)+99);</pre>
+<pre>
+ $pdlchar3d = PDL::Char-&gt;new([['abc','def','ghi'],['jkl', 'mno', 'pqr']]);</pre>
+<p>
+</p>
+<h2><a name="string">string</a></h2>
+<p>Function to print a character PDL (created by 'char') in a pretty format.</p>
+<pre>
+ $char = PDL::Char-&gt;new( [['abc', 'def', 'ghi'], ['jkl', 'mno', 'pqr']] );
+ print $char; # 'string' bound to &quot;&quot;, perl stringify function
+ # Prints:
+ # [
+ #  ['abc' 'def' 'ghi']
+ #  ['jkl' 'mno' 'pqr']
+ # ]</pre>
+<pre>
+ # 'string' is overloaded to the &quot;&quot; operator, so:
+ # print $char;
+ # should have the same effect.</pre>
+<p>
+</p>
+<h2><a name="setstr">setstr</a></h2>
+<p>Function to set one string value in a character PDL.  The input position is 
+the position of the string, not a character in the string.  The first dimension
+is assumed to be the length of the string.</p>
+<p>The input string will be null-padded if the string is shorter than the first
+dimension of the PDL.  It will be truncated if it is longer.</p>
+<pre>
+ $char = PDL::Char-&gt;new( [['abc', 'def', 'ghi'], ['jkl', 'mno', 'pqr']] );
+ $char-&gt;setstr(0,1, 'foobar');
+ print $char; # 'string' bound to &quot;&quot;, perl stringify function
+ # Prints:
+ # [
+ #  ['abc' 'def' 'ghi']
+ #  ['foo' 'mno' 'pqr']
+ # ]
+ $char-&gt;setstr(2,1, 'f');
+ print $char; # 'string' bound to &quot;&quot;, perl stringify function
+ # Prints:
+ # [
+ #  ['abc' 'def' 'ghi']
+ #  ['foo' 'mno' 'f']      -&gt; note that this 'f' is stored &quot;f\0\0&quot;
+ # ]</pre>
+<p>
+</p>
+<h2><a name="atstr">atstr</a></h2>
+<p>Function to fetch one string value from a PDL::Char type PDL, given a position within the PDL.
+The input position of the string, not a character in the string.  The length of the input
+string is the implied first dimension.</p>
+<pre>
+ $char = PDL::Char-&gt;new( [['abc', 'def', 'ghi'], ['jkl', 'mno', 'pqr']] );
+ print $char-&gt;atstr(0,1);
+ # Prints:
+ # jkl</pre>
+
+</body>
+
+</html>

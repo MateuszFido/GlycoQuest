@@ -2,6 +2,8 @@
 
 use std::path::{Path, PathBuf};
 
+use crate::output::ProjectLayout;
+
 const RESERVED_PSEUDO_RESIDUES: &[char] = &['X', 'U', 'B', 'J'];
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -22,9 +24,8 @@ pub fn validate_fasta(path: &Path) -> Result<FastaDatabase, String> {
         return Err(format!("FASTA database not accessible: {}", path.display()));
     }
 
-    let content = std::fs::read_to_string(path).map_err(|err| {
-        format!("cannot read FASTA database {}: {err}", path.display())
-    })?;
+    let content = std::fs::read_to_string(path)
+        .map_err(|err| format!("cannot read FASTA database {}: {err}", path.display()))?;
 
     let mut entries = Vec::new();
     let mut header: Option<String> = None;
@@ -83,16 +84,46 @@ pub fn validate_fasta(path: &Path) -> Result<FastaDatabase, String> {
     }
 
     if entries.is_empty() {
-        return Err(format!("FASTA database contains no entries: {}", path.display()));
+        return Err(format!(
+            "FASTA database contains no entries: {}",
+            path.display()
+        ));
     }
 
-    let path = path
-        .canonicalize()
-        .unwrap_or_else(|_| path.to_path_buf());
+    let path = path.canonicalize().unwrap_or_else(|_| path.to_path_buf());
 
     Ok(FastaDatabase {
         path: path.to_path_buf(),
         entries,
+    })
+}
+
+/// Copy the validated FASTA into `out/<project>/input/` so xQuest indexes there,
+/// not beside the user's source database path.
+pub fn stage_fasta_for_project(
+    fasta: &FastaDatabase,
+    layout: &ProjectLayout,
+) -> Result<FastaDatabase, String> {
+    let staged_path = layout.staged_fasta_path(&fasta.path)?;
+    std::fs::create_dir_all(layout.input_dir()).map_err(|err| {
+        format!(
+            "cannot create input directory {}: {err}",
+            layout.input_dir().display()
+        )
+    })?;
+
+    std::fs::copy(&fasta.path, &staged_path).map_err(|err| {
+        format!(
+            "cannot stage FASTA from {} to {}: {err}",
+            fasta.path.display(),
+            staged_path.display()
+        )
+    })?;
+
+    let path = staged_path.canonicalize().unwrap_or(staged_path);
+    Ok(FastaDatabase {
+        path,
+        entries: fasta.entries.clone(),
     })
 }
 
@@ -119,6 +150,7 @@ fn validate_entry(header: &str, sequence: &str, line_no: usize) -> Result<(), St
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::output::ProjectLayout;
     use std::fs;
     use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -138,10 +170,7 @@ mod tests {
 
     #[test]
     fn accepts_valid_fasta() {
-        let path = temp_fasta(
-            "valid",
-            ">protein1\nACDEFG\n>protein2\nHIKLMN\n",
-        );
+        let path = temp_fasta("valid", ">protein1\nACDEFG\n>protein2\nHIKLMN\n");
         let db = validate_fasta(&path).unwrap();
         assert_eq!(db.entries.len(), 2);
         assert_eq!(db.entries[0].sequence, "ACDEFG");
@@ -149,10 +178,7 @@ mod tests {
 
     #[test]
     fn accepts_wrapped_sequences() {
-        let path = temp_fasta(
-            "wrapped",
-            ">protein\nACDEF\nGHIKL\n",
-        );
+        let path = temp_fasta("wrapped", ">protein\nACDEF\nGHIKL\n");
         let db = validate_fasta(&path).unwrap();
         assert_eq!(db.entries[0].sequence, "ACDEFGHIKL");
     }
@@ -170,6 +196,33 @@ mod tests {
         let err = validate_fasta(&path).unwrap_err();
         assert!(err.contains("reserved pseudo-residue"));
         assert!(err.contains("'X'"));
+    }
+
+    #[test]
+    fn stages_fasta_into_project_input_dir() {
+        let source = temp_fasta("stage_src", ">protein\nACDEFG\n");
+        let db = validate_fasta(&source).unwrap();
+        let out =
+            std::env::temp_dir().join(format!("glycoquest_stage_test_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&out);
+        let layout = ProjectLayout::new(out.clone());
+
+        let staged = stage_fasta_for_project(&db, &layout).unwrap();
+        assert_eq!(staged.entries.len(), 1);
+        assert_eq!(
+            staged.path,
+            layout
+                .staged_fasta_path(&source)
+                .unwrap()
+                .canonicalize()
+                .unwrap_or_else(|_| layout.staged_fasta_path(&source).unwrap())
+        );
+        assert!(staged.path.is_file());
+        let text = fs::read_to_string(&staged.path).unwrap();
+        assert!(text.contains("ACDEFG"));
+
+        let _ = fs::remove_dir_all(out);
+        let _ = fs::remove_file(source);
     }
 
     #[test]

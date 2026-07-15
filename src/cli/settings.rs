@@ -23,6 +23,7 @@ pub struct Settings {
     pub fixed_carbamidomethyl_cys: bool,
     pub variable_oxidation: bool,
     pub glycan_targets: String,
+    pub max_glycans_per_peptide: u32,
     pub max_jobs: u32,
     pub max_pruned_spectra: u32,
     pub max_total_job_spectrum_comparisons: u64,
@@ -51,6 +52,7 @@ impl Settings {
             fixed_carbamidomethyl_cys: true,
             variable_oxidation: false,
             glycan_targets: "N,S,T".into(),
+            max_glycans_per_peptide: 3,
             max_jobs: 0,
             max_pruned_spectra: 0,
             max_total_job_spectrum_comparisons: 0,
@@ -71,18 +73,26 @@ impl Settings {
         ini.load(path_str)
             .map_err(|e| format!("failed to read settings file {}: {e}", path.display()))?;
 
-        Ok(Self::from_ini(&ini))
+        Self::from_ini(&ini)
     }
 
-    fn from_ini(ini: &Ini) -> Self {
+    fn from_ini(ini: &Ini) -> Result<Self, String> {
         let mut s = Self::defaults();
 
         s.xquest_bin = non_empty_path(ini.get("xquest", "xquest_bin"));
 
-        s.diagnostic_tolerance_ppm =
-            get_f64(ini, "tolerances", "diagnostic_tolerance_ppm", s.diagnostic_tolerance_ppm);
-        s.neutral_loss_tolerance_da =
-            get_f64(ini, "tolerances", "neutral_loss_tolerance_da", s.neutral_loss_tolerance_da);
+        s.diagnostic_tolerance_ppm = get_f64(
+            ini,
+            "tolerances",
+            "diagnostic_tolerance_ppm",
+            s.diagnostic_tolerance_ppm,
+        );
+        s.neutral_loss_tolerance_da = get_f64(
+            ini,
+            "tolerances",
+            "neutral_loss_tolerance_da",
+            s.neutral_loss_tolerance_da,
+        );
         s.ms1_tolerance_ppm = get_f64(ini, "tolerances", "ms1_tolerance_ppm", s.ms1_tolerance_ppm);
         s.ms2_tolerance_da = get_f64(ini, "tolerances", "ms2_tolerance_da", s.ms2_tolerance_da);
         s.isotope_pair_ms1_tolerance_ppm = get_f64(
@@ -111,13 +121,33 @@ impl Settings {
         }
         s.nterm_xlinkable = get_bool(ini, "crosslinker", "nterm_xlinkable", s.nterm_xlinkable);
 
-        s.fixed_carbamidomethyl_cys =
-            get_bool(ini, "modifications", "fixed_carbamidomethyl_cys", s.fixed_carbamidomethyl_cys);
-        s.variable_oxidation =
-            get_bool(ini, "modifications", "variable_oxidation", s.variable_oxidation);
+        s.fixed_carbamidomethyl_cys = get_bool(
+            ini,
+            "modifications",
+            "fixed_carbamidomethyl_cys",
+            s.fixed_carbamidomethyl_cys,
+        );
+        s.variable_oxidation = get_bool(
+            ini,
+            "modifications",
+            "variable_oxidation",
+            s.variable_oxidation,
+        );
 
         if let Some(v) = non_empty_string(ini.get("glycan", "targets")) {
             s.glycan_targets = v;
+        }
+        s.max_glycans_per_peptide = get_u32(
+            ini,
+            "glycan",
+            "max_glycans_per_peptide",
+            s.max_glycans_per_peptide,
+        );
+        if !(1..=3).contains(&s.max_glycans_per_peptide) {
+            return Err(format!(
+                "max_glycans_per_peptide must be between 1 and 3, got {}",
+                s.max_glycans_per_peptide
+            ));
         }
 
         s.max_jobs = get_u32(ini, "limits", "max_jobs", s.max_jobs);
@@ -129,12 +159,16 @@ impl Settings {
             s.max_total_job_spectrum_comparisons,
         );
         s.min_score = get_f64(ini, "limits", "min_score", s.min_score);
-        s.max_precursor_error_ppm =
-            get_f64(ini, "limits", "max_precursor_error_ppm", s.max_precursor_error_ppm);
+        s.max_precursor_error_ppm = get_f64(
+            ini,
+            "limits",
+            "max_precursor_error_ppm",
+            s.max_precursor_error_ppm,
+        );
 
         s.job_parallelism = get_u32(ini, "execution", "job_parallelism", s.job_parallelism);
 
-        s
+        Ok(s)
     }
 }
 
@@ -193,7 +227,7 @@ label = light-heavy
             .into(),
         )
         .unwrap();
-        let settings = Settings::from_ini(&ini);
+        let settings = Settings::from_ini(&ini).unwrap();
         assert_eq!(settings.crosslinker_name, "dss");
         assert_eq!(settings.crosslinker_label, "light-heavy");
     }
@@ -211,6 +245,60 @@ job_parallelism = 6
             .into(),
         )
         .unwrap();
-        assert_eq!(Settings::from_ini(&ini).job_parallelism, 6);
+        assert_eq!(Settings::from_ini(&ini).unwrap().job_parallelism, 6);
+    }
+
+    #[test]
+    fn parses_max_glycans_per_peptide() {
+        let mut ini = Ini::new();
+        ini.read(
+            r#"
+[glycan]
+max_glycans_per_peptide = 2
+"#
+            .into(),
+        )
+        .unwrap();
+
+        let settings = Settings::from_ini(&ini).unwrap();
+        assert_eq!(settings.max_glycans_per_peptide, 2);
+    }
+
+    #[test]
+    fn rejects_max_glycans_per_peptide_above_three() {
+        let mut ini = Ini::new();
+        ini.read(
+            r#"
+[glycan]
+max_glycans_per_peptide = 4
+"#
+            .into(),
+        )
+        .unwrap();
+
+        assert!(
+            Settings::from_ini(&ini)
+                .unwrap_err()
+                .contains("between 1 and 3")
+        );
+    }
+
+    #[test]
+    fn rejects_zero_max_glycans_per_peptide() {
+        let mut ini = Ini::new();
+        ini.read(
+            r#"
+[glycan]
+max_glycans_per_peptide = 0
+"#
+            .into(),
+        )
+        .unwrap();
+
+        assert!(
+            Settings::from_ini(&ini)
+                .unwrap_err()
+                .contains("between 1 and 3")
+        );
     }
 }

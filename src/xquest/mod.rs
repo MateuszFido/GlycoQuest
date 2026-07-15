@@ -6,8 +6,9 @@ mod matchlist;
 mod run;
 mod runtime;
 
-pub use defs::{write_job_defs, JobDefs};
-pub use generate::{generate_jobs, GeneratedJob};
+pub use defs::{JobDefs, write_job_defs};
+pub use generate::{GeneratedJob, generate_jobs};
 pub use matchlist::{MatchlistRow, write_matchlist};
-pub use run::{execute_jobs, log_job_summary, JobRunRecord};
-pub use runtime::{resolve_runtime, XQuestRuntime};
+pub(crate) use run::execute_jobs_with_progress;
+pub use run::{JobRunRecord, log_job_summary};
+pub use runtime::{XQuestRuntime, resolve_runtime};

@@ -1,10 +1,9 @@
-//! xiVIEW-compatible CSV export and a self-contained HTML QC/glycan report.
+//! CLMS-CSV-compatible export and a self-contained HTML QC/glycan report.
 //!
 //! Two artifacts are written next to `glycoquest_xquest.csv`:
 //!
-//! * `results/xiview.csv` — passing crosslinks in the CLMS-CSV column layout
-//!   accepted by xiVIEW/xiNET (<https://www.xiview.org/csv-formats.php>), with
-//!   FASTA-derived peptide start positions so absolute residue numbers resolve.
+//! * `results/xiview.csv` — passing crosslinks in the CLMS-CSV column layout,
+//!   with glycan annotations appended as trailing columns.
 //! * `results/report.html` — a dependency-free HTML report (inline CSS + SVG
 //!   charts, no network or JavaScript) summarizing the prefilter funnel, hit
 //!   quality, and glycan distribution.
@@ -17,7 +16,7 @@ use crate::fasta::FastaDatabase;
 use crate::jobs::JobManifest;
 use crate::prefilter::PrefilterStats;
 
-use super::filter::{AnnotatedHit, PostfilterStatus};
+use super::filter::{AnnotatedHit, PostfilterStatus, format_glyco_sites};
 use super::mapping::{
     abs_position, first_protein, locate_peptide, parse_link_positions, protein_lookup,
     resolve_peptide,
@@ -31,7 +30,6 @@ pub struct ReportContext {
     pub crosslinker_name: String,
     pub xlink_sites: String,
     pub glycan_library: String,
-    pub resume: bool,
 }
 
 impl ReportContext {
@@ -40,7 +38,6 @@ impl ReportContext {
         input_label: String,
         crosslinker: &CrosslinkerProfile,
         glycan_library: String,
-        resume: bool,
     ) -> Self {
         Self {
             project,
@@ -48,7 +45,6 @@ impl ReportContext {
             crosslinker_name: crosslinker.name.clone(),
             xlink_sites: crosslinker.xlink_sites.clone(),
             glycan_library,
-            resume,
         }
     }
 }
@@ -63,16 +59,16 @@ pub struct XiviewSummary {
 }
 
 // -----------------------------------------------------------------------------
-// xiVIEW CSV
+// CLMS-CSV export
 // -----------------------------------------------------------------------------
 
-/// Write passing crosslinks to `path` in xiVIEW CLMS-CSV layout.
+/// Write passing crosslinks to `path` in CLMS-CSV layout.
 ///
 /// Peptide sequences are resolved back from xQuest pseudo-residues (via the job
 /// manifest) so they can be located in the FASTA to yield 1-based peptide start
 /// positions (`PepPos*`) and absolute cross-link residue positions (`AbsPos*`).
-/// Glycan annotations are appended as trailing columns; xiVIEW ignores unknown
-/// columns, so the file loads directly while retaining the extra context.
+/// Glycan annotations are appended as trailing columns; conforming importers ignore
+/// unrecognized columns.
 pub fn write_xiview_csv(
     path: &Path,
     hits: &[AnnotatedHit],
@@ -82,8 +78,26 @@ pub fn write_xiview_csv(
     let proteins = protein_lookup(fasta);
 
     let header = [
-        "Protein1", "PepPos1", "PepSeq1", "LinkPos1", "AbsPos1", "Protein2", "PepPos2", "PepSeq2",
-        "LinkPos2", "AbsPos2", "Score", "Id", "Scan", "Glycan", "GlycoResidue", "LossLabel",
+        "Protein1",
+        "PepPos1",
+        "PepSeq1",
+        "LinkPos1",
+        "AbsPos1",
+        "Protein2",
+        "PepPos2",
+        "PepSeq2",
+        "LinkPos2",
+        "AbsPos2",
+        "Score",
+        "Id",
+        "Scan",
+        "Glycan",
+        "GlycoResidue",
+        "GlycoSites",
+        "AllSitesPlausible",
+        "LossLabel",
+        "LinkType",
+        "XlinkerMass",
     ]
     .join(",");
     let mut lines = vec![header];
@@ -108,7 +122,8 @@ pub fn write_xiview_csv(
 
         let abs1 = abs_position(pep_pos1, link1);
         let abs2 = abs_position(pep_pos2, link2);
-        if abs1.is_some() && abs2.is_some() {
+        let is_monolink = hit.hit.is_monolink();
+        if abs1.is_some() && (is_monolink || abs2.is_some()) {
             summary.mapped += 1;
         }
 
@@ -134,7 +149,11 @@ pub fn write_xiview_csv(
             hit.scan.map(|s| s.to_string()).unwrap_or_default(),
             csv_field(hit.glycan_composition.as_deref().unwrap_or("")),
             hit.glyco_residue.map(|c| c.to_string()).unwrap_or_default(),
+            csv_field(&format_glyco_sites(&hit.glyco_sites)),
+            hit.all_sites_plausible.to_string(),
             csv_field(hit.loss_label.as_deref().unwrap_or("")),
+            csv_field(&hit.hit.normalized_link_type()),
+            opt_float(hit.hit.xlinker_mass),
         ]
         .join(",");
         lines.push(row);
@@ -155,6 +174,10 @@ fn csv_field(value: &str) -> String {
 
 fn opt_num(value: Option<usize>) -> String {
     value.map(|v| v.to_string()).unwrap_or_default()
+}
+
+fn opt_float(value: Option<f64>) -> String {
+    value.map(|v| format!("{v:.6}")).unwrap_or_default()
 }
 
 // -----------------------------------------------------------------------------
@@ -179,11 +202,6 @@ pub fn write_html_report(
 
     if stats.scans_total > 0 {
         body.push_str(&prefilter_funnel(stats));
-    } else if ctx.resume {
-        body.push_str(
-            "<div class=\"chart\"><h3>Prefilter funnel</h3><p class=\"empty\">\
-             not available in --resume mode (prefilter state is not rebuilt)</p></div>",
-        );
     }
 
     body.push_str("<div class=\"grid\">");
@@ -201,8 +219,7 @@ pub fn write_html_report(
 <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
 <title>GlycoQuest report — {project}</title>{style}</head><body>\
 <h1>GlycoQuest report</h1>{body}\
-<footer>Generated by GlycoQuest. Open <code>viewer/index.html</code> for the interactive crosslink viewer, or <code>xiview.csv</code> at \
-<a href=\"https://xiview.org\">xiview.org</a> for the external xiVIEW network view.</footer>\
+<footer>Generated by GlycoQuest. Open <code>viewer/index.html</code> for the interactive crosslink viewer, or import <code>xiview.csv</code> into a CLMS-CSV-compatible network tool.</footer>\
 </body></html>\n",
         project = esc(&ctx.project),
         style = STYLE,
@@ -222,7 +239,6 @@ fn summary_section(ctx: &ReportContext, total: usize, pass: usize) -> String {
 <tr><th>Input</th><td>{input}</td></tr>\
 <tr><th>Crosslinker</th><td>{xl} (sites: {sites})</td></tr>\
 <tr><th>Glycan library</th><td>{glycans}</td></tr>\
-<tr><th>Mode</th><td>{mode}</td></tr>\
 </table></section>",
         card_pass = card("Passing hits", pass, "pass"),
         card_fail = card("Filtered out", fail, "fail"),
@@ -232,7 +248,6 @@ fn summary_section(ctx: &ReportContext, total: usize, pass: usize) -> String {
         xl = esc(&ctx.crosslinker_name),
         sites = esc(&ctx.xlink_sites),
         glycans = esc(&ctx.glycan_library),
-        mode = if ctx.resume { "resume" } else { "run" },
     )
 }
 
@@ -282,10 +297,7 @@ fn glycan_chart(hits: &[AnnotatedHit]) -> String {
             *counts.entry(comp.clone()).or_insert(0) += 1;
         }
     }
-    let mut data: Vec<(String, f64)> = counts
-        .into_iter()
-        .map(|(k, v)| (k, v as f64))
-        .collect();
+    let mut data: Vec<(String, f64)> = counts.into_iter().map(|(k, v)| (k, v as f64)).collect();
     data.sort_by(|a, b| {
         b.1.partial_cmp(&a.1)
             .unwrap_or(std::cmp::Ordering::Equal)
@@ -301,8 +313,8 @@ fn glyco_residue_chart(hits: &[AnnotatedHit]) -> String {
         .iter()
         .filter(|h| h.postfilter_status == PostfilterStatus::Pass)
     {
-        if let Some(residue) = hit.glyco_residue {
-            *counts.entry(residue).or_insert(0) += 1;
+        for site in &hit.glyco_sites {
+            *counts.entry(site.residue).or_insert(0) += 1;
         }
     }
     let data: Vec<(String, f64)> = counts
@@ -334,7 +346,8 @@ fn error_histogram(hits: &[AnnotatedHit]) -> String {
 fn hits_table(hits: &[AnnotatedHit]) -> String {
     const CAP: usize = 500;
     if hits.is_empty() {
-        return "<div class=\"chart\"><h3>Hits</h3><p class=\"empty\">no hits</p></div>".to_string();
+        return "<div class=\"chart\"><h3>Hits</h3><p class=\"empty\">no hits</p></div>"
+            .to_string();
     }
     let mut s = String::from("<h2>Hits</h2>");
     if hits.len() > CAP {
@@ -362,9 +375,10 @@ fn hits_table(hits: &[AnnotatedHit]) -> String {
             Some(false) => "no",
             None => "-",
         };
-        let site = match (hit.glyco_peptide, hit.glyco_residue) {
-            (Some(pep), Some(res)) => format!("pep{pep}:{res}"),
-            _ => "-".to_string(),
+        let site = if hit.glyco_sites.is_empty() {
+            "-".to_string()
+        } else {
+            format_glyco_sites(&hit.glyco_sites)
         };
         let _ = write!(
             s,
@@ -401,7 +415,11 @@ fn svg_hbar(title: &str, data: &[(String, f64)]) -> String {
             esc(title)
         );
     }
-    let max = data.iter().map(|(_, v)| *v).fold(0.0_f64, f64::max).max(1.0);
+    let max = data
+        .iter()
+        .map(|(_, v)| *v)
+        .fold(0.0_f64, f64::max)
+        .max(1.0);
     let row_h = 26.0;
     let label_w = 190.0;
     let bar_w = 340.0;
@@ -609,8 +627,17 @@ mod tests {
             loss_label: Some("none".into()),
             glyco_residue: Some('N'),
             glyco_peptide: Some(2),
+            glyco_sites: vec![super::super::filter::GlycoSite {
+                peptide: 2,
+                peptide_position: 1,
+                residue: 'N',
+                sequon_present: Some(true),
+                plausible: true,
+            }],
+            all_sites_plausible: true,
             n_glycan_pseudo: 1,
             matched_families: vec!["HexNAc".into()],
+            matched_ions: vec![],
             matched_ion_count: 3,
             sequon_present: Some(true),
             charge_plausible: true,
@@ -645,7 +672,16 @@ mod tests {
         let dir = std::env::temp_dir().join(format!("gq_xiview_{}", std::process::id()));
         std::fs::create_dir_all(&dir).unwrap();
         let path = dir.join("xiview.csv");
-        let hit = pass_hit("DTHK", "DTIVNELR", "P00761", "HRP", "2-3");
+        let mut hit = pass_hit("DTHK", "DTIVNELR", "P00761", "HRP", "2-3");
+        hit.glyco_sites.push(super::super::filter::GlycoSite {
+            peptide: 1,
+            peptide_position: 3,
+            residue: 'N',
+            sequon_present: Some(false),
+            plausible: false,
+        });
+        hit.n_glycan_pseudo = 2;
+        hit.all_sites_plausible = false;
         let summary = write_xiview_csv(&path, &[hit], None, &fasta()).unwrap();
         assert_eq!(summary.rows, 1);
         assert_eq!(summary.mapped, 1);
@@ -653,6 +689,7 @@ mod tests {
         assert!(content.starts_with("Protein1,PepPos1,PepSeq1,LinkPos1,AbsPos1"));
         // DTHK starts at 25 -> AbsPos1 = 25 + 2 - 1 = 26. DTIVNELR starts at 20 -> AbsPos2 = 20 + 3 - 1 = 22.
         assert!(content.contains("P00761,25,DTHK,2,26,HRP,20,DTIVNELR,3,22,"));
+        assert!(content.contains("pep2:1:N:true:true;pep1:3:N:false:false"));
     }
 
     #[test]
@@ -714,7 +751,6 @@ mod tests {
             crosslinker_name: "dss".into(),
             xlink_sites: "K:K".into(),
             glycan_library: "nglyc309".into(),
-            resume: false,
         };
         let stats = PrefilterStats {
             scans_total: 24661,
@@ -739,7 +775,6 @@ mod tests {
             crosslinker_name: "DSS".into(),
             xlink_sites: "K".into(),
             glycan_library: "n-glycans".into(),
-            resume: false,
         };
         let stats = PrefilterStats {
             scans_total: 100,

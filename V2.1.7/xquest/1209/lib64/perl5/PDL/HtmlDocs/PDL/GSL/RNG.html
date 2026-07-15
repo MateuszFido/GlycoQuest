@@ -1,0 +1,479 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSL::RNG - PDL interface to RNG and randist routines in GSL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#new__"><code>new()</code></a></li>
+		<li><a href="#set_seed___"><code>set_seed()</code>;</a></li>
+		<li><a href="#min__"><code>min()</code></a></li>
+		<li><a href="#max__"><code>max()</code></a></li>
+		<li><a href="#name__"><code>name()</code></a></li>
+		<li><a href="#get_uniform__"><code>get_uniform()</code></a></li>
+		<li><a href="#get_uniform_pos__"><code>get_uniform_pos()</code></a></li>
+		<li><a href="#get__"><code>get()</code></a></li>
+		<li><a href="#get_int__"><code>get_int()</code></a></li>
+		<li><a href="#ran_gaussian__"><code>ran_gaussian()</code></a></li>
+		<li><a href="#ran_gaussian_var__"><code>ran_gaussian_var()</code></a></li>
+		<li><a href="#ran_additive_gaussian__"><code>ran_additive_gaussian()</code></a></li>
+		<li><a href="#ran_additive_poisson__"><code>ran_additive_poisson()</code></a></li>
+		<li><a href="#ran_feed_poisson__"><code>ran_feed_poisson()</code></a></li>
+		<li><a href="#ran_bivariate_gaussian__"><code>ran_bivariate_gaussian()</code></a></li>
+		<li><a href="#ran_dir__"><code>ran_dir()</code></a></li>
+		<li><a href="#ran_discrete_preproc__"><code>ran_discrete_preproc()</code></a></li>
+		<li><a href="#ran_discrete__"><code>ran_discrete()</code></a></li>
+		<li><a href="#ran_shuffle__"><code>ran_shuffle()</code></a></li>
+		<li><a href="#ran_shuffle_vec__"><code>ran_shuffle_vec()</code></a></li>
+		<li><a href="#ran_choose__"><code>ran_choose()</code></a></li>
+		<li><a href="#ran_choose_vec__"><code>ran_choose_vec()</code></a></li>
+		<li><a href="#ran_ver__"><code>ran_ver()</code></a></li>
+		<li><a href="#ran_caos__"><code>ran_caos()</code></a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSL::RNG - PDL interface to RNG and randist routines in GSL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the rng and randist packages present
+in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use PDL;
+   use PDL::GSL::RNG;</pre>
+<pre>
+   $rng = PDL::GSL::RNG-&gt;new('taus');</pre>
+<pre>
+   $rng-&gt;set_seed(time());</pre>
+<pre>
+   $a=zeroes(5,5,5)</pre>
+<pre>
+   $rng-&gt;get_uniform($a); # inplace</pre>
+<pre>
+   $b=$rng-&gt;get_uniform(3,4,5); # creates new pdl</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="new__"><code>new()</code></a></h2>
+<p>The new method initializes a new instance of the RNG.</p>
+<p>The avaible RNGs are:
+slatec, cmrg, gfsr4, minstd, mrg, mt19937, r250, ran0, ran1, ran2,
+ran3, rand48, rand, random8_bsd, random8_glibc2, random8_libc5,
+random128_bsd, random128_glibc2, random128_libc5, random256_bsd,
+random256_glibc2, random256_libc5, random32_bsd, random32_glibc2,
+random32_libc5, random64_bsd, random64_glibc2, random64_libc5,
+random_bsd, random_glibc2, random_libc5, randu, ranf, ranlux389,
+ranlux, ranmar, taus, transputer, tt800, uni32, uni, vax, zuf,
+default. The last one (default) uses the enviroment variable
+GSL_RNG_TYPE. Please check the GSL documentation for more
+information.</p>
+<p>Usage:</p>
+<pre>
+   $blessed_ref = PDL::GSL::RNG-&gt;new($RNG_name);</pre>
+<p>Example:</p>
+<pre>
+   $rng = PDL::GSL::RNG-&gt;new('taus');</pre>
+<p>
+</p>
+<h2><a name="set_seed___"><code>set_seed()</code>;</a></h2>
+<p>Sets the RNG seed.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;set_seed($integer);</pre>
+<p>Example:</p>
+<pre>
+   $rng-&gt;set_seed(666);</pre>
+<p>
+</p>
+<h2><a name="min__"><code>min()</code></a></h2>
+<p>Return the minimum value generable by this RNG.</p>
+<p>Usage:</p>
+<pre>
+   $integer = $rng-&gt;min();</pre>
+<p>Example:</p>
+<pre>
+   $min = $rng-&gt;min(); $max = $rng-&gt;max();</pre>
+<p>
+</p>
+<h2><a name="max__"><code>max()</code></a></h2>
+<p>Return the maximum value generable by the RNG.</p>
+<p>Usage:</p>
+<pre>
+   $integer = $rng-&gt;max();</pre>
+<p>Example:</p>
+<pre>
+   $min = $rng-&gt;min(); $max = $rng-&gt;max();</pre>
+<p>
+</p>
+<h2><a name="name__"><code>name()</code></a></h2>
+<p>Returns the name of the RNG.</p>
+<p>Usage:</p>
+<pre>
+   $string = $rng-&gt;name();</pre>
+<p>Example:</p>
+<pre>
+   $name = $rng-&gt;name();</pre>
+<p>
+</p>
+<h2><a name="get_uniform__"><code>get_uniform()</code></a></h2>
+<p>This function creates a piddle with given dimensions or accept an
+existing piddle and fills it. <code>get_uniform()</code> returns values 0&lt;=x&lt;1,</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;get_uniform($list_of_integers)
+   $rng-&gt;get_uniform($piddle);</pre>
+<p>Example:</p>
+<pre>
+   $a = zeroes 5,6; $max=100;
+   $o = $rng-&gt;get_uniform(10,10); $rng-&gt;get_uniform($a);</pre>
+<p>
+</p>
+<h2><a name="get_uniform_pos__"><code>get_uniform_pos()</code></a></h2>
+<p>This function creates a piddle with given dimensions or accept an
+existing piddle and fills it. <code>get_uniform_pos()</code> returns values 0&lt;x&lt;1,</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;get_uniform_pos($list_of_integers)
+   $rng-&gt;get_uniform_pos($piddle);</pre>
+<p>Example:</p>
+<pre>
+   $a = zeroes 5,6;
+   $o = $rng-&gt;get_uniform_pos(10,10); $rng-&gt;get_uniform_pos($a);</pre>
+<p>
+</p>
+<h2><a name="get__"><code>get()</code></a></h2>
+<p>This function creates a piddle with given dimensions or accept an
+existing piddle and fills it. <code>get()</code> returns integer values 
+beetween a minimum and a maximum specific to evry RNG.</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;get($list_of_integers)
+   $rng-&gt;get($piddle);</pre>
+<p>Example:</p>
+<pre>
+   $a = zeroes 5,6;
+   $o = $rng-&gt;get(10,10); $rng-&gt;get($a);</pre>
+<p>
+</p>
+<h2><a name="get_int__"><code>get_int()</code></a></h2>
+<p>This function creates a piddle with given dimensions or accept an
+existing piddle and fills it. <code>get_int()</code> returns integer values 
+beetween 0 and $max.</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;get($max, $list_of_integers)
+   $rng-&gt;get($max, $piddle);</pre>
+<p>Example:</p>
+<pre>
+   $a = zeroes 5,6; $max=100;
+   $o = $rng-&gt;get(10,10); $rng-&gt;get($a);</pre>
+<p>
+</p>
+<h2><a name="ran_gaussian__"><code>ran_gaussian()</code></a></h2>
+<p>These functions return random deviates from given distribution.</p>
+<p>The general form is</p>
+<pre>
+  ran_[distrib](args)</pre>
+<p>where distrib can be any of the ones shown below.</p>
+<p>They accept the parameters of the distribution and a specification of
+where to put output. This spec can be in form of list of integers that
+specify the dimensions of the ouput piddle or an existing piddle that
+will be filled with values inplace.</p>
+<p>Usage:</p>
+<pre>
+   # gaussian dist
+   $piddle = $rng-&gt;ran_gaussian($sigma,[list of integers]);
+   $rng-&gt;ran_gaussian($sigma,$piddle);</pre>
+<pre>
+   # gaussian tail
+   $piddle = $rng-&gt;ran_ugaussian_tail($tail,[list of integers]);
+   $rng-&gt;ran_ugaussian_tail($tail,$piddle);</pre>
+<pre>
+   # exponential dist
+   $piddle = $rng-&gt;ran_exponential($mu,[list of integers]);
+   $rng-&gt;ran_exponential($mu,$piddle);</pre>
+<pre>
+   # laplacian dist
+   $piddle = $rng-&gt;ran_laplace($mu,[list of integers]);
+   $rng-&gt;ran_laplace($mu,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_exppow($mu,$a,[list of integers]);
+   $rng-&gt;ran_exppow($mu,$a,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_cauchy($mu,[list of integers]);
+   $rng-&gt;ran_cauchy($mu,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_rayleigh($sigma,[list of integers]);
+   $rng-&gt;ran_rayleigh($sigma,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_rayleigh_tail($a,$sigma,[list of integers]);
+   $rng-&gt;ran_rayleigh_tail($a,$sigma,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_levy($mu,$a,[list of integers]);
+   $rng-&gt;ran_levy($mu,$a,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_gamma($a,$b,[list of integers]);
+   $rng-&gt;ran_gamma($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_flat($a,$b,[list of integers]);
+   $rng-&gt;ran_flat($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_lognormal($zeta, $sigma,[list of integers]);
+   $rng-&gt;ran_lognormal($zeta, $sigma,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_chisq($nu,[list of integers]);
+   $rng-&gt;ran_chisq($nu,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_fdist($nu1, $nu2,[list of integers]);
+   $rng-&gt;ran_fdist($nu1, $nu2,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_tdist($nu,[list of integers]);
+   $rng-&gt;ran_tdist($nu,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_beta($a,$b,[list of integers]);
+   $rng-&gt;ran_beta($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_logistic($m,[list of integers]u)
+   $rng-&gt;ran_logistic($m,$piddleu)</pre>
+<pre>
+   $piddle = $rng-&gt;ran_pareto($a,$b,[list of integers]);
+   $rng-&gt;ran_pareto($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_weibull($mu,$a,[list of integers]);
+   $rng-&gt;ran_weibull($mu,$a,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_gumbel1($a,$b,[list of integers]);
+   $rng-&gt;ran_gumbel1($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_gumbel2($a,$b,[list of integers]);
+   $rng-&gt;ran_gumbel2($a,$b,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_poisson($mu,[list of integers]);
+   $rng-&gt;ran_poisson($mu,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_bernoulli($p,[list of integers]);
+   $rng-&gt;ran_bernoulli($p,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_binomial($p,$n,[list of integers]);
+   $rng-&gt;ran_binomial($p,$n,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_negative_binomial($p,$n,[list of integers]);
+   $rng-&gt;ran_negative_binomial($p,$n,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_pascal($p,$n,[list of integers]);
+   $rng-&gt;ran_pascal($p,$n,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_geometric($p,[list of integers]);
+   $rng-&gt;ran_geometric($p,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_hypergeometric($n1, $n2, $t,[list of integers]);
+   $rng-&gt;ran_hypergeometric($n1, $n2, $t,$piddle);</pre>
+<pre>
+   $piddle = $rng-&gt;ran_logarithmic($p,[list of integers]);
+   $rng-&gt;ran_logarithmic($p,$piddle);</pre>
+<p>Example:</p>
+<pre>
+  $o = $rng-&gt;ran_gaussian($sigma,10,10);
+  $rng-&gt;ran_gaussian($sigma,$a);</pre>
+<p>
+</p>
+<h2><a name="ran_gaussian_var__"><code>ran_gaussian_var()</code></a></h2>
+<p>This method is similar to <a href="#ran_gaussian__">ran_[distrib]()</a> except that it
+takes the
+parameters of the distribution as a piddle and returns a piddle of equal
+dimensions. Of course, you can use the same set of distributions as in
+the previous method (see also the <a href="#ran_gaussian__">ran_gaussian</a> entry above).</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;ran_[distribution]_var($distr_parameters_list,$piddle_dim_list);
+   $rng-&gt;ran_[distribution]_var($distr_parameters_list,$piddle);</pre>
+<p>Example:</p>
+<pre>
+   $sigma_pdl = rvals zeroes 11,11;
+   $o = $rng-&gt;ran_gaussian_var($sigma_pdl);</pre>
+<p>
+</p>
+<h2><a name="ran_additive_gaussian__"><code>ran_additive_gaussian()</code></a></h2>
+<p>Add Gaussian noise of given sigma to a piddle.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_additive_gaussian($sigma,$piddle);</pre>
+<p>Example:</p>
+<pre>
+   $rng-&gt;ran_additive_gaussian(1,$image);</pre>
+<p>
+</p>
+<h2><a name="ran_additive_poisson__"><code>ran_additive_poisson()</code></a></h2>
+<p>Add Poisson noise of given sigma to a piddle.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_additive_poisson($mu,$piddle);</pre>
+<p>Example:</p>
+<pre>
+   $rng-&gt;ran_additive_poisson(1,$image);</pre>
+<p>
+</p>
+<h2><a name="ran_feed_poisson__"><code>ran_feed_poisson()</code></a></h2>
+<p>This method simulates shot noise, taking the values of piddle as
+values for mu to be fed in the poissonian RNG.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_feed_poisson($piddle);</pre>
+<p>Example:</p>
+<pre>
+   $rng-&gt;ran_feed_poisson($image);</pre>
+<p>
+</p>
+<h2><a name="ran_bivariate_gaussian__"><code>ran_bivariate_gaussian()</code></a></h2>
+<p>Generates $n bivariate gaussian random deviates.</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;ran_bivariate_gaussian($sigma_x,$sigma_y,$rho,$n);</pre>
+<p>Example:</p>
+<pre>
+   $o = $rng-&gt;ran_bivariate_gaussian(1,2,0.5,1000);</pre>
+<p>
+</p>
+<h2><a name="ran_dir__"><code>ran_dir()</code></a></h2>
+<p>Returns <code>$n</code> random vectors in <code>$ndim</code> dimensions.</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;ran_dir($ndim,$n);</pre>
+<p>Example:</p>
+<pre>
+   $o = $rng-&gt;ran_dir($ndim,$n);</pre>
+<p>
+</p>
+<h2><a name="ran_discrete_preproc__"><code>ran_discrete_preproc()</code></a></h2>
+<p>This method returns a handle that must be used when calling
+<code>ran_discrete()</code>. You specify the probability of the integer number
+that are returned by <code>ran_discrete()</code>.</p>
+<p>Usage:</p>
+<pre>
+   $discrete_dist_handle = $rng-&gt;ran_discrete_preproc($double_piddle_prob);</pre>
+<p>Example:</p>
+<pre>
+   $prob = pdl [0.1,0.3,0.6];
+   $ddh = $rng-&gt;ran_discrete_preproc($prob);
+   $o = $rng-&gt;ran_discrete($discrete_dist_handle,100);</pre>
+<p>
+</p>
+<h2><a name="ran_discrete__"><code>ran_discrete()</code></a></h2>
+<p>Is used to get the desired samples once a proper handle has been
+enstablished (see ran_discrete_preproc()).</p>
+<p>Usage:</p>
+<pre>
+   $piddle = $rng-&gt;ran_discrete($discrete_dist_handle,$num);</pre>
+<p>Example:</p>
+<pre>
+   $prob = pdl [0.1,0.3,0.6];
+   $ddh = $rng-&gt;ran_discrete_preproc($prob);
+   $o = $rng-&gt;ran_discrete($discrete_dist_handle,100);</pre>
+<p>
+</p>
+<h2><a name="ran_shuffle__"><code>ran_shuffle()</code></a></h2>
+<p>Shuffles values in piddle</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_shuffle($piddle);</pre>
+<p>
+</p>
+<h2><a name="ran_shuffle_vec__"><code>ran_shuffle_vec()</code></a></h2>
+<p>Shuffles values in piddle</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_shuffle_vec(@vec);</pre>
+<p>
+</p>
+<h2><a name="ran_choose__"><code>ran_choose()</code></a></h2>
+<p>Chooses values from $inpiddle to $outpiddle.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_choose($inpiddle,$outpiddle);</pre>
+<p>
+</p>
+<h2><a name="ran_choose_vec__"><code>ran_choose_vec()</code></a></h2>
+<p>Chooses $n values from @vec.</p>
+<p>Usage:</p>
+<pre>
+   @choosen = $rng-&gt;ran_choose_vec($n,@vec);</pre>
+<p>
+</p>
+<h2><a name="ran_ver__"><code>ran_ver()</code></a></h2>
+<p>Returns a piddle with $n values generated by the Verhulst map from $x0 and
+paramater $r.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_ver($x0, $r, $n);</pre>
+<p>
+</p>
+<h2><a name="ran_caos__"><code>ran_caos()</code></a></h2>
+<p>Returns values from Verhuls map with $r=4.0 and randomly choosen
+$x0. The values are scaled by $m.</p>
+<p>Usage:</p>
+<pre>
+   $rng-&gt;ran_caos($m,$n);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Feedback is welcome. Log bugs in the PDL bug database (the
+database is always linked from <a href="http://pdl.perl.org/">http://pdl.perl.org/</a>).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../PDL.html">the PDL manpage</a></p>
+<p>The GSL documentation is online at
+<a href="http://www.gnu.org/software/gsl/manual/html_node/">http://www.gnu.org/software/gsl/manual/html_node/</a></p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+Docs mangled by C. Soeller. All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL RNG and randist modules were written by James Theiler.</p>
+
+</body>
+
+</html>

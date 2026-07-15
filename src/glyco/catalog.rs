@@ -107,7 +107,7 @@ pub fn ensure_data_files(entry: &DatabaseEntry) -> Result<(), String> {
     for path in [
         glycan_data_dir().join(entry.filename),
         glycan_data_dir().join("glycan_residues.txt"),
-        glycan_data_dir().join("diagnostic_ion_catalog.txt")
+        glycan_data_dir().join("diagnostic_ion_catalog.txt"),
     ] {
         if !path.is_file() {
             return Err(format!(
@@ -132,6 +132,10 @@ mod tests {
 
     #[test]
     fn rejects_unknown_database() {
-        assert!(resolve_database("unknown").unwrap_err().contains("Unknown glycan database"));
+        assert!(
+            resolve_database("unknown")
+                .unwrap_err()
+                .contains("Unknown glycan database")
+        );
     }
 }

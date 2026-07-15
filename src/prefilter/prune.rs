@@ -1,6 +1,6 @@
 //! Spectrum-local glycan candidate pruning by matched diagnostic families.
 
-use crate::glyco::{contains_family, parse_composition, Composition, GlycanLibrary};
+use crate::glyco::{Composition, GlycanLibrary, contains_family, parse_composition};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct PrunedGlycan {

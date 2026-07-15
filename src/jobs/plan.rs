@@ -135,6 +135,8 @@ pub struct PlannedJob {
     pub job_id: String,
     pub variant: GlycanVariant,
     pub spectrum_keys: Vec<SpectrumKey>,
+    /// Charge-weighted estimate used for limits and aggregate progress.
+    pub estimated_comparisons: u64,
 }
 
 /// Records what each generated xQuest job searched for, so hits can be annotated
@@ -199,9 +201,7 @@ impl JobPlan {
         let mut total_comparisons = 0u64;
 
         for (key, spectra) in variant_spectra {
-            let variant = variant_meta
-                .remove(&key)
-                .expect("variant metadata present");
+            let variant = variant_meta.remove(&key).expect("variant metadata present");
             let spectrum_keys: Vec<_> = spectra.into_iter().collect();
             let comparisons = estimate_comparisons(&spectrum_keys, prefilter);
             total_comparisons += comparisons;
@@ -210,6 +210,7 @@ impl JobPlan {
                 job_id: sanitize_job_id(&variant),
                 variant,
                 spectrum_keys,
+                estimated_comparisons: comparisons,
             });
         }
 
@@ -318,9 +319,10 @@ pub fn filtered_for_key<'a>(
     prefilter: &'a PrefilterResult,
     key: &SpectrumKey,
 ) -> Option<&'a FilteredSpectrum> {
-    prefilter.filtered.iter().find(|row| {
-        row.source_file == key.source_file && row.scan_number == key.scan_number
-    })
+    prefilter
+        .filtered
+        .iter()
+        .find(|row| row.source_file == key.source_file && row.scan_number == key.scan_number)
 }
 
 #[cfg(test)]
@@ -347,5 +349,12 @@ mod tests {
         let plan = JobPlan::build(&prefilter, &library, &settings, &crosslinker).unwrap();
         assert!(!plan.jobs.is_empty());
         assert!(plan.total_comparisons > 0);
+        assert_eq!(
+            plan.total_comparisons,
+            plan.jobs
+                .iter()
+                .map(|job| job.estimated_comparisons)
+                .sum::<u64>()
+        );
     }
 }

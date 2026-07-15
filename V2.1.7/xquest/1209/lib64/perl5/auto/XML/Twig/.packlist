@@ -1,0 +1,13 @@
+/cluster/apps/perl_modules/1209/bin/xml_grep
+/cluster/apps/perl_modules/1209/bin/xml_merge
+/cluster/apps/perl_modules/1209/bin/xml_pp
+/cluster/apps/perl_modules/1209/bin/xml_spellcheck
+/cluster/apps/perl_modules/1209/bin/xml_split
+/cluster/apps/perl_modules/1209/share/man/man1/xml_grep.1
+/cluster/apps/perl_modules/1209/share/man/man1/xml_merge.1
+/cluster/apps/perl_modules/1209/share/man/man1/xml_pp.1
+/cluster/apps/perl_modules/1209/share/man/man1/xml_spellcheck.1
+/cluster/apps/perl_modules/1209/share/man/man1/xml_split.1
+/cluster/apps/perl_modules/1209/share/man/man3/XML::Twig.3pm
+/cluster/apps/perl_modules/1209/share/perl5/XML/Twig.pm
+/cluster/apps/perl_modules/1209/share/perl5/XML/Twig/XPath.pm

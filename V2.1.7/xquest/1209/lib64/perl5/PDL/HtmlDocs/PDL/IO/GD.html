@@ -1,0 +1,1146 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::IO::GD - Interface to the GD image library.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#write_png">write_png</a></li>
+		<li><a href="#write_png_ex">write_png_ex</a></li>
+		<li><a href="#write_true_png">write_true_png</a></li>
+		<li><a href="#write_true_png_ex">write_true_png_ex</a></li>
+		<li><a href="#write_png_best___img_piddle____lut_piddle____filename__">write_png_best( $img(piddle), $lut(piddle), $filename )</a></li>
+		<li><a href="#write_true_png_best___img_piddle____filename__">write_true_png_best( $img(piddle), $filename )</a></li>
+		<li><a href="#load_lut___filename__">load_lut( $filename )</a></li>
+		<li><a href="#read_png___filename__">read_png( $filename )</a></li>
+		<li><a href="#read_png_true___filename__">read_png_true( $filename )</a></li>
+		<li><a href="#my__lut___read_png_lut___filename__">my $lut = read_png_lut( $filename )</a></li>
+	</ul>
+
+	<li><a href="#oo_interface">OO INTERFACE</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#implementation_notes">IMPLEMENTATION NOTES</a></li>
+	</ul>
+
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#new">new</a></li>
+		<li><a href="#to_pdl">to_pdl</a></li>
+		<li><a href="#apply_lut___lut_piddle___">apply_lut( $lut(piddle) )</a></li>
+		<li><a href="#warning_">WARNING:</a></li>
+		<li><a href="#write_png">write_Png</a></li>
+		<li><a href="#write_pngex">write_PngEx</a></li>
+		<li><a href="#write_wbmp">write_WBMP</a></li>
+		<li><a href="#write_jpeg">write_Jpeg</a></li>
+		<li><a href="#write_gd">write_Gd</a></li>
+		<li><a href="#write_gd2">write_Gd2</a></li>
+		<li><a href="#write_gif">write_Gif</a></li>
+		<li><a href="#get_png_data">get_Png_data</a></li>
+		<li><a href="#get_pngex_data">get_PngEx_data</a></li>
+		<li><a href="#get_wbmp_data">get_WBMP_data</a></li>
+		<li><a href="#get_jpeg_data">get_Jpeg_data</a></li>
+		<li><a href="#get_gd_data">get_Gd_data</a></li>
+		<li><a href="#get_gd2_data">get_Gd2_data</a></li>
+		<li><a href="#setpixel">SetPixel</a></li>
+		<li><a href="#gdimagesetpixel">gdImageSetPixel</a></li>
+		<li><a href="#getpixel">GetPixel</a></li>
+		<li><a href="#gdimagegetpixel">gdImageGetPixel</a></li>
+		<li><a href="#aablend">AABlend</a></li>
+		<li><a href="#gdimageaablend">gdImageAABlend</a></li>
+		<li><a href="#line">Line</a></li>
+		<li><a href="#gdimageline">gdImageLine</a></li>
+		<li><a href="#dashedline">DashedLine</a></li>
+		<li><a href="#gdimagedashedline">gdImageDashedLine</a></li>
+		<li><a href="#rectangle">Rectangle</a></li>
+		<li><a href="#gdimagerectangle">gdImageRectangle</a></li>
+		<li><a href="#filledrectangle">FilledRectangle</a></li>
+		<li><a href="#gdimagefilledrectangle">gdImageFilledRectangle</a></li>
+		<li><a href="#setclip">SetClip</a></li>
+		<li><a href="#gdimagesetclip">gdImageSetClip</a></li>
+		<li><a href="#getclip">GetClip</a></li>
+		<li><a href="#gdimagegetclip">gdImageGetClip</a></li>
+		<li><a href="#boundssafe">BoundsSafe</a></li>
+		<li><a href="#gdimageboundssafe">gdImageBoundsSafe</a></li>
+		<li><a href="#char">Char</a></li>
+		<li><a href="#gdimagechar">gdImageChar</a></li>
+		<li><a href="#charup">CharUp</a></li>
+		<li><a href="#gdimagecharup">gdImageCharUp</a></li>
+		<li><a href="#string">String</a></li>
+		<li><a href="#gdimagestring">gdImageString</a></li>
+		<li><a href="#stringup">StringUp</a></li>
+		<li><a href="#gdimagestringup">gdImageStringUp</a></li>
+		<li><a href="#string16">String16</a></li>
+		<li><a href="#gdimagestring16">gdImageString16</a></li>
+		<li><a href="#stringup16">StringUp16</a></li>
+		<li><a href="#gdimagestringup16">gdImageStringUp16</a></li>
+		<li><a href="#polygon">Polygon</a></li>
+		<li><a href="#gdimagepolygon">gdImagePolygon</a></li>
+		<li><a href="#filledpolygon">FilledPolygon</a></li>
+		<li><a href="#gdimagefilledpolygon">gdImageFilledPolygon</a></li>
+		<li><a href="#colorallocate">ColorAllocate</a></li>
+		<li><a href="#gdimagecolorallocate">gdImageColorAllocate</a></li>
+		<li><a href="#colorallocatealpha">ColorAllocateAlpha</a></li>
+		<li><a href="#gdimagecolorallocatealpha">gdImageColorAllocateAlpha</a></li>
+		<li><a href="#colorclosest">ColorClosest</a></li>
+		<li><a href="#gdimagecolorclosest">gdImageColorClosest</a></li>
+		<li><a href="#colorclosestalpha">ColorClosestAlpha</a></li>
+		<li><a href="#gdimagecolorclosestalpha">gdImageColorClosestAlpha</a></li>
+		<li><a href="#colorclosesthwb">ColorClosestHWB</a></li>
+		<li><a href="#gdimagecolorclosesthwb">gdImageColorClosestHWB</a></li>
+		<li><a href="#colorexact">ColorExact</a></li>
+		<li><a href="#gdimagecolorexact">gdImageColorExact</a></li>
+		<li><a href="#colorexactalpha">ColorExactAlpha</a></li>
+		<li><a href="#gdimagecolorexactalpha">gdImageColorExactAlpha</a></li>
+		<li><a href="#colorresolve">ColorResolve</a></li>
+		<li><a href="#gdimagecolorresolve">gdImageColorResolve</a></li>
+		<li><a href="#colorresolvealpha">ColorResolveAlpha</a></li>
+		<li><a href="#gdimagecolorresolvealpha">gdImageColorResolveAlpha</a></li>
+		<li><a href="#colordeallocate">ColorDeallocate</a></li>
+		<li><a href="#gdimagecolordeallocate">gdImageColorDeallocate</a></li>
+		<li><a href="#truecolortopalette">TrueColorToPalette</a></li>
+		<li><a href="#gdimagetruecolortopalette">gdImageTrueColorToPalette</a></li>
+		<li><a href="#colortransparent">ColorTransparent</a></li>
+		<li><a href="#gdimagecolortransparent">gdImageColorTransparent</a></li>
+		<li><a href="#filledarc">FilledArc</a></li>
+		<li><a href="#gdimagefilledarc">gdImageFilledArc</a></li>
+		<li><a href="#arc">Arc</a></li>
+		<li><a href="#gdimagearc">gdImageArc</a></li>
+		<li><a href="#filledellipse">FilledEllipse</a></li>
+		<li><a href="#gdimagefilledellipse">gdImageFilledEllipse</a></li>
+		<li><a href="#filltoborder">FillToBorder</a></li>
+		<li><a href="#gdimagefilltoborder">gdImageFillToBorder</a></li>
+		<li><a href="#fill">Fill</a></li>
+		<li><a href="#gdimagefill">gdImageFill</a></li>
+		<li><a href="#copyrotated">CopyRotated</a></li>
+		<li><a href="#gdimagecopyrotated">gdImageCopyRotated</a></li>
+		<li><a href="#setbrush">SetBrush</a></li>
+		<li><a href="#gdimagesetbrush">gdImageSetBrush</a></li>
+		<li><a href="#settile">SetTile</a></li>
+		<li><a href="#gdimagesettile">gdImageSetTile</a></li>
+		<li><a href="#setantialiased">SetAntiAliased</a></li>
+		<li><a href="#gdimagesetantialiased">gdImageSetAntiAliased</a></li>
+		<li><a href="#setantialiaseddontblend">SetAntiAliasedDontBlend</a></li>
+		<li><a href="#gdimagesetantialiaseddontblend">gdImageSetAntiAliasedDontBlend</a></li>
+		<li><a href="#setstyle">SetStyle</a></li>
+		<li><a href="#gdimagesetstyle">gdImageSetStyle</a></li>
+		<li><a href="#setthickness">SetThickness</a></li>
+		<li><a href="#gdimagesetthickness">gdImageSetThickness</a></li>
+		<li><a href="#interlace">Interlace</a></li>
+		<li><a href="#gdimageinterlace">gdImageInterlace</a></li>
+		<li><a href="#alphablending">AlphaBlending</a></li>
+		<li><a href="#gdimagealphablending">gdImageAlphaBlending</a></li>
+		<li><a href="#savealpha">SaveAlpha</a></li>
+		<li><a href="#gdimagesavealpha">gdImageSaveAlpha</a></li>
+		<li><a href="#truecolor">TrueColor</a></li>
+		<li><a href="#gdimagetruecolor">gdImageTrueColor</a></li>
+		<li><a href="#colorstotal">ColorsTotal</a></li>
+		<li><a href="#gdimagecolorstotal">gdImageColorsTotal</a></li>
+		<li><a href="#red">Red</a></li>
+		<li><a href="#gdimagered">gdImageRed</a></li>
+		<li><a href="#green">Green</a></li>
+		<li><a href="#gdimagegreen">gdImageGreen</a></li>
+		<li><a href="#blue">Blue</a></li>
+		<li><a href="#gdimageblue">gdImageBlue</a></li>
+		<li><a href="#alpha">Alpha</a></li>
+		<li><a href="#gdimagealpha">gdImageAlpha</a></li>
+		<li><a href="#gettransparent">GetTransparent</a></li>
+		<li><a href="#gdimagegettransparent">gdImageGetTransparent</a></li>
+		<li><a href="#getinterlaced">GetInterlaced</a></li>
+		<li><a href="#gdimagegetinterlaced">gdImageGetInterlaced</a></li>
+		<li><a href="#sx">SX</a></li>
+		<li><a href="#gdimagesx">gdImageSX</a></li>
+		<li><a href="#sy">SY</a></li>
+		<li><a href="#gdimagesy">gdImageSY</a></li>
+		<li><a href="#colorallocates">ColorAllocates</a></li>
+		<li><a href="#gdimagecolorallocates">gdImageColorAllocates</a></li>
+		<li><a href="#colorallocatealphas">ColorAllocateAlphas</a></li>
+		<li><a href="#gdimagecolorallocatealphas">gdImageColorAllocateAlphas</a></li>
+		<li><a href="#setpixels">SetPixels</a></li>
+		<li><a href="#gdimagesetpixels">gdImageSetPixels</a></li>
+		<li><a href="#lines">Lines</a></li>
+		<li><a href="#gdimagelines">gdImageLines</a></li>
+		<li><a href="#dashedlines">DashedLines</a></li>
+		<li><a href="#gdimagedashedlines">gdImageDashedLines</a></li>
+		<li><a href="#rectangles">Rectangles</a></li>
+		<li><a href="#gdimagerectangles">gdImageRectangles</a></li>
+		<li><a href="#filledrectangles">FilledRectangles</a></li>
+		<li><a href="#gdimagefilledrectangles">gdImageFilledRectangles</a></li>
+		<li><a href="#filledarcs">FilledArcs</a></li>
+		<li><a href="#gdimagefilledarcs">gdImageFilledArcs</a></li>
+		<li><a href="#arcs">Arcs</a></li>
+		<li><a href="#gdimagearcs">gdImageArcs</a></li>
+		<li><a href="#filledellipses">FilledEllipses</a></li>
+		<li><a href="#gdimagefilledellipses">gdImageFilledEllipses</a></li>
+	</ul>
+
+	<li><a href="#class_functions">CLASS FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gdimagecopy">gdImageCopy</a></li>
+		<li><a href="#gdimagecopymerge">gdImageCopyMerge</a></li>
+		<li><a href="#gdimagecopymergegray">gdImageCopyMergeGray</a></li>
+		<li><a href="#gdimagecopyresized">gdImageCopyResized</a></li>
+		<li><a href="#gdimagecopyresampled">gdImageCopyResampled</a></li>
+		<li><a href="#gdimagecompare">gdImageCompare</a></li>
+		<li><a href="#gdimagepalettecopy">gdImagePaletteCopy</a></li>
+		<li><a href="#stringttf">StringTTF</a></li>
+		<li><a href="#gdimagestringttf">gdImageStringTTF</a></li>
+		<li><a href="#stringft">StringFT</a></li>
+		<li><a href="#gdimagestringft">gdImageStringFT</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::IO::GD - Interface to the GD image library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ my $pdl = sequence(byte, 30, 30);
+ write_png($pdl, load_lut($lutfile), &quot;test.png&quot;);</pre>
+<pre>
+ write_true_png(sequence(100, 100, 3), &quot;test_true.png&quot;);</pre>
+<pre>
+ my $image = read_png(&quot;test.png&quot;);</pre>
+<pre>
+ my $image = read_true_png(&quot;test_true_read.png&quot;);
+ write_true_png($image, &quot;test_true_read.out.png&quot;);</pre>
+<pre>
+ my $lut = read_png_lut(&quot;test.png&quot;);</pre>
+<pre>
+ $pdl = sequence(byte, 30, 30);
+ write_png_ex($pdl, load_lut($lutfile), &quot;test_nocomp.png&quot;, 0);
+ write_png_ex($pdl, load_lut($lutfile), &quot;test_bestcomp1.png&quot;, 9);
+ write_png_best($pdl, load_lut($lutfile), &quot;test_bestcomp2.png&quot;);</pre>
+<pre>
+ $pdl = sequence(100, 100, 3);
+ write_true_png_ex($pdl, &quot;test_true_nocomp.png&quot;, 0);
+ write_true_png_ex($pdl, &quot;test_true_bestcomp1.png&quot;, 9);
+ write_true_png_best($pdl, &quot;test_true_bestcomp2.png&quot;);</pre>
+<pre>
+ recompress_png_best(&quot;test_recomp_best.png&quot;);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is the &quot;General Interface&quot; for the PDL::IO::GD library, and is actually several
+years old at this point (read: stable). If you're feeling frisky, try the new OO 
+interface described below.</p>
+<p>The general version just provides several image IO utility functions you can use with
+piddle variables. It's deceptively useful, however.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="write_png">write_png</a></h2>
+<pre>
+  Signature: (byte img(x,y); byte lut(i,j); char* filename)</pre>
+<p>Writes a 2-d PDL varable out to a PNG file, using the supplied color look-up-table piddle
+(hereafter referred to as a LUT).</p>
+<p>The LUT contains a line for each value 0-255 with a corresponding R, G, and B value.</p>
+<p>write_png does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="write_png_ex">write_png_ex</a></h2>
+<pre>
+  Signature: (img(x,y); lut(i,j); char* filename; int level)</pre>
+<p>Same as <code>write_png()</code>, except you can specify the compression level (0-9) as the last arguement.</p>
+<p>write_png_ex does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="write_true_png">write_true_png</a></h2>
+<pre>
+  Signature: (img(x,y,z); char* filename)</pre>
+<p>Writes an (x, y, z(3)) PDL varable out to a PNG file, using a true color format.</p>
+<p>This means a larger file on disk, but can contain more than 256 colors.</p>
+<p>write_true_png does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="write_true_png_ex">write_true_png_ex</a></h2>
+<pre>
+  Signature: (img(x,y,z); char* filename; int level)</pre>
+<p>Same as <code>write_true_png()</code>, except you can specify the compression level (0-9) as the last arguement.</p>
+<p>write_true_png_ex does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="write_png_best___img_piddle____lut_piddle____filename__">write_png_best( $img(piddle), $lut(piddle), $filename )</a></h2>
+<p>Like <code>write_png()</code>, but it assumes the best PNG compression (9).</p>
+<p>
+</p>
+<h2><a name="write_true_png_best___img_piddle____filename__">write_true_png_best( $img(piddle), $filename )</a></h2>
+<p>Like <code>write_true_png()</code>, but it assumes the best PNG compression (9).</p>
+<p>
+</p>
+<h2><a name="load_lut___filename__">load_lut( $filename )</a></h2>
+<p>Loads a color look up table from an ASCII file. returns a piddle</p>
+<p>
+</p>
+<h2><a name="read_png___filename__">read_png( $filename )</a></h2>
+<p>Reads a (palette) PNG image into a (new) PDL variable.</p>
+<p>
+</p>
+<h2><a name="read_png_true___filename__">read_png_true( $filename )</a></h2>
+<p>Reads a true color PNG image into a (new) PDL variable.</p>
+<p>
+</p>
+<h2><a name="my__lut___read_png_lut___filename__">my $lut = read_png_lut( $filename )</a></h2>
+<p>Reads a color LUT from an already-existing palette PNG file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="oo_interface">OO INTERFACE</a></h1>
+<pre>
+
+Object Oriented interface to the GD image library.</pre>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ # Open an existing file:
+ # 
+ my $gd = PDL::IO::GD-&gt;new( { filename =&gt; &quot;test.png&quot; } );
+ 
+ # Query the x and y sizes:
+ my $x = $gd-&gt;SX();
+ my $y = $gd-&gt;SY();</pre>
+<pre>
+ # Grab the PDL of the data:
+ my $pdl = $gd-&gt;to_pdl();</pre>
+<pre>
+ # Kill this thing:
+ $gd-&gt;DESTROY();</pre>
+<pre>
+ # Create a new object:
+ # 
+ my $im = PDL::IO::GD-&gt;new( { x =&gt; 300, y =&gt; 300 } );</pre>
+<pre>
+ # Allocate some colors:
+ #
+ my $black = $im-&gt;ColorAllocate( 0, 0, 0 );
+ my $red = $im-&gt;ColorAllocate( 255, 0, 0 );
+ my $green = $im-&gt;ColorAllocate( 0, 255, 0 );
+ my $blue = $im-&gt;ColorAllocate( 0, 0, 255 );</pre>
+<pre>
+ # Draw a rectangle:
+ $im-&gt;Rectangle( 10, 10, 290, 290, $red );</pre>
+<pre>
+ # Add some text:
+ $im-&gt;String( gdFontGetLarge(), 20, 20, &quot;Test Large Font!&quot;, $green );</pre>
+<pre>
+ # Write the output file:
+ $im-&gt;write_Png( &quot;test2.png&quot; );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is the Object-Oriented interface from PDL to the GD image library.</p>
+<p>See <a href="http://www.boutell.com/gd/">http://www.boutell.com/gd/</a> for more information on the GD library and how it works.</p>
+<p>
+</p>
+<h2><a name="implementation_notes">IMPLEMENTATION NOTES</a></h2>
+<p>Surprisingly enough, this interface has nothing to do with the other Perl-&gt;GD interface module, 
+aka 'GD' (as in 'use GD;'). This is done from scratch over the years.</p>
+<p>Requires at least version 2.0.22 of the GD library, but it's only been thoroughly tested with
+gd-2.0.33, so it would be best to use that. The 2.0.22 requirement has to do with a change in
+GD's font handling functions, so if you don't use those, then don't worry about it.</p>
+<p>I should also add, the statement about &quot;thoroughly tested&quot; above is mostly a joke. This OO 
+interface is very young, and it has <em>barely</em> been tested at all, so if something 
+breaks, email me and I'll get it fixed ASAP (for me).</p>
+<p>Functions that manipulate and query the image objects generally have a 'gdImage' prefix on the
+function names (ex: gdImageString()). I've created aliases here for all of those member 
+functions so you don't have to keep typing 'gdImage' in your code, but the long version are in 
+there as well.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="new">new</a></h2>
+<p>Creates a new PDL::IO::GD object.</p>
+<p>Accepts an anonymous hash describing how to create it. Use curly braces here!</p>
+<p>If the hash has:</p>
+<pre>
+ pdl =&gt; $pdl_var (lut =&gt; $lut_piddle)
+    Then a new GD is created from that PDL variable.</pre>
+<pre>
+ filename =&gt; $file
+    Then a new GD is created from the image file.
+    
+ x =&gt; $num, y =&gt; $num
+    Then a new GD is created as a palette image, with size x, y
+    
+ x =&gt; $num, y =&gt; $num, true_color =&gt; 1
+    Then a new GD is created as a true color image, with size x, y</pre>
+<pre>
+ data =&gt; $scalar (type =&gt; $typename)
+    Then a new GD is created from the file data stored in $scalar. 
+    If no type is given, then it will try to guess the type of the data, but 
+        this will not work for WBMP and gd image types. For those types, you 
+        _must_ specify the type of the data, or the operation will fail.
+    Valid types are: 'jpg', 'png', 'gif', 'gd', 'gd2', 'wbmp'.
+    
+Example:
+ 
+ my $gd = PDL::IO::GD-&gt;new({ pdl =&gt; $pdl_var });
+    
+ my $gd = PDL::IO::GD-&gt;new({ pdl =&gt; $pdl_var, lut =&gt; $lut_piddle });
+ 
+ my $gd = PDL::IO::GD-&gt;new({ filename =&gt; &quot;image.png&quot; });
+ 
+ my $gd = PDL::IO::GD-&gt;new({ x =&gt; 100, y =&gt; 100 });
+ 
+ my $gd = PDL::IO::GD-&gt;new({ x =&gt; 100, y =&gt; 100, true_color =&gt; 1 });
+ 
+ my $gd = PDL::IO::GD-&gt;new({ data =&gt; $imageData });
+ 
+ my $gd = PDL::IO::GD-&gt;new({ data =&gt; $imageData, type =&gt; 'wbmp' });</pre>
+<p>
+</p>
+<h2><a name="to_pdl">to_pdl</a></h2>
+<p>When you're done playing with your GDImage and want a piddle back, use this function to return one.</p>
+<p>
+</p>
+<h2><a name="apply_lut___lut_piddle___">apply_lut( $lut(piddle) )</a></h2>
+<p>Does a $im-&gt;<code>ColorAllocate()</code> for and entire LUT piddle at once.</p>
+<p>The LUT piddle format is the same as for the general interface above.</p>
+<p>
+</p>
+<h2><a name="warning_">WARNING:</a></h2>
+<p>All of the docs below this point are auto-generated (not to mention the actual code), 
+so read with a grain of salt, and <strong>always</strong> check the main GD documentation about how 
+that function works and what it does.</p>
+<p>
+</p>
+<h2><a name="write_png">write_Png</a></h2>
+<p>$image-&gt;write_Png( $filename )</p>
+<p>
+</p>
+<h2><a name="write_pngex">write_PngEx</a></h2>
+<p>$image-&gt;write_PngEx( $filename, $level )</p>
+<p>
+</p>
+<h2><a name="write_wbmp">write_WBMP</a></h2>
+<p>$image-&gt;write_WBMP( $fg, $filename )</p>
+<p>
+</p>
+<h2><a name="write_jpeg">write_Jpeg</a></h2>
+<p>$image-&gt;write_Jpeg( $filename, $quality )</p>
+<p>
+</p>
+<h2><a name="write_gd">write_Gd</a></h2>
+<p>$image-&gt;write_Gd( $filename )</p>
+<p>
+</p>
+<h2><a name="write_gd2">write_Gd2</a></h2>
+<p>$image-&gt;write_Gd2( $filename, $cs, $fmt )</p>
+<p>
+</p>
+<h2><a name="write_gif">write_Gif</a></h2>
+<p>$image-&gt;write_Gif( $filename )</p>
+<p>
+</p>
+<h2><a name="get_png_data">get_Png_data</a></h2>
+<p>$image-&gt;get_Png_data(  )</p>
+<p>
+</p>
+<h2><a name="get_pngex_data">get_PngEx_data</a></h2>
+<p>$image-&gt;get_PngEx_data( $level )</p>
+<p>
+</p>
+<h2><a name="get_wbmp_data">get_WBMP_data</a></h2>
+<p>$image-&gt;get_WBMP_data( $fg )</p>
+<p>
+</p>
+<h2><a name="get_jpeg_data">get_Jpeg_data</a></h2>
+<p>$image-&gt;get_Jpeg_data( $quality )</p>
+<p>
+</p>
+<h2><a name="get_gd_data">get_Gd_data</a></h2>
+<p>$image-&gt;get_Gd_data(  )</p>
+<p>
+</p>
+<h2><a name="get_gd2_data">get_Gd2_data</a></h2>
+<p>$image-&gt;get_Gd2_data( $cs, $fmt )</p>
+<p>
+</p>
+<h2><a name="setpixel">SetPixel</a></h2>
+<p>$image-&gt;SetPixel( $x, $y, $color )</p>
+<p>Alias for gdImageSetPixel.</p>
+<p>
+</p>
+<h2><a name="gdimagesetpixel">gdImageSetPixel</a></h2>
+<p>$image-&gt;gdImageSetPixel( $x, $y, $color )</p>
+<p>
+</p>
+<h2><a name="getpixel">GetPixel</a></h2>
+<p>$image-&gt;GetPixel( $x, $y )</p>
+<p>Alias for gdImageGetPixel.</p>
+<p>
+</p>
+<h2><a name="gdimagegetpixel">gdImageGetPixel</a></h2>
+<p>$image-&gt;gdImageGetPixel( $x, $y )</p>
+<p>
+</p>
+<h2><a name="aablend">AABlend</a></h2>
+<p>$image-&gt;AABlend(  )</p>
+<p>Alias for gdImageAABlend.</p>
+<p>
+</p>
+<h2><a name="gdimageaablend">gdImageAABlend</a></h2>
+<p>$image-&gt;gdImageAABlend(  )</p>
+<p>
+</p>
+<h2><a name="line">Line</a></h2>
+<p>$image-&gt;Line( $x1, $y1, $x2, $y2, $color )</p>
+<p>Alias for gdImageLine.</p>
+<p>
+</p>
+<h2><a name="gdimageline">gdImageLine</a></h2>
+<p>$image-&gt;gdImageLine( $x1, $y1, $x2, $y2, $color )</p>
+<p>
+</p>
+<h2><a name="dashedline">DashedLine</a></h2>
+<p>$image-&gt;DashedLine( $x1, $y1, $x2, $y2, $color )</p>
+<p>Alias for gdImageDashedLine.</p>
+<p>
+</p>
+<h2><a name="gdimagedashedline">gdImageDashedLine</a></h2>
+<p>$image-&gt;gdImageDashedLine( $x1, $y1, $x2, $y2, $color )</p>
+<p>
+</p>
+<h2><a name="rectangle">Rectangle</a></h2>
+<p>$image-&gt;Rectangle( $x1, $y1, $x2, $y2, $color )</p>
+<p>Alias for gdImageRectangle.</p>
+<p>
+</p>
+<h2><a name="gdimagerectangle">gdImageRectangle</a></h2>
+<p>$image-&gt;gdImageRectangle( $x1, $y1, $x2, $y2, $color )</p>
+<p>
+</p>
+<h2><a name="filledrectangle">FilledRectangle</a></h2>
+<p>$image-&gt;FilledRectangle( $x1, $y1, $x2, $y2, $color )</p>
+<p>Alias for gdImageFilledRectangle.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledrectangle">gdImageFilledRectangle</a></h2>
+<p>$image-&gt;gdImageFilledRectangle( $x1, $y1, $x2, $y2, $color )</p>
+<p>
+</p>
+<h2><a name="setclip">SetClip</a></h2>
+<p>$image-&gt;SetClip( $x1, $y1, $x2, $y2 )</p>
+<p>Alias for gdImageSetClip.</p>
+<p>
+</p>
+<h2><a name="gdimagesetclip">gdImageSetClip</a></h2>
+<p>$image-&gt;gdImageSetClip( $x1, $y1, $x2, $y2 )</p>
+<p>
+</p>
+<h2><a name="getclip">GetClip</a></h2>
+<p>$image-&gt;GetClip( $x1P, $y1P, $x2P, $y2P )</p>
+<p>Alias for gdImageGetClip.</p>
+<p>
+</p>
+<h2><a name="gdimagegetclip">gdImageGetClip</a></h2>
+<p>$image-&gt;gdImageGetClip( $x1P, $y1P, $x2P, $y2P )</p>
+<p>
+</p>
+<h2><a name="boundssafe">BoundsSafe</a></h2>
+<p>$image-&gt;BoundsSafe( $x, $y )</p>
+<p>Alias for gdImageBoundsSafe.</p>
+<p>
+</p>
+<h2><a name="gdimageboundssafe">gdImageBoundsSafe</a></h2>
+<p>$image-&gt;gdImageBoundsSafe( $x, $y )</p>
+<p>
+</p>
+<h2><a name="char">Char</a></h2>
+<p>$image-&gt;Char( $f, $x, $y, $c, $color )</p>
+<p>Alias for gdImageChar.</p>
+<p>
+</p>
+<h2><a name="gdimagechar">gdImageChar</a></h2>
+<p>$image-&gt;gdImageChar( $f, $x, $y, $c, $color )</p>
+<p>
+</p>
+<h2><a name="charup">CharUp</a></h2>
+<p>$image-&gt;CharUp( $f, $x, $y, $c, $color )</p>
+<p>Alias for gdImageCharUp.</p>
+<p>
+</p>
+<h2><a name="gdimagecharup">gdImageCharUp</a></h2>
+<p>$image-&gt;gdImageCharUp( $f, $x, $y, $c, $color )</p>
+<p>
+</p>
+<h2><a name="string">String</a></h2>
+<p>$image-&gt;String( $f, $x, $y, $s, $color )</p>
+<p>Alias for gdImageString.</p>
+<p>
+</p>
+<h2><a name="gdimagestring">gdImageString</a></h2>
+<p>$image-&gt;gdImageString( $f, $x, $y, $s, $color )</p>
+<p>
+</p>
+<h2><a name="stringup">StringUp</a></h2>
+<p>$image-&gt;StringUp( $f, $x, $y, $s, $color )</p>
+<p>Alias for gdImageStringUp.</p>
+<p>
+</p>
+<h2><a name="gdimagestringup">gdImageStringUp</a></h2>
+<p>$image-&gt;gdImageStringUp( $f, $x, $y, $s, $color )</p>
+<p>
+</p>
+<h2><a name="string16">String16</a></h2>
+<p>$image-&gt;String16( $f, $x, $y, $s, $color )</p>
+<p>Alias for gdImageString16.</p>
+<p>
+</p>
+<h2><a name="gdimagestring16">gdImageString16</a></h2>
+<p>$image-&gt;gdImageString16( $f, $x, $y, $s, $color )</p>
+<p>
+</p>
+<h2><a name="stringup16">StringUp16</a></h2>
+<p>$image-&gt;StringUp16( $f, $x, $y, $s, $color )</p>
+<p>Alias for gdImageStringUp16.</p>
+<p>
+</p>
+<h2><a name="gdimagestringup16">gdImageStringUp16</a></h2>
+<p>$image-&gt;gdImageStringUp16( $f, $x, $y, $s, $color )</p>
+<p>
+</p>
+<h2><a name="polygon">Polygon</a></h2>
+<p>$image-&gt;Polygon( $p, $n, $c )</p>
+<p>Alias for gdImagePolygon.</p>
+<p>
+</p>
+<h2><a name="gdimagepolygon">gdImagePolygon</a></h2>
+<p>$image-&gt;gdImagePolygon( $p, $n, $c )</p>
+<p>
+</p>
+<h2><a name="filledpolygon">FilledPolygon</a></h2>
+<p>$image-&gt;FilledPolygon( $p, $n, $c )</p>
+<p>Alias for gdImageFilledPolygon.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledpolygon">gdImageFilledPolygon</a></h2>
+<p>$image-&gt;gdImageFilledPolygon( $p, $n, $c )</p>
+<p>
+</p>
+<h2><a name="colorallocate">ColorAllocate</a></h2>
+<p>$image-&gt;ColorAllocate( $r, $g, $b )</p>
+<p>Alias for gdImageColorAllocate.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorallocate">gdImageColorAllocate</a></h2>
+<p>$image-&gt;gdImageColorAllocate( $r, $g, $b )</p>
+<p>
+</p>
+<h2><a name="colorallocatealpha">ColorAllocateAlpha</a></h2>
+<p>$image-&gt;ColorAllocateAlpha( $r, $g, $b, $a )</p>
+<p>Alias for gdImageColorAllocateAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorallocatealpha">gdImageColorAllocateAlpha</a></h2>
+<p>$image-&gt;gdImageColorAllocateAlpha( $r, $g, $b, $a )</p>
+<p>
+</p>
+<h2><a name="colorclosest">ColorClosest</a></h2>
+<p>$image-&gt;ColorClosest( $r, $g, $b )</p>
+<p>Alias for gdImageColorClosest.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorclosest">gdImageColorClosest</a></h2>
+<p>$image-&gt;gdImageColorClosest( $r, $g, $b )</p>
+<p>
+</p>
+<h2><a name="colorclosestalpha">ColorClosestAlpha</a></h2>
+<p>$image-&gt;ColorClosestAlpha( $r, $g, $b, $a )</p>
+<p>Alias for gdImageColorClosestAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorclosestalpha">gdImageColorClosestAlpha</a></h2>
+<p>$image-&gt;gdImageColorClosestAlpha( $r, $g, $b, $a )</p>
+<p>
+</p>
+<h2><a name="colorclosesthwb">ColorClosestHWB</a></h2>
+<p>$image-&gt;ColorClosestHWB( $r, $g, $b )</p>
+<p>Alias for gdImageColorClosestHWB.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorclosesthwb">gdImageColorClosestHWB</a></h2>
+<p>$image-&gt;gdImageColorClosestHWB( $r, $g, $b )</p>
+<p>
+</p>
+<h2><a name="colorexact">ColorExact</a></h2>
+<p>$image-&gt;ColorExact( $r, $g, $b )</p>
+<p>Alias for gdImageColorExact.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorexact">gdImageColorExact</a></h2>
+<p>$image-&gt;gdImageColorExact( $r, $g, $b )</p>
+<p>
+</p>
+<h2><a name="colorexactalpha">ColorExactAlpha</a></h2>
+<p>$image-&gt;ColorExactAlpha( $r, $g, $b, $a )</p>
+<p>Alias for gdImageColorExactAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorexactalpha">gdImageColorExactAlpha</a></h2>
+<p>$image-&gt;gdImageColorExactAlpha( $r, $g, $b, $a )</p>
+<p>
+</p>
+<h2><a name="colorresolve">ColorResolve</a></h2>
+<p>$image-&gt;ColorResolve( $r, $g, $b )</p>
+<p>Alias for gdImageColorResolve.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorresolve">gdImageColorResolve</a></h2>
+<p>$image-&gt;gdImageColorResolve( $r, $g, $b )</p>
+<p>
+</p>
+<h2><a name="colorresolvealpha">ColorResolveAlpha</a></h2>
+<p>$image-&gt;ColorResolveAlpha( $r, $g, $b, $a )</p>
+<p>Alias for gdImageColorResolveAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorresolvealpha">gdImageColorResolveAlpha</a></h2>
+<p>$image-&gt;gdImageColorResolveAlpha( $r, $g, $b, $a )</p>
+<p>
+</p>
+<h2><a name="colordeallocate">ColorDeallocate</a></h2>
+<p>$image-&gt;ColorDeallocate( $color )</p>
+<p>Alias for gdImageColorDeallocate.</p>
+<p>
+</p>
+<h2><a name="gdimagecolordeallocate">gdImageColorDeallocate</a></h2>
+<p>$image-&gt;gdImageColorDeallocate( $color )</p>
+<p>
+</p>
+<h2><a name="truecolortopalette">TrueColorToPalette</a></h2>
+<p>$image-&gt;TrueColorToPalette( $ditherFlag, $colorsWanted )</p>
+<p>Alias for gdImageTrueColorToPalette.</p>
+<p>
+</p>
+<h2><a name="gdimagetruecolortopalette">gdImageTrueColorToPalette</a></h2>
+<p>$image-&gt;gdImageTrueColorToPalette( $ditherFlag, $colorsWanted )</p>
+<p>
+</p>
+<h2><a name="colortransparent">ColorTransparent</a></h2>
+<p>$image-&gt;ColorTransparent( $color )</p>
+<p>Alias for gdImageColorTransparent.</p>
+<p>
+</p>
+<h2><a name="gdimagecolortransparent">gdImageColorTransparent</a></h2>
+<p>$image-&gt;gdImageColorTransparent( $color )</p>
+<p>
+</p>
+<h2><a name="filledarc">FilledArc</a></h2>
+<p>$image-&gt;FilledArc( $cx, $cy, $w, $h, $s, $e, $color, $style )</p>
+<p>Alias for gdImageFilledArc.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledarc">gdImageFilledArc</a></h2>
+<p>$image-&gt;gdImageFilledArc( $cx, $cy, $w, $h, $s, $e, $color, $style )</p>
+<p>
+</p>
+<h2><a name="arc">Arc</a></h2>
+<p>$image-&gt;Arc( $cx, $cy, $w, $h, $s, $e, $color )</p>
+<p>Alias for gdImageArc.</p>
+<p>
+</p>
+<h2><a name="gdimagearc">gdImageArc</a></h2>
+<p>$image-&gt;gdImageArc( $cx, $cy, $w, $h, $s, $e, $color )</p>
+<p>
+</p>
+<h2><a name="filledellipse">FilledEllipse</a></h2>
+<p>$image-&gt;FilledEllipse( $cx, $cy, $w, $h, $color )</p>
+<p>Alias for gdImageFilledEllipse.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledellipse">gdImageFilledEllipse</a></h2>
+<p>$image-&gt;gdImageFilledEllipse( $cx, $cy, $w, $h, $color )</p>
+<p>
+</p>
+<h2><a name="filltoborder">FillToBorder</a></h2>
+<p>$image-&gt;FillToBorder( $x, $y, $border, $color )</p>
+<p>Alias for gdImageFillToBorder.</p>
+<p>
+</p>
+<h2><a name="gdimagefilltoborder">gdImageFillToBorder</a></h2>
+<p>$image-&gt;gdImageFillToBorder( $x, $y, $border, $color )</p>
+<p>
+</p>
+<h2><a name="fill">Fill</a></h2>
+<p>$image-&gt;Fill( $x, $y, $color )</p>
+<p>Alias for gdImageFill.</p>
+<p>
+</p>
+<h2><a name="gdimagefill">gdImageFill</a></h2>
+<p>$image-&gt;gdImageFill( $x, $y, $color )</p>
+<p>
+</p>
+<h2><a name="copyrotated">CopyRotated</a></h2>
+<p>$image-&gt;CopyRotated( $dstX, $dstY, $srcX, $srcY, $srcWidth, $srcHeight, $angle )</p>
+<p>Alias for gdImageCopyRotated.</p>
+<p>
+</p>
+<h2><a name="gdimagecopyrotated">gdImageCopyRotated</a></h2>
+<p>$image-&gt;gdImageCopyRotated( $dstX, $dstY, $srcX, $srcY, $srcWidth, $srcHeight, $angle )</p>
+<p>
+</p>
+<h2><a name="setbrush">SetBrush</a></h2>
+<p>$image-&gt;SetBrush(  )</p>
+<p>Alias for gdImageSetBrush.</p>
+<p>
+</p>
+<h2><a name="gdimagesetbrush">gdImageSetBrush</a></h2>
+<p>$image-&gt;gdImageSetBrush(  )</p>
+<p>
+</p>
+<h2><a name="settile">SetTile</a></h2>
+<p>$image-&gt;SetTile(  )</p>
+<p>Alias for gdImageSetTile.</p>
+<p>
+</p>
+<h2><a name="gdimagesettile">gdImageSetTile</a></h2>
+<p>$image-&gt;gdImageSetTile(  )</p>
+<p>
+</p>
+<h2><a name="setantialiased">SetAntiAliased</a></h2>
+<p>$image-&gt;SetAntiAliased( $c )</p>
+<p>Alias for gdImageSetAntiAliased.</p>
+<p>
+</p>
+<h2><a name="gdimagesetantialiased">gdImageSetAntiAliased</a></h2>
+<p>$image-&gt;gdImageSetAntiAliased( $c )</p>
+<p>
+</p>
+<h2><a name="setantialiaseddontblend">SetAntiAliasedDontBlend</a></h2>
+<p>$image-&gt;SetAntiAliasedDontBlend( $c, $dont_blend )</p>
+<p>Alias for gdImageSetAntiAliasedDontBlend.</p>
+<p>
+</p>
+<h2><a name="gdimagesetantialiaseddontblend">gdImageSetAntiAliasedDontBlend</a></h2>
+<p>$image-&gt;gdImageSetAntiAliasedDontBlend( $c, $dont_blend )</p>
+<p>
+</p>
+<h2><a name="setstyle">SetStyle</a></h2>
+<p>$image-&gt;SetStyle( $style, $noOfPixels )</p>
+<p>Alias for gdImageSetStyle.</p>
+<p>
+</p>
+<h2><a name="gdimagesetstyle">gdImageSetStyle</a></h2>
+<p>$image-&gt;gdImageSetStyle( $style, $noOfPixels )</p>
+<p>
+</p>
+<h2><a name="setthickness">SetThickness</a></h2>
+<p>$image-&gt;SetThickness( $thickness )</p>
+<p>Alias for gdImageSetThickness.</p>
+<p>
+</p>
+<h2><a name="gdimagesetthickness">gdImageSetThickness</a></h2>
+<p>$image-&gt;gdImageSetThickness( $thickness )</p>
+<p>
+</p>
+<h2><a name="interlace">Interlace</a></h2>
+<p>$image-&gt;Interlace( $interlaceArg )</p>
+<p>Alias for gdImageInterlace.</p>
+<p>
+</p>
+<h2><a name="gdimageinterlace">gdImageInterlace</a></h2>
+<p>$image-&gt;gdImageInterlace( $interlaceArg )</p>
+<p>
+</p>
+<h2><a name="alphablending">AlphaBlending</a></h2>
+<p>$image-&gt;AlphaBlending( $alphaBlendingArg )</p>
+<p>Alias for gdImageAlphaBlending.</p>
+<p>
+</p>
+<h2><a name="gdimagealphablending">gdImageAlphaBlending</a></h2>
+<p>$image-&gt;gdImageAlphaBlending( $alphaBlendingArg )</p>
+<p>
+</p>
+<h2><a name="savealpha">SaveAlpha</a></h2>
+<p>$image-&gt;SaveAlpha( $saveAlphaArg )</p>
+<p>Alias for gdImageSaveAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagesavealpha">gdImageSaveAlpha</a></h2>
+<p>$image-&gt;gdImageSaveAlpha( $saveAlphaArg )</p>
+<p>
+</p>
+<h2><a name="truecolor">TrueColor</a></h2>
+<p>$image-&gt;TrueColor(  )</p>
+<p>Alias for gdImageTrueColor.</p>
+<p>
+</p>
+<h2><a name="gdimagetruecolor">gdImageTrueColor</a></h2>
+<p>$image-&gt;gdImageTrueColor(  )</p>
+<p>
+</p>
+<h2><a name="colorstotal">ColorsTotal</a></h2>
+<p>$image-&gt;ColorsTotal(  )</p>
+<p>Alias for gdImageColorsTotal.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorstotal">gdImageColorsTotal</a></h2>
+<p>$image-&gt;gdImageColorsTotal(  )</p>
+<p>
+</p>
+<h2><a name="red">Red</a></h2>
+<p>$image-&gt;Red( $c )</p>
+<p>Alias for gdImageRed.</p>
+<p>
+</p>
+<h2><a name="gdimagered">gdImageRed</a></h2>
+<p>$image-&gt;gdImageRed( $c )</p>
+<p>
+</p>
+<h2><a name="green">Green</a></h2>
+<p>$image-&gt;Green( $c )</p>
+<p>Alias for gdImageGreen.</p>
+<p>
+</p>
+<h2><a name="gdimagegreen">gdImageGreen</a></h2>
+<p>$image-&gt;gdImageGreen( $c )</p>
+<p>
+</p>
+<h2><a name="blue">Blue</a></h2>
+<p>$image-&gt;Blue( $c )</p>
+<p>Alias for gdImageBlue.</p>
+<p>
+</p>
+<h2><a name="gdimageblue">gdImageBlue</a></h2>
+<p>$image-&gt;gdImageBlue( $c )</p>
+<p>
+</p>
+<h2><a name="alpha">Alpha</a></h2>
+<p>$image-&gt;Alpha( $c )</p>
+<p>Alias for gdImageAlpha.</p>
+<p>
+</p>
+<h2><a name="gdimagealpha">gdImageAlpha</a></h2>
+<p>$image-&gt;gdImageAlpha( $c )</p>
+<p>
+</p>
+<h2><a name="gettransparent">GetTransparent</a></h2>
+<p>$image-&gt;GetTransparent(  )</p>
+<p>Alias for gdImageGetTransparent.</p>
+<p>
+</p>
+<h2><a name="gdimagegettransparent">gdImageGetTransparent</a></h2>
+<p>$image-&gt;gdImageGetTransparent(  )</p>
+<p>
+</p>
+<h2><a name="getinterlaced">GetInterlaced</a></h2>
+<p>$image-&gt;GetInterlaced(  )</p>
+<p>Alias for gdImageGetInterlaced.</p>
+<p>
+</p>
+<h2><a name="gdimagegetinterlaced">gdImageGetInterlaced</a></h2>
+<p>$image-&gt;gdImageGetInterlaced(  )</p>
+<p>
+</p>
+<h2><a name="sx">SX</a></h2>
+<p>$image-&gt;SX(  )</p>
+<p>Alias for gdImageSX.</p>
+<p>
+</p>
+<h2><a name="gdimagesx">gdImageSX</a></h2>
+<p>$image-&gt;gdImageSX(  )</p>
+<p>
+</p>
+<h2><a name="sy">SY</a></h2>
+<p>$image-&gt;SY(  )</p>
+<p>Alias for gdImageSY.</p>
+<p>
+</p>
+<h2><a name="gdimagesy">gdImageSY</a></h2>
+<p>$image-&gt;gdImageSY(  )</p>
+<p>
+</p>
+<h2><a name="colorallocates">ColorAllocates</a></h2>
+<p>$image-&gt;ColorAllocates( $r(pdl), $g(pdl), $b(pdl) )</p>
+<p>Alias for gdImageColorAllocates.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorallocates">gdImageColorAllocates</a></h2>
+<p>$image-&gt;gdImageColorAllocates( $r(pdl), $g(pdl), $b(pdl) )</p>
+<p>
+</p>
+<h2><a name="colorallocatealphas">ColorAllocateAlphas</a></h2>
+<p>$image-&gt;ColorAllocateAlphas( $r(pdl), $g(pdl), $b(pdl), $a(pdl) )</p>
+<p>Alias for gdImageColorAllocateAlphas.</p>
+<p>
+</p>
+<h2><a name="gdimagecolorallocatealphas">gdImageColorAllocateAlphas</a></h2>
+<p>$image-&gt;gdImageColorAllocateAlphas( $r(pdl), $g(pdl), $b(pdl), $a(pdl) )</p>
+<p>
+</p>
+<h2><a name="setpixels">SetPixels</a></h2>
+<p>$image-&gt;SetPixels( $x(pdl), $y(pdl), $color(pdl) )</p>
+<p>Alias for gdImageSetPixels.</p>
+<p>
+</p>
+<h2><a name="gdimagesetpixels">gdImageSetPixels</a></h2>
+<p>$image-&gt;gdImageSetPixels( $x(pdl), $y(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="lines">Lines</a></h2>
+<p>$image-&gt;Lines( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>Alias for gdImageLines.</p>
+<p>
+</p>
+<h2><a name="gdimagelines">gdImageLines</a></h2>
+<p>$image-&gt;gdImageLines( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="dashedlines">DashedLines</a></h2>
+<p>$image-&gt;DashedLines( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>Alias for gdImageDashedLines.</p>
+<p>
+</p>
+<h2><a name="gdimagedashedlines">gdImageDashedLines</a></h2>
+<p>$image-&gt;gdImageDashedLines( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="rectangles">Rectangles</a></h2>
+<p>$image-&gt;Rectangles( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>Alias for gdImageRectangles.</p>
+<p>
+</p>
+<h2><a name="gdimagerectangles">gdImageRectangles</a></h2>
+<p>$image-&gt;gdImageRectangles( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="filledrectangles">FilledRectangles</a></h2>
+<p>$image-&gt;FilledRectangles( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>Alias for gdImageFilledRectangles.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledrectangles">gdImageFilledRectangles</a></h2>
+<p>$image-&gt;gdImageFilledRectangles( $x1(pdl), $y1(pdl), $x2(pdl), $y2(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="filledarcs">FilledArcs</a></h2>
+<p>$image-&gt;FilledArcs( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $s(pdl), $e(pdl), $color(pdl), $style(pdl) )</p>
+<p>Alias for gdImageFilledArcs.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledarcs">gdImageFilledArcs</a></h2>
+<p>$image-&gt;gdImageFilledArcs( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $s(pdl), $e(pdl), $color(pdl), $style(pdl) )</p>
+<p>
+</p>
+<h2><a name="arcs">Arcs</a></h2>
+<p>$image-&gt;Arcs( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $s(pdl), $e(pdl), $color(pdl) )</p>
+<p>Alias for gdImageArcs.</p>
+<p>
+</p>
+<h2><a name="gdimagearcs">gdImageArcs</a></h2>
+<p>$image-&gt;gdImageArcs( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $s(pdl), $e(pdl), $color(pdl) )</p>
+<p>
+</p>
+<h2><a name="filledellipses">FilledEllipses</a></h2>
+<p>$image-&gt;FilledEllipses( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $color(pdl) )</p>
+<p>Alias for gdImageFilledEllipses.</p>
+<p>
+</p>
+<h2><a name="gdimagefilledellipses">gdImageFilledEllipses</a></h2>
+<p>$image-&gt;gdImageFilledEllipses( $cx(pdl), $cy(pdl), $w(pdl), $h(pdl), $color(pdl) )</p>
+<p>
+</p>
+<hr />
+<h1><a name="class_functions">CLASS FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gdimagecopy">gdImageCopy</a></h2>
+<p>gdImageCopy ( $dst(PDL::IO::GD), $src(PDL::IO::GD), $dstX, $dstY, $srcX, $srcY, $w, $h )</p>
+<p>
+</p>
+<h2><a name="gdimagecopymerge">gdImageCopyMerge</a></h2>
+<p>gdImageCopyMerge ( $dst(PDL::IO::GD), $src(PDL::IO::GD), $dstX, $dstY, $srcX, $srcY, $w, $h, $pct )</p>
+<p>
+</p>
+<h2><a name="gdimagecopymergegray">gdImageCopyMergeGray</a></h2>
+<p>gdImageCopyMergeGray ( $dst(PDL::IO::GD), $src(PDL::IO::GD), $dstX, $dstY, $srcX, $srcY, $w, $h, $pct )</p>
+<p>
+</p>
+<h2><a name="gdimagecopyresized">gdImageCopyResized</a></h2>
+<p>gdImageCopyResized ( $dst(PDL::IO::GD), $src(PDL::IO::GD), $dstX, $dstY, $srcX, $srcY, $dstW, $dstH, $srcW, $srcH )</p>
+<p>
+</p>
+<h2><a name="gdimagecopyresampled">gdImageCopyResampled</a></h2>
+<p>gdImageCopyResampled ( $dst(PDL::IO::GD), $src(PDL::IO::GD), $dstX, $dstY, $srcX, $srcY, $dstW, $dstH, $srcW, $srcH )</p>
+<p>
+</p>
+<h2><a name="gdimagecompare">gdImageCompare</a></h2>
+<p>gdImageCompare ( $im1(PDL::IO::GD), $im2(PDL::IO::GD) )</p>
+<p>
+</p>
+<h2><a name="gdimagepalettecopy">gdImagePaletteCopy</a></h2>
+<p>gdImagePaletteCopy ( $dst(PDL::IO::GD), $src(PDL::IO::GD) )</p>
+<p>
+</p>
+<h2><a name="stringttf">StringTTF</a></h2>
+<p>$image-&gt;StringTTF( $brect, $fg, $fontlist, $ptsize, $angle, $x, $y, $string )</p>
+<p>Alias for gdImageStringTTF.</p>
+<p>
+</p>
+<h2><a name="gdimagestringttf">gdImageStringTTF</a></h2>
+<p>$image-&gt;gdImageStringTTF( $brect, $fg, $fontlist, $ptsize, $angle, $x, $y, $string )</p>
+<p>
+</p>
+<h2><a name="stringft">StringFT</a></h2>
+<p>$image-&gt;StringFT( $brect, $fg, $fontlist, $ptsize, $angle, $x, $y, $string )</p>
+<p>Alias for gdImageStringFT.</p>
+<p>
+</p>
+<h2><a name="gdimagestringft">gdImageStringFT</a></h2>
+<p>$image-&gt;gdImageStringFT( $brect, $fg, $fontlist, $ptsize, $angle, $x, $y, $string )</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Judd Taylor, Orbital Systems, Ltd.
+judd dot t at orbitalsystems dot com</p>
+
+</body>
+
+</html>

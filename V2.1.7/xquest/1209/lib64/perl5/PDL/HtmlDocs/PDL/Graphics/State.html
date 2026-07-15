@@ -1,0 +1,86 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>State - A package to keep track of plotting commands</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#usage">USAGE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>State - A package to keep track of plotting commands</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use PDL::Graphics::State;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is a very simple, at present almost trivial, package to keep track
+of the current set of plotting commands.</p>
+<p>
+</p>
+<hr />
+<h1><a name="usage">USAGE</a></h1>
+<p>You create a new object by calling the <code>new</code> operator</p>
+<pre>
+  $state = PDL::Graphics::State-&gt;new();</pre>
+<p>Then for each new command you call <code>add</code> on this object so that for a
+call to <code>line</code> of the form</p>
+<pre>
+  line $x, $y, $opt;</pre>
+<p>the call to <code>add</code> would be like</p>
+<pre>
+  $state-&gt;add(\&amp;line, 'line', [$x, $y], $opt);</pre>
+<p>which is stored internally as:</p>
+<pre>
+  [\&amp;line, 'line', [$x, $y], $opt]</pre>
+<p>The state can later be extracted using <code>get</code> which returns the state
+object which is an array of anonymous arrays like the one above where
+the first object is a reference to the function, the second an anomymous
+array of arguments to the function and finally an anonymous hash with
+options to the command.</p>
+<p>If you know the order in which you inserted commands they can be removed
+by calling <code>remove</code> with the number in the stack. No further interaction
+is implmented except <code>clear</code> which clears the stack and <code>copy</code> which
+returns a &quot;deep&quot; copy of the state.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Jarle Brinchmann (<a href="mailto:jarle@astro.ox.ac.uk">jarle@astro.ox.ac.uk</a>) after some prodding by
+Karl Glazebrook.</p>
+<p>All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

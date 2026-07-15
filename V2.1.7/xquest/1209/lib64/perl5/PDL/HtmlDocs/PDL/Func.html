@@ -1,0 +1,374 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Func - useful functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#interpolation_and_more">INTERPOLATION AND MORE</a></li>
+	<ul>
+
+		<li><a href="#boundary_conditions_for_the_hermite_routines">Boundary conditions for the Hermite routines</a></li>
+		<li><a href="#errors">Errors</a></li>
+	</ul>
+
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#pdl__func__init">PDL::Func::init</a></li>
+		<li><a href="#pdl__func__set">PDL::Func::set</a></li>
+		<li><a href="#pdl__func__get">PDL::Func::get</a></li>
+		<li><a href="#pdl__func__scheme">PDL::Func::scheme</a></li>
+		<li><a href="#pdl__func__status">PDL::Func::status</a></li>
+		<li><a href="#pdl__func__routine">PDL::Func::routine</a></li>
+		<li><a href="#pdl__func__attributes">PDL::Func::attributes</a></li>
+		<li><a href="#pdl__func__interpolate">PDL::Func::interpolate</a></li>
+		<li><a href="#pdl__func__gradient">PDL::Func::gradient</a></li>
+		<li><a href="#pdl__func__integrate">PDL::Func::integrate</a></li>
+	</ul>
+
+	<li><a href="#todo">TODO</a></li>
+	<li><a href="#history">HISTORY</a></li>
+	<li><a href="#the_future">THE FUTURE</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Func - useful functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Func;
+ use PDL::Math;</pre>
+<pre>
+ # somewhat pointless way to estimate cos and sin,
+ # but is shows that you can thread if you want to
+ # (and the library lets you)
+ #
+ my $obj = PDL::Func-&gt;init( Interpolate =&gt; &quot;Hermite&quot; );
+ # 
+ my $x = pdl( 0 .. 45 ) * 4 * 3.14159 / 180;
+ my $y = cat( sin($x), cos($x) );
+ $obj-&gt;set( x =&gt; $x, y =&gt; $y, bc =&gt; &quot;simple&quot; );
+ #
+ my $xi = pdl( 0.5, 1.5, 2.5 );
+ my $yi = $obj-&gt;interpolate( $xi );
+ #
+ print &quot;sin( $xi ) equals &quot;, $yi-&gt;slice(':,(0)'), &quot;\n&quot;;
+ sin( [0.5 1.5 2.5] ) equals  [0.87759844 0.070737667 -0.80115622]
+ #
+ print &quot;cos( $xi ) equals &quot;, $yi-&gt;slice(':,(1)'), &quot;\n&quot;;
+ cos( [0.5 1.5 2.5] ) equals  [ 0.4794191 0.99768655 0.59846449]
+ #
+ print sin($xi), &quot;\n&quot;, cos($xi), &quot;\n&quot;;
+ [0.47942554 0.99749499 0.59847214]
+ [0.87758256 0.070737202 -0.80114362]</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module aims to contain useful functions. Honest.</p>
+<p>
+</p>
+<hr />
+<h1><a name="interpolation_and_more">INTERPOLATION AND MORE</a></h1>
+<p>This module aims to provide a relatively-uniform interface
+to the various interpolation methods available to PDL.
+The idea is that a different interpolation scheme
+can be used just by changing an attribute of a <code>PDL::Func</code>
+object.
+Some interpolation schemes (as exemplified by the SLATEC
+library) also provide additional functionality, such as 
+integration and gradient estimation.</p>
+<p>Throughout this documentation, <code>$x</code> and <code>$y</code> refer to the function
+to be interpolated whilst <code>$xi</code> and <code>$yi</code> are the interpolated values.</p>
+<p>The avaliable types, or <em>schemes</em>, of interpolation are listed below.
+Also given are the valid attributes for each scheme: the flag value
+indicates whether it can be set (s), got (g), and if it is
+required (r) for the method to work.</p>
+<dl>
+<dt><strong><a name="interpolate_linear" class="item">Interpolate =&gt; Linear</a></strong></dt>
+
+<dd>
+<p>An extravagent way of calling the linear interpolation routine
+<a href="./Primitive.html#interpolate">PDL::Primitive::interpolate</a>.</p>
+<p>The valid attributes are:</p>
+<pre>
+ Attribute    Flag  Description
+ x            sgr   x positions of data
+ y            sgr   function values at x positions
+ err          g     error flag</pre>
+</dd>
+<dt><strong><a name="interpolate_hermite" class="item">Interpolate =&gt; Hermite</a></strong></dt>
+
+<dd>
+<p>Use the piecewice cubic Hermite interpolation routines
+from the SLATEC library.
+Only available if <a href="./Slatec.html">PDL::Slatec</a> is installed.</p>
+<p>The valid attributes are:</p>
+<pre>
+ Attribute    Flag  Description
+ x            sgr   x positions of data
+ y            sgr   function values at x positions
+ bc           sgr   boundary conditions
+ g            g     estimated gradient at x positions
+ err          g     error flag</pre>
+<p>Given the initial set of points <code>(x,y)</code>, an estimate of the
+gradient is made at these points, using the given boundary 
+conditions. The gradients are stored in the <code>g</code> attribute,
+accessible via:</p>
+<pre>
+ $gradient = $obj-&gt;get( 'g' );</pre>
+<p>However, as this gradient is only calculated 'at the last moment',
+<code>g</code> will only contain data <em>after</em> one of 
+<code>interpolate</code>, <code>gradient</code>, or <code>integrate</code> is used.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="boundary_conditions_for_the_hermite_routines">Boundary conditions for the Hermite routines</a></h2>
+<p>If your data is monotonic, and you are not too bothered about
+edge effects, then the default value of <code>bc</code> of <code>simple</code> is for you.
+Otherwise, take a look at the description of
+<a href="./Slatec.html#chic">PDL::Slatec::chic</a> and use a hash reference
+for the <code>bc</code> attribute, with the following keys:</p>
+<dl>
+<dt><strong><a name="monotonic" class="item">monotonic</a></strong></dt>
+
+<dd>
+<p>0 if the interpolant is to be monotonic in each interval (so
+the gradient will be 0 at each switch point), 
+otherwise the gradient is calculated using a 3-point difference
+formula at switch points. 
+If &gt; 0 then the interpolant is forced to lie close to the 
+data, if &lt; 0 no such control is imposed.
+Default = <strong>0</strong>.</p>
+</dd>
+<dt><strong><a name="start" class="item">start</a></strong></dt>
+
+<dd>
+<p>A perl list of one or two elements. The first element defines how the
+boundary condition for the start of the array is to be calculated;
+it has a range of <code>-5 .. 5</code>, as given for the <code>ic</code> parameter
+of <a href="./Slatec.html#chic">chic</a>. 
+The second element, only used if options 2, 1, -1, or 2
+are chosen, contains the value of the <code>vc</code> parameter.
+Default = <strong>[ 0 ]</strong>.</p>
+</dd>
+<dt><strong><a name="end" class="item">end</a></strong></dt>
+
+<dd>
+<p>As for <a href="#start"><code>start</code></a>, but for the end of the data.</p>
+</dd>
+</dl>
+<p>An example would be</p>
+<pre>
+ $obj-&gt;set( bc =&gt; { start =&gt; [ 1, 0 ], end =&gt; [ 1, -1 ] } )</pre>
+<p>which sets the first derivative at the first point to 0, 
+and at the last point to -1.</p>
+<p>
+</p>
+<h2><a name="errors">Errors</a></h2>
+<p>The <code>status</code> method provides a simple mechanism to check if
+the previous method was successful. 
+If the function returns an error flag, then it is stored
+in the <code>err</code> attribute.
+To find out which routine was used, use the
+<code>routine</code> method.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="pdl__func__init">PDL::Func::init</a></h2>
+<pre>
+ $obj = PDL::Func-&gt;init( Interpolate =&gt; &quot;Hermite&quot;, x =&gt; $x, y =&gt; $y );
+ $obj = PDL::Func-&gt;init( { x =&gt; $x, y =&gt; $y } );</pre>
+<p>Create a PDL::Func object, which can interpolate, and possibly
+integrate and calculate gradients of a dataset.</p>
+<p>If not specified, the value of Interpolate is taken to be 
+<code>Linear</code>, which means the interpolation is performed by
+<a href="./Primitive.html#interpolate">PDL::Primitive::interpolate</a>.
+A value of <code>Hermite</code> uses piecewise cubic Hermite functions,
+which also allows the integral and gradient of the data
+to be estimated.</p>
+<p>Options can either be provided directly to the method, as in the
+first example, or within a hash reference, as shown in the second
+example.</p>
+<p>
+</p>
+<h2><a name="pdl__func__set">PDL::Func::set</a></h2>
+<pre>
+ my $nset = $obj-&gt;set( x =&gt; $newx, $y =&gt; $newy );
+ my $nset = $obj-&gt;set( { x =&gt; $newx, $y =&gt; $newy } );</pre>
+<p>Set attributes for a PDL::Func object.</p>
+<p>The return value gives the number of the supplied attributes
+which were actually set.</p>
+<p>
+</p>
+<h2><a name="pdl__func__get">PDL::Func::get</a></h2>
+<pre>
+ my $x         = $obj-&gt;get( x );
+ my ( $x, $y ) = $obj-&gt;get( qw( x y ) );</pre>
+<p>Get attributes from a PDL::Func object.</p>
+<p>Given a list of attribute names, return a list of
+their values; in scalar mode return a scalar value.
+If the supplied list contains an unknown attribute,
+<code>get</code> returns a value of <code>undef</code> for that
+attribute.</p>
+<p>
+</p>
+<h2><a name="pdl__func__scheme">PDL::Func::scheme</a></h2>
+<pre>
+ my $scheme = $obj-&gt;scheme;</pre>
+<p>Return the type of interpolation of a PDL::Func object.</p>
+<p>Returns either <code>Linear</code> or <code>Hermite</code>.</p>
+<p>
+</p>
+<h2><a name="pdl__func__status">PDL::Func::status</a></h2>
+<pre>
+ my $status = $obj-&gt;status;</pre>
+<p>Returns the status of a PDL::Func object.</p>
+<p>This method provides a high-level indication of 
+the success of the last method called
+(except for <code>get</code> which is ignored).
+Returns <strong>1</strong> if everything is okay, <strong>0</strong> if 
+there has been a serious error,
+and <strong>-1</strong> if there
+was a problem which was not serious.
+In the latter case, <code>$obj-&gt;get(&quot;err&quot;)</code> may
+provide more information, depending on the
+particular scheme in use.</p>
+<p>
+</p>
+<h2><a name="pdl__func__routine">PDL::Func::routine</a></h2>
+<pre>
+ my $name = $obj-&gt;routine;</pre>
+<p>Returns the name of the last routine called by a PDL::Func object.</p>
+<p>This is mainly useful for decoding the value stored in the
+<code>err</code> attribute.</p>
+<p>
+</p>
+<h2><a name="pdl__func__attributes">PDL::Func::attributes</a></h2>
+<pre>
+ $obj-&gt;attributes;
+ PDL::Func-&gt;attributes;</pre>
+<p>Print out the flags for the attributes of a PDL::Func object.</p>
+<p>Useful in case the documentation is just too opaque!</p>
+<pre>
+ PDL::Func-&gt;attributes;
+ Flags  Attribute
+  SGR    x
+  SGR    y
+  G      err</pre>
+<p>
+</p>
+<h2><a name="pdl__func__interpolate">PDL::Func::interpolate</a></h2>
+<pre>
+ my $yi = $obj-&gt;interpolate( $xi );</pre>
+<p>Returns the interpolated function at a given set of points
+(PDL::Func).</p>
+<p>A status value of -1, as returned by the <code>status</code> method, 
+means that some of the <code>$xi</code> points lay outside the 
+range of the data. The values for these points
+were calculated by extrapolation (the details depend on the
+scheme being used).</p>
+<p>
+</p>
+<h2><a name="pdl__func__gradient">PDL::Func::gradient</a></h2>
+<pre>
+ my $gi          = $obj-&gt;gradient( $xi );
+ my ( $yi, $gi ) = $obj-&gt;gradient( $xi );</pre>
+<p>Returns the derivative and, optionally,
+the interpolated function for the <code>Hermite</code>
+scheme (PDL::Func).</p>
+<p>
+</p>
+<h2><a name="pdl__func__integrate">PDL::Func::integrate</a></h2>
+<pre>
+ my $ans = $obj-&gt;integrate( index =&gt; pdl( 2, 5 ) );
+ my $ans = $obj-&gt;integrate( x =&gt; pdl( 2.3, 4.5 ) );</pre>
+<p>Integrate the function stored in the PDL::Func
+object, if the scheme is <code>Hermite</code>.</p>
+<p>The integration can either be between points of
+the original <a href="#x"><code>x</code></a> array (<a href="#index"><code>index</code></a>), or arbitrary x values
+(<a href="#x"><code>x</code></a>). For both cases, a two element piddle
+should be given,
+to specify the start and end points of the integration.</p>
+<dl>
+<dt><strong><a name="index" class="item">index</a></strong></dt>
+
+<dd>
+<p>The values given refer to the indices of the points
+in the <a href="#x"><code>x</code></a> array.</p>
+</dd>
+<dt><strong><a name="x" class="item">x</a></strong></dt>
+
+<dd>
+<p>The array contains the actual values to integrate between.</p>
+</dd>
+</dl>
+<p>If the <code>status</code> method returns a value of -1, then
+one or both of the integration limits did not
+lie inside the <a href="#x"><code>x</code></a> array. <em>Caveat emptor</em> with the
+result in such a case.</p>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<p>It should be relatively easy to provide an interface to other
+interpolation routines, such as those provided by the
+Gnu Scientific Library (GSL), or the B-spline routines
+in the SLATEC library.</p>
+<p>In the documentation, the methods are preceeded by <code>PDL::Func::</code>
+to avoid clashes with functions such as <code>set</code> when using
+the <code>help</code> or <code>apropos</code> commands within <em>perldl</em> or <em>pdl2</em>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="history">HISTORY</a></h1>
+<p>Amalgamated <code>PDL::Interpolate</code> and <code>PDL::Interpolate::Slatec</code>
+to form <code>PDL::Func</code>. Comments greatly appreciated on the
+current implementation, as it is not too sensible.</p>
+<p>Thanks to Robin Williams, Halldór Olafsson, and Vince McIntyre.</p>
+<p>
+</p>
+<hr />
+<h1><a name="the_future">THE FUTURE</a></h1>
+<p>Robin is working on a new version, that improves on the current version
+a lot. No time scale though!</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) 2000,2001 Doug Burke (<a href="mailto:dburke@cfa.harvard.edu">dburke@cfa.harvard.edu</a>)
+All rights reserved. There is no warranty. 
+You are allowed to redistribute this software / documentation as 
+described in the file COPYING in the PDL distribution.</p>
+
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::GEGENBAUER - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_gegenpoly_n">gsl_sf_gegenpoly_n</a></li>
+		<li><a href="#gsl_sf_gegenpoly_array">gsl_sf_gegenpoly_array</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::GEGENBAUER - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_gegenpoly_n">gsl_sf_gegenpoly_n</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n; double lambda)</pre>
+<p>Evaluate Gegenbauer polynomials.</p>
+<p>gsl_sf_gegenpoly_n does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_gegenpoly_array">gsl_sf_gegenpoly_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num; double lambda)</pre>
+<p>Calculate array of Gegenbauer polynomials from 0 to n-1.</p>
+<p>gsl_sf_gegenpoly_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

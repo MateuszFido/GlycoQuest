@@ -1,0 +1,547 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Image2D - Miscellaneous 2D image processing functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#conv2d">conv2d</a></li>
+		<li><a href="#med2d">med2d</a></li>
+		<li><a href="#med2df">med2df</a></li>
+		<li><a href="#box2d">box2d</a></li>
+		<li><a href="#patch2d">patch2d</a></li>
+		<li><a href="#patchbad2d">patchbad2d</a></li>
+		<li><a href="#max2d_ind">max2d_ind</a></li>
+		<li><a href="#centroid2d">centroid2d</a></li>
+		<li><a href="#cc8compt">cc8compt</a></li>
+		<li><a href="#cc4compt">cc4compt</a></li>
+		<li><a href="#ccncompt">ccNcompt</a></li>
+		<li><a href="#pnpoly">pnpoly</a></li>
+		<li><a href="#polyfill">polyfill</a></li>
+		<li><a href="#polyfillv">polyfillv</a></li>
+		<li><a href="#rot2d">rot2d</a></li>
+		<li><a href="#bilin2d">bilin2d</a></li>
+		<li><a href="#rescale2d">rescale2d</a></li>
+		<li><a href="#fitwarp2d">fitwarp2d</a></li>
+		<li><a href="#applywarp2d">applywarp2d</a></li>
+		<li><a href="#warp2d">warp2d</a></li>
+		<li><a href="#warp2d_kernel">warp2d_kernel</a></li>
+	</ul>
+
+	<li><a href="#authors">AUTHORS</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Image2D - Miscellaneous 2D image processing functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Miscellaneous 2D image processing functions - for want
+of anywhere else to put them.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Image2D;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="conv2d">conv2d</a></h2>
+<pre>
+  Signature: (a(m,n); kern(p,q); [o]b(m,n); int opt)</pre>
+<p>2D convolution of an array with a kernel (smoothing)</p>
+<p>For large kernels, using a FFT routine,
+such as <a href="./FFT.html#fftconvolve__">fftconvolve()</a> in <code>PDL::FFT</code>,
+will be quicker.</p>
+<pre>
+ $new = conv2d $old, $kernel, {OPTIONS}</pre>
+<pre>
+ $smoothed = conv2d $image, ones(3,3), {Boundary =&gt; Reflect}</pre>
+<pre>
+ Boundary - controls what values are assumed for the image when kernel
+            crosses its edge:
+            =&gt; Default  - periodic boundary conditions 
+                          (i.e. wrap around axis)
+            =&gt; Reflect  - reflect at boundary
+            =&gt; Truncate - truncate at boundary</pre>
+<p>Unlike the FFT routines, conv2d is able to process bad values.</p>
+<p>
+</p>
+<h2><a name="med2d">med2d</a></h2>
+<pre>
+  Signature: (a(m,n); kern(p,q); [o]b(m,n); int opt)</pre>
+<p>2D median-convolution of an array with a kernel (smoothing)</p>
+<p>Note: only points in the kernel &gt;0 are included in the median, other
+points are weighted by the kernel value (medianing lots of zeroes
+is rather pointless)</p>
+<pre>
+ $new = med2d $old, $kernel, {OPTIONS}</pre>
+<pre>
+ $smoothed = med2d $image, ones(3,3), {Boundary =&gt; Reflect}</pre>
+<pre>
+ Boundary - controls what values are assumed for the image when kernel
+            crosses its edge:
+            =&gt; Default  - periodic boundary conditions (i.e. wrap around axis)
+            =&gt; Reflect  - reflect at boundary
+            =&gt; Truncate - truncate at boundary</pre>
+<p>Bad values are ignored in the calculation. If all elements within the 
+kernel are bad, the output is set bad.</p>
+<p>
+</p>
+<h2><a name="med2df">med2df</a></h2>
+<pre>
+  Signature: (a(m,n); [o]b(m,n); int __p_size; int __q_size; int opt)</pre>
+<p>2D median-convolution of an array in a pxq window (smoothing)</p>
+<p>Note: this routine does the median over all points in a rectangular
+      window and is not quite as flexible as <code>med2d</code> in this regard
+      but slightly faster instead</p>
+<pre>
+ $new = med2df $old, $xwidth, $ywidth, {OPTIONS}</pre>
+<pre>
+ $smoothed = med2df $image, 3, 3, {Boundary =&gt; Reflect}</pre>
+<pre>
+ Boundary - controls what values are assumed for the image when kernel
+            crosses its edge:
+            =&gt; Default  - periodic boundary conditions (i.e. wrap around axis)
+            =&gt; Reflect  - reflect at boundary
+            =&gt; Truncate - truncate at boundary</pre>
+<p>med2df does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="box2d">box2d</a></h2>
+<pre>
+  Signature: (a(n,m); [o] b(n,m); int wx; int wy; int edgezero)</pre>
+<p>fast 2D boxcar average</p>
+<pre>
+  $smoothim = $im-&gt;box2d($wx,$wy,$edgezero=1);</pre>
+<p>The edgezero argument controls if edge is set to zero (edgezero=1)
+or just keeps the original (unfiltered) values.</p>
+<p><code>box2d</code> should be updated to support similar edge options
+as <code>conv2d</code> and <code>med2d</code> etc.</p>
+<p>Boxcar averaging is a pretty crude way of filtering. For serious stuff
+better filters are around (e.g., use <a href="#conv2d">conv2d</a> with the appropriate
+kernel). On the other hand it is fast and computational cost grows only
+approximately linearly with window size.</p>
+<p>box2d does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="patch2d">patch2d</a></h2>
+<pre>
+  Signature: (a(m,n); int bad(m,n); [o]b(m,n))</pre>
+<p>patch bad pixels out of 2D images using a mask</p>
+<pre>
+ $patched = patch2d $data, $bad;</pre>
+<p><code>$bad</code> is a 2D mask array where 1=bad pixel 0=good pixel. 
+Pixels are replaced by the average of their non-bad neighbours;
+if all neighbours are bad, the original data value is
+copied across.</p>
+<p>This routine does not handle bad values - use <a href="#patchbad2d">patchbad2d</a> instead</p>
+<p>
+</p>
+<h2><a name="patchbad2d">patchbad2d</a></h2>
+<pre>
+  Signature: (a(m,n); [o]b(m,n))</pre>
+<p>patch bad pixels out of 2D images containing bad values</p>
+<pre>
+ $patched = patchbad2d $data;</pre>
+<p>Pixels are replaced by the average of their non-bad neighbours;
+if all neighbours are bad, the output is set bad.
+If the input piddle contains <em>no</em> bad values, then a straight copy
+is performed (see <a href="#patch2d">patch2d</a>).</p>
+<p>patchbad2d handles bad values. The output piddle <em>may</em> contain
+bad values, depending on the pattern of bad values in the input piddle.</p>
+<p>
+</p>
+<h2><a name="max2d_ind">max2d_ind</a></h2>
+<pre>
+  Signature: (a(m,n); [o]val(); int [o]x(); int[o]y())</pre>
+<p>Return value/position of maximum value in 2D image</p>
+<p>Contributed by Tim Jeness</p>
+<p>Bad values are excluded from the search. If all pixels
+are bad then the output is set bad.</p>
+<p>
+</p>
+<h2><a name="centroid2d">centroid2d</a></h2>
+<pre>
+  Signature: (im(m,n); x(); y(); box(); [o]xcen(); [o]ycen())</pre>
+<p>Refine a list of object positions in 2D image by centroiding in a box</p>
+<p><code>$box</code> is the full-width of the box, i.e. the window
+is <code>+/- $box/2</code>.</p>
+<p>Bad pixels are excluded from the centroid calculation. If all elements are
+bad (or the pixel sum is 0 - but why would you be centroiding
+something with negatives in...) then the output values are set bad.</p>
+<p>
+</p>
+<h2><a name="cc8compt">cc8compt</a></h2>
+<p>Connected 8-component labeling of a binary image.</p>
+<p>Connected 8-component labeling of 0,1 image - i.e. find separate
+segmented objects and fill object pixels with object number.
+8-component labeling includes all neighboring pixels.
+This is just a front-end to ccNcompt.  See also <a href="#cc4compt">the cc4compt manpage</a>.</p>
+<pre>
+ $segmented = cc8compt( $image &gt; $threshold );</pre>
+<p>
+</p>
+<h2><a name="cc4compt">cc4compt</a></h2>
+<p>Connected 4-component labeling of a binary image.</p>
+<p>Connected 4-component labeling of 0,1 image - i.e. find separate
+segmented objects and fill object pixels with object number.
+4-component labling does not include the diagonal neighbors.
+This is just a front-end to ccNcompt.  See also <a href="#cc8compt">the cc8compt manpage</a>.</p>
+<pre>
+ $segmented = cc4compt( $image &gt; $threshold );</pre>
+<p>
+</p>
+<h2><a name="ccncompt">ccNcompt</a></h2>
+<pre>
+  Signature: (a(m,n); [o]b(m,n); int con)</pre>
+<p>Connected component labeling of a binary image.</p>
+<p>Connected component labeling of 0,1 image - i.e. find separate
+segmented objects and fill object pixels with object number.
+See also <a href="#cc4compt">the cc4compt manpage</a> and <a href="#cc8compt">the cc8compt manpage</a>.</p>
+<p>The connectivity parameter must be 4 or 8.</p>
+<pre>
+ $segmented = ccNcompt( $image &gt; $threshold, 4);</pre>
+<pre>
+ $segmented2 = ccNcompt( $image &gt; $threshold, 8);</pre>
+<p>where the second parameter specifies the connectivity (4 or 8) of the labeling.</p>
+<p>ccNcompt ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="pnpoly">pnpoly</a></h2>
+<p>'points in a polygon' selection from a 2-D piddle</p>
+<pre>
+  $mask = pnpoly($x, $y, $px, $py);</pre>
+<p>For a closed polygon determined by the sequence of points in {$py,$py}
+the output of pnpoly is a mask corresponding to whether or not each
+coordinate (x,y) in the set of test points, {$x,$y}, is in the interior
+of the polygon.  This is the 'points in a polygon' algorithm from
+<a href="http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html">http://www.ecse.rpi.edu/Homepages/wrf/Research/Short_Notes/pnpoly.html</a>
+and vectorized for PDL by Karl Glazebrook.</p>
+<pre>
+  # define a 3-sided polygon (a triangle)
+  $px = pdl( 3, 20, 34 );
+  $py = pdl( 3, 20,  3 );
+  
+  $img = zeros(40, 40);  # create test image
+  $x = $img-&gt;xvals;      # get x pixel coords
+  $y = $img-&gt;yvals;      # get y pixel coords
+  
+  # $tri is 0 everywhere except for points in polygon interior
+  $tri = pnpoly($x,$y,$px,$py);</pre>
+<p>
+</p>
+<h2><a name="polyfill">polyfill</a></h2>
+<pre>
+  Signature: (int [o,nc] im(m,n); float ps(two=2,np); int col())</pre>
+<p>fill the area inside the given polygon with a given colour</p>
+<p>This function works inplace, i.e. modifies <code>im</code>.</p>
+<p>polyfill ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="polyfillv">polyfillv</a></h2>
+<p>return the (dataflown) area of an image within a polygon</p>
+<pre>
+  # increment intensity in area bounded by $poly
+  $im-&gt;polyfillv($pol)++; # legal in perl &gt;= 5.6
+  # compute average intensity within area bounded by $poly
+  $av = $im-&gt;polyfillv($poly)-&gt;avg;</pre>
+<p>
+</p>
+<h2><a name="rot2d">rot2d</a></h2>
+<pre>
+  Signature: (im(m,n); float angle(); bg(); int aa(); [o] om(p,q))</pre>
+<p>rotate an image by given <code>angle</code></p>
+<pre>
+  # rotate by 10.5 degrees with antialiasing, set missing values to 7
+  $rot = $im-&gt;rot2d(10.5,7,1);</pre>
+<p>This function rotates an image through an <code>angle</code> between -90 and + 90
+degrees. Uses/doesn't use antialiasing depending on the <code>aa</code> flag.
+Pixels outside the rotated image are set to <code>bg</code>.</p>
+<p>Code modified from pnmrotate (Copyright Jef Poskanzer) with an algorithm based
+on &quot;A Fast Algorithm for General  Raster  Rotation&quot;  by  Alan Paeth,
+Graphics Interface '86, pp. 77-81.</p>
+<p>Use the <code>rotnewsz</code> function to find out about the dimension of the
+newly created image</p>
+<pre>
+  ($newcols,$newrows) = rotnewsz $oldn, $oldm, $angle;</pre>
+<p><a href="./Transform.html">PDL::Transform</a> offers a more general interface to 
+distortions, including rotation, with various types of sampling; but 
+rot2d is faster.</p>
+<p>rot2d ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="bilin2d">bilin2d</a></h2>
+<pre>
+  Signature: (I(n,m); O(q,p))</pre>
+<p>Bilinearly maps the first piddle in the second. The
+interpolated values are actually added to the second
+piddle which is supposed to be larger than the first one.</p>
+<p>bilin2d ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="rescale2d">rescale2d</a></h2>
+<pre>
+  Signature: (I(m,n); O(p,q))</pre>
+<p>The first piddle is rescaled to the dimensions of the second
+(expanding or meaning values as needed) and then added to it in place.
+Nothing useful is returned.</p>
+<p>If you want photometric accuracy or automatic FITS header metadata
+tracking, consider using <a href="./Transform.html#map">PDL::Transform::map</a>
+instead: it does these things, at some speed penalty compared to 
+rescale2d.</p>
+<p>rescale2d ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="fitwarp2d">fitwarp2d</a></h2>
+<p>Find the best-fit 2D polynomial to describe
+a coordinate transformation.</p>
+<pre>
+  ( $px, $py ) = fitwarp2d( $x, $y, $u, $v, $nf. { options } )</pre>
+<p>Given a set of points in the output plane (<code>$u,$v</code>), find
+the best-fit (using singular-value decomposition) 2D polynomial 
+to describe the mapping back to the image plane (<code>$x,$y</code>).
+The order of the fit is controlled by the <code>$nf</code> parameter
+(the maximum power of the polynomial is <code>$nf - 1</code>), and you
+can restrict the terms to fit using the <a href="#fit"><code>FIT</code></a> option.</p>
+<p><code>$px</code> and <code>$py</code> are <code>np</code> by <code>np</code> element piddles which describe
+a polynomial mapping (of order <code>np-1</code>) 
+from the <em>output</em> <code>(u,v)</code> image to the <em>input</em> <code>(x,y)</code> image:</p>
+<pre>
+  x = sum(j=0,np-1) sum(i=0,np-1) px(i,j) * u^i * v^j
+  y = sum(j=0,np-1) sum(i=0,np-1) py(i,j) * u^i * v^j</pre>
+<p>The transformation is returned for the reverse direction (ie
+output to input image) since that is what is required by the
+<a href="#warp2d">warp2d()</a> routine.  The <a href="#applywarp2d">applywarp2d()</a>
+routine can be used to convert a set of <code>$u,$v</code> points given
+<code>$px</code> and <code>$py</code>.</p>
+<p>Options:</p>
+<pre>
+  FIT     - which terms to fit? default ones(byte,$nf,$nf)
+  THRESH  - in svd, remove terms smaller than THRESH * max value
+            default is 1.0e-5</pre>
+<dl>
+<dt><strong><a name="fit" class="item">FIT</a></strong></dt>
+
+<dd>
+<p><a href="#fit"><code>FIT</code></a> allows you to restrict which terms of the polynomial to fit:
+only those terms for which the FIT piddle evaluates to true will be
+evaluated.  If a 2D piddle is sent in, then it is
+used for the x and y polynomials; otherwise 
+<code>$fit-&gt;slice(&quot;:,:,(0)&quot;)</code> will be used for <code>$px</code> and
+<code>$fit-&gt;slice(&quot;:,:,(1)&quot;)</code> will be used for <code>$py</code>.</p>
+</dd>
+<dt><strong><a name="thresh" class="item">THRESH</a></strong></dt>
+
+<dd>
+<p>Remove all singular values whose valus is less than <a href="#thresh"><code>THRESH</code></a>
+times the largest singular value.</p>
+</dd>
+</dl>
+<p>The number of points must be at least equal to the number of
+terms to fit (<code>$nf*$nf</code> points for the default value of <a href="#fit"><code>FIT</code></a>).</p>
+<pre>
+  # points in original image
+  $x = pdl( 0,   0, 100, 100 );
+  $y = pdl( 0, 100, 100,   0 );
+  # get warped to these positions
+  $u = pdl( 10, 10, 90, 90 );
+  $v = pdl( 10, 90, 90, 10 );
+  # 
+  # shift of origin + scale x/y axis only
+  $fit = byte( [ [1,1], [0,0] ], [ [1,0], [1,0] ] );
+  ( $px, $py ) = fitwarp2d( $x, $y, $u, $v, 2, { FIT =&gt; $fit } );
+  print &quot;px = ${px}py = $py&quot;;
+  px = 
+  [
+   [-12.5  1.25]
+   [    0     0]
+  ]
+  py = 
+  [
+   [-12.5     0]
+   [ 1.25     0]
+  ]
+  #
+  # Compared to allowing all 4 terms
+  ( $px, $py ) = fitwarp2d( $x, $y, $u, $v, 2 );
+  print &quot;px = ${px}py = $py&quot;;
+  px = 
+  [
+   [         -12.5           1.25]
+   [  1.110223e-16 -1.1275703e-17]
+  ]
+  py = 
+  [
+   [         -12.5  1.6653345e-16]
+   [          1.25 -5.8546917e-18]
+  ]</pre>
+<p>
+</p>
+<h2><a name="applywarp2d">applywarp2d</a></h2>
+<p>Transform a set of points using a 2-D polynomial mapping</p>
+<pre>
+  ( $x, $y ) = applywarp2d( $px, $py, $u, $v )</pre>
+<p>Convert a set of points (stored in 1D piddles <code>$u,$v</code>)
+to <code>$x,$y</code> using the 2-D polynomial with coefficients stored in <code>$px</code>
+and <code>$py</code>.  See <a href="#fitwarp2d">fitwarp2d()</a>
+for more information on the format of <code>$px</code> and <code>$py</code>.</p>
+<p>
+</p>
+<h2><a name="warp2d">warp2d</a></h2>
+<pre>
+  Signature: (img(m,n); double px(np,np); double py(np,np); [o] warp(m,n); { options })</pre>
+<p>Warp a 2D image given a polynomial describing the <em>reverse</em> mapping.</p>
+<pre>
+  $out = warp2d( $img, $px, $py, { options } );</pre>
+<p>Apply the polynomial transformation encoded in the <code>$px</code> and
+<code>$py</code> piddles to warp the input image <code>$img</code> into the output
+image <code>$out</code>.</p>
+<p>The format for the polynomial transformation is described in
+the documentation for the <a href="#fitwarp2d">fitwarp2d()</a> routine.</p>
+<p>At each point <code>x,y</code>, the closest 16 pixel values are combined
+with an interpolation kernel to calculate the value at <code>u,v</code>.
+The interpolation is therefore done in the image, rather than
+Fourier, domain.
+By default, a <a href="#tanh"><code>tanh</code></a> kernel is used, but this can be changed
+using the <code>KERNEL</code> option discussed below
+(the choice of kernel depends on the frequency content of the input image).</p>
+<p>The routine is based on the <code>warping</code> command from
+the Eclipse data-reduction package - see <a href="http://www.eso.org/eclipse/">http://www.eso.org/eclipse/</a> - and
+for further details on image resampling see
+Wolberg, G., &quot;Digital Image Warping&quot;, 1990, IEEE Computer
+Society Press ISBN 0-8186-8944-7).</p>
+<p>Currently the output image is the same size as the input one,
+which means data will be lost if the transformation reduces
+the pixel scale.  This will (hopefully) be changed soon.</p>
+<pre>
+  $img = rvals(byte,501,501);
+  imag $img, { JUSTIFY =&gt; 1 };
+  # 
+  # use a not-particularly-obvious transformation:
+  #   x = -10 + 0.5 * $u - 0.1 * $v 
+  #   y = -20 + $v - 0.002 * $u * $v
+  #
+  $px  = pdl( [ -10, 0.5 ], [ -0.1, 0 ] );
+  $py  = pdl( [ -20, 0 ], [ 1, 0.002 ] );
+  $wrp = warp2d( $img, $px, $py );
+  #
+  # see the warped image
+  imag $warp, { JUSTIFY =&gt; 1 };</pre>
+<p>The options are:</p>
+<pre>
+  KERNEL - default value is tanh
+  NOVAL  - default value is 0</pre>
+<p><code>KERNEL</code> is used to specify which interpolation kernel to use
+(to see what these kernels look like, use the
+<a href="#warp2d_kernel">warp2d_kernel()</a> routine).
+The options are:</p>
+<dl>
+<dt><strong><a name="tanh" class="item">tanh</a></strong></dt>
+
+<dd>
+<p>Hyperbolic tangent: the approximation of an ideal box filter by the
+product of symmetric tanh functions.</p>
+</dd>
+<dt><strong><a name="sinc" class="item">sinc</a></strong></dt>
+
+<dd>
+<p>For a correctly sampled signal, the ideal filter in the fourier domain is a rectangle,
+which produces a <a href="#sinc"><code>sinc</code></a> interpolation kernel in the spatial domain:</p>
+<pre>
+  sinc(x) = sin(pi * x) / (pi * x)</pre>
+<p>However, it is not ideal for the <code>4x4</code> pixel region used here.</p>
+</dd>
+<dt><strong><a name="sinc2" class="item">sinc2</a></strong></dt>
+
+<dd>
+<p>This is the square of the sinc function.</p>
+</dd>
+<dt><strong><a name="lanczos" class="item">lanczos</a></strong></dt>
+
+<dd>
+<p>Although defined differently to the <a href="#tanh"><code>tanh</code></a> kernel, the result is very
+similar in the spatial domain.  The Lanczos function is defined as</p>
+<pre>
+  L(x) = sinc(x) * sinc(x/2)  if abs(x) &lt; 2
+       = 0                       otherwise</pre>
+</dd>
+<dt><strong><a name="hann" class="item">hann</a></strong></dt>
+
+<dd>
+<p>This kernel is derived from the following function:</p>
+<pre>
+  H(x) = a + (1-a) * cos(2*pi*x/(N-1))  if abs(x) &lt; 0.5*(N-1)
+       = 0                                 otherwise</pre>
+<p>with <code>a = 0.5</code> and N currently equal to 2001.</p>
+</dd>
+<dt><strong><a name="hamming" class="item">hamming</a></strong></dt>
+
+<dd>
+<p>This kernel uses the same <code>H(x)</code> as the Hann filter, but with
+<code>a = 0.54</code>.</p>
+</dd>
+</dl>
+<p><code>NOVAL</code> gives the value used to indicate that a pixel in the
+output image does not map onto one in the input image.</p>
+<p>
+</p>
+<h2><a name="warp2d_kernel">warp2d_kernel</a></h2>
+<p>Return the specified kernel, as used by <a href="#warp2d">warp2d</a></p>
+<pre>
+  ( $x, $k ) = warp2d_kernel( $name )</pre>
+<p>The valid values for <code>$name</code> are the same as the <code>KERNEL</code> option
+of <a href="#warp2d">warp2d()</a>.</p>
+<pre>
+  line warp2d_kernel( &quot;hamming&quot; );</pre>
+<p>
+</p>
+<hr />
+<h1><a name="authors">AUTHORS</a></h1>
+<p>Copyright (C) Karl Glazebrook 1997 with additions by Robin Williams
+(<a href="mailto:rjrw@ast.leeds.ac.uk">rjrw@ast.leeds.ac.uk</a>), Tim Jeness (<a href="mailto:timj@jach.hawaii.edu">timj@jach.hawaii.edu</a>),
+and Doug Burke (<a href="mailto:burke@ifa.hawaii.edu">burke@ifa.hawaii.edu</a>)</p>
+<p>All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

@@ -1,0 +1,16 @@
+#!/usr/bin/perl
+
+eval 'exec /usr/bin/perl  -S $0 ${1+"$@"}'
+    if 0; # not running under some shell
+require 5;            # Time-stamp: "2001-10-27 00:08:46 MDT"
+use strict;
+use Pod::Spell;
+if(@ARGV) {  # iterate over files, sending to STDOUT
+  foreach my $x (@ARGV) {
+    Pod::Spell->new->parse_from_file($x, '-');
+  }
+} else {     # take from STDIN, send to STDOUT
+  Pod::Spell->new->parse_from_filehandle();
+}
+
+__END__

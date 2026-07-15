@@ -86,12 +86,8 @@ pub fn resolve_files(paths: &[&Path]) -> Result<Vec<PathBuf>, String> {
 }
 
 fn resolve_dir(dir: &Path) -> Result<Vec<PathBuf>, String> {
-    let entries = std::fs::read_dir(dir).map_err(|err| {
-        format!(
-            "cannot read MS input directory {}: {err}",
-            dir.display()
-        )
-    })?;
+    let entries = std::fs::read_dir(dir)
+        .map_err(|err| format!("cannot read MS input directory {}: {err}", dir.display()))?;
 
     let files: Vec<PathBuf> = entries
         .filter_map(|entry| entry.ok())

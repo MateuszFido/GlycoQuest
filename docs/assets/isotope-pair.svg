@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 200" font-family="system-ui, sans-serif" font-size="12">
+  <defs>
+    <style>
+      .title { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .label { fill: #334155; }
+      .light { fill: #3b82f6; }
+      .heavy { fill: #ef4444; }
+      .axis { stroke: #94a3b8; stroke-width: 1; }
+    </style>
+  </defs>
+  <text x="20" y="24" class="title">DSS light/heavy isotope pairing (MS1)</text>
+  <!-- m/z axis -->
+  <line class="axis" x1="40" y1="150" x2="480" y2="150"/>
+  <text x="250" y="180" class="label" text-anchor="middle">precursor m/z ’</text>
+  <!-- Light peak -->
+  <rect class="light" x="120" y="70" width="8" height="80" opacity="0.85"/>
+  <text x="124" y="60" class="label" text-anchor="middle" fill="#2563eb">Light</text>
+  <text x="124" y="168" class="label" text-anchor="middle">M</text>
+  <!-- Heavy peak -->
+  <rect class="heavy" x="280" y="55" width="8" height="95" opacity="0.85"/>
+  <text x="284" y="45" class="label" text-anchor="middle" fill="#dc2626">Heavy</text>
+  <text x="284" y="168" class="label" text-anchor="middle">M + 12.075</text>
+  <!-- Shift arrow -->
+  <line x1="132" y1="40" x2="276" y2="40" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
+  <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <text x="204" y="32" class="label" text-anchor="middle">” = shift_da (12.075 Da)</text>
+  <text x="20" y="100" class="label" fill="#64748b">Partners must match within MS1 ppm + RT window (default ±2 min)</text>
+</svg>

@@ -4,6 +4,7 @@ import { SelectionStore } from './store/selection';
 import { renderQcPanel } from './panels/QcPanel';
 import { renderNetworkPanel } from './panels/NetworkPanel';
 import { renderSpectrumPanel } from './panels/SpectrumPanel';
+import { renderFilteringPanel } from './panels/FilteringPanel';
 import { renderHitsTable } from './panels/HitsTable';
 
 export type { ViewerBundle, ViewerCrosslink } from './types';
@@ -83,6 +84,7 @@ export async function mountViewer(container: HTMLElement, options: MountOptions 
   cleanups.push(renderQcPanel(left, store));
   cleanups.push(renderNetworkPanel(right, store));
   cleanups.push(renderSpectrumPanel(right, store));
+  cleanups.push(renderFilteringPanel(right, store));
 
   if (bundle.crosslinks.length > 0) {
     const first = store.visibleCrosslinks[0] ?? bundle.crosslinks[0];
@@ -108,8 +110,8 @@ function buildHeader(bundle: ViewerBundle): HTMLElement {
       <span>Crosslinker: ${esc(meta.crosslinker)} (${esc(meta.xlink_sites)})</span>
       <span>Glycans: ${esc(meta.glycan_library)}</span>
       <span>${meta.passing_hits} passing / ${meta.total_hits} total</span>
+      ${meta.xquest_version ? `<span>xQuest: ${esc(meta.xquest_version)}</span>` : ''}
       ${meta.generated_at_iso ? `<span>Generated: ${esc(formatDate(meta.generated_at_iso))}</span>` : ''}
-      ${meta.resume ? '<span>Resume mode</span>' : ''}
     </div>`;
   return header;
 }
@@ -171,7 +173,7 @@ function buildFooter(): HTMLElement {
   const footer = document.createElement('footer');
   footer.className = 'gq-footer';
   footer.innerHTML =
-    'GlycoQuest viewer (MIT). Approximate annotations are labeled when exact fragment evidence is unavailable.';
+    'GlycoQuest viewer (MIT). Annotations are rendered only from completed-run Filtering data.';
   return footer;
 }
 

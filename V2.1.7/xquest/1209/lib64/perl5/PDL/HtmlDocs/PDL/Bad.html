@@ -1,0 +1,421 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Bad - PDL does process bad values</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#variables">VARIABLES</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#badflag">badflag</a></li>
+		<li><a href="#badvalue">badvalue</a></li>
+		<li><a href="#orig_badvalue">orig_badvalue</a></li>
+		<li><a href="#check_badflag">check_badflag</a></li>
+		<li><a href="#isbad">isbad</a></li>
+		<li><a href="#isgood">isgood</a></li>
+		<li><a href="#nbadover">nbadover</a></li>
+		<li><a href="#ngoodover">ngoodover</a></li>
+		<li><a href="#setbadat">setbadat</a></li>
+		<li><a href="#setbadif">setbadif</a></li>
+		<li><a href="#setvaltobad">setvaltobad</a></li>
+		<li><a href="#setnantobad">setnantobad</a></li>
+		<li><a href="#setbadtonan">setbadtonan</a></li>
+		<li><a href="#setbadtoval">setbadtoval</a></li>
+		<li><a href="#copybad">copybad</a></li>
+	</ul>
+
+	<li><a href="#changes">CHANGES</a></li>
+	<li><a href="#configuration">CONFIGURATION</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Bad - PDL does process bad values</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>PDL has been compiled with WITH_BADVAL set to 1. Therefore,
+you can enter the wonderful world of bad value support in
+PDL.</p>
+<p>This module is loaded when you do <code>use PDL</code>,
+<code>Use PDL::Lite</code> or <code>PDL::LiteF</code>.</p>
+<p>Implementation details are given in
+<a href="./BadValues.html">the PDL::BadValues manpage</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Bad;
+ print &quot;\nBad value support in PDL is turned &quot; .
+     $PDL::Bad::Status ? &quot;on&quot; : &quot;off&quot; . &quot;.\n&quot;;</pre>
+<pre>
+ Bad value support in PDL is turned on.</pre>
+<pre>
+ and some other things</pre>
+<p>
+</p>
+<hr />
+<h1><a name="variables">VARIABLES</a></h1>
+<p>There are currently three variables that this module defines
+which may be of use.</p>
+<dl>
+<dt><strong><a name="_pdl__bad__status" class="item">$PDL::Bad::Status</a></strong></dt>
+
+<dd>
+<p>Set to 1</p>
+</dd>
+<dt><strong><a name="_pdl__bad__usenan" class="item">$PDL::Bad::UseNaN</a></strong></dt>
+
+<dd>
+<p>Set to 1 if PDL was compiled with <code>BADVAL_USENAN</code> set,
+0 otherwise.</p>
+</dd>
+<dt><strong><a name="_pdl__bad__perpdl" class="item">$PDL::Bad::PerPdl</a></strong></dt>
+
+<dd>
+<p>Set to 1 if PDL was compiled with the <em>experimental</em>
+<code>BADVAL_PER_PDL</code> option set, 0 otherwise.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="badflag">badflag</a></h2>
+<p>switch on/off/examine bad data flag</p>
+<pre>
+  if ( $a-&gt;badflag() ) {
+    print &quot;Data may contain bad values.\n&quot;;
+  }
+  $a-&gt;badflag(1);      # set bad data flag
+  $a-&gt;badflag(0);      # unset bad data flag</pre>
+<p>A return value of 1 does not guarantee the presence of
+bad data in a piddle; all it does is say that we need to
+<em>check</em> for the presence of such beasties. To actually
+find out if there are any bad values present in a piddle,
+use the <a href="#check_badflag">check_badflag</a> method.</p>
+<p>Does support bad values.</p>
+<p>
+</p>
+<h2><a name="badvalue">badvalue</a></h2>
+<p>returns the value used to indicate a missing (or bad) element
+for the given piddle type. You can give it a piddle,
+a PDL::Type object, or one of <code>$PDL_B</code>, <code>$PDL_S</code>, etc.</p>
+<pre>
+   $badval = badvalue( float );
+   $a = ones(ushort,10);
+   print &quot;The bad data value for ushort is: &quot;,
+      $a-&gt;badvalue(), &quot;\n&quot;;</pre>
+<p>If a new value is supplied via a piddle (e.g. <code>$a-&gt;badvalue(23)</code>),
+then the data in the supplied piddle is converted to use the new
+bad value as well if the data type is an integer
+or <a href="#_pdl__bad__usenan"><code>$PDL::Bad::UseNaN == 0</code></a>.</p>
+<p>Currently there is no way of automatically converting the bad
+values of already existing piddles. This could be supported - e.g.
+by having a per-piddle bad value or by storing a time index in the piddle
+structure - if required.</p>
+<p>If the <a href="#_pdl__bad__perpdl"><code>$PDL::Bad::PerPdl</code></a> flag is set then it is possible to
+change the bad value on a per-piddle basis, so</p>
+<pre>
+    $a = sequence (10);
+    $a-&gt;badvalue (3); $a-&gt;badflag (1);
+    $b = sequence (10);
+    $b-&gt;badvalue (4); $b-&gt;badflag (1);</pre>
+<p>will set $a to be <code>[0 1 2 BAD 4 5 6 7 8 9]</code> and $b to be
+<code>[0 1 2 3 BAD 5 6 7 8 9]</code>. If the flag is not set then both
+$a and $b will be set to <code>[0 1 2 3 BAD 5 6 7 8 9]</code>. Please
+note that the code to support per-piddle bad values is
+<em>experimental</em> in the current release.</p>
+<p>Does support bad values.</p>
+<p>
+</p>
+<h2><a name="orig_badvalue">orig_badvalue</a></h2>
+<p>returns the original value used to represent bad values for
+a given type.</p>
+<p>This routine operates the same as <a href="#badvalue">badvalue</a>,
+except you can not change the values.</p>
+<p>It also has an <em>awful</em> name.</p>
+<pre>
+   $orig_badval = orig_badvalue( float );
+   $a = ones(ushort,10);
+   print &quot;The original bad data value for ushort is: &quot;, 
+      $a-&gt;orig_badvalue(), &quot;\n&quot;;</pre>
+<p>Does support bad values.</p>
+<p>
+</p>
+<h2><a name="check_badflag">check_badflag</a></h2>
+<p>clear the bad-value flag of a piddle if it does not
+contain any bad values</p>
+<p>Given a piddle whose bad flag is set, check whether it
+actually contains any bad values and, if not, clear the flag.
+It returns the final state of the bad-value flag.</p>
+<pre>
+ print &quot;State of bad flag == &quot;, $pdl-&gt;check_badflag;</pre>
+<p>Does support bad values.</p>
+<p>
+</p>
+<h2><a name="isbad">isbad</a></h2>
+<pre>
+  Signature: (a(); int [o]b())</pre>
+<p>Is a value bad?</p>
+<p>Returns a 1 if the value is bad, 0 otherwise.
+Also see <a href="./Math.html#isfinite">isfinite</a>.</p>
+<pre>
+ $a = pdl(1,2,3);
+ $a-&gt;badflag(1);
+ set($a,1,$a-&gt;badvalue);
+ $b = isbad($a);
+ print $b, &quot;\n&quot;;
+ [0 1 0]</pre>
+<p>isbad does handle bad values.
+The output piddles will NOT have their bad-value flag set.</p>
+<p>
+</p>
+<h2><a name="isgood">isgood</a></h2>
+<pre>
+  Signature: (a(); int [o]b())</pre>
+<p>Is a value good?</p>
+<p>Returns a 1 if the value is good, 0 otherwise.
+Also see <a href="./Math.html#isfinite">isfinite</a>.</p>
+<pre>
+ $a = pdl(1,2,3);
+ $a-&gt;badflag(1);
+ set($a,1,$a-&gt;badvalue);
+ $b = isgood($a);
+ print $b, &quot;\n&quot;;
+ [1 0 1]</pre>
+<p>isgood does handle bad values.
+The output piddles will NOT have their bad-value flag set.</p>
+<p>
+</p>
+<h2><a name="nbadover">nbadover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Find the number of bad elements along the 1st dimension.</p>
+<p>This function reduces the dimensionality of a piddle
+by one by finding the number of bad elements
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = nbadover($b);</pre>
+<pre>
+ $spectrum = nbadover $image-&gt;xchg(0,1)</pre>
+<p>nbadover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="ngoodover">ngoodover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Find the number of good elements along the 1st dimension.</p>
+<p>This function reduces the dimensionality of a piddle
+by one by finding the number of good elements
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = ngoodover($b);</pre>
+<pre>
+ $spectrum = ngoodover $image-&gt;xchg(0,1)</pre>
+<p>ngoodover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="setbadat">setbadat</a></h2>
+<p>Set the value to bad at a given position.</p>
+<pre>
+ setbadat $piddle, @position</pre>
+<p><code>@position</code> is a coordinate list, of size equal to the
+number of dimensions in the piddle.
+This is a wrapper around <a href="./Core.html#set">set</a> and is
+probably mainly useful in test scripts!</p>
+<pre>
+ pdl&gt; $x = sequence 3,4
+ pdl&gt; $x-&gt;setbadat 2,1
+ pdl&gt; p $x
+ [
+  [  0   1   2]
+  [  3   4 BAD]
+  [  6   7   8]
+  [  9  10  11]
+ ]</pre>
+<p>Supports badvalues.</p>
+<p>
+</p>
+<h2><a name="setbadif">setbadif</a></h2>
+<pre>
+  Signature: (a(); int mask(); [o]b())</pre>
+<p>Set elements bad based on the supplied mask, otherwise
+copy across the data.</p>
+<pre>
+ $a = sequence(5,5);
+ $a = $a-&gt;setbadif( $a % 2 );
+ print &quot;a badflag: &quot;, $a-&gt;badflag, &quot;\n&quot;;
+ a badflag: 1</pre>
+<p>Unfortunately, this routine can <em>not</em> be run inplace, since the
+current implementation can not handle the same piddle used as
+<code>a</code> and <code>mask</code> (eg <code>$a-&gt;inplace-&gt;setbadif($a%2)</code> fails).</p>
+<p>Also see <a href="#setvaltobad">setvaltobad</a> and <a href="#setnantobad">setnantobad</a>.</p>
+<p>The output always has its bad flag set, even if it does not contain
+any bad values (use <a href="#check_badflag">check_badflag</a> to check
+whether there are any bad values in the output). 
+Any bad values in the input piddles are copied across to the output piddle.</p>
+<p>
+</p>
+<h2><a name="setvaltobad">setvaltobad</a></h2>
+<pre>
+  Signature: (a(); [o]b(); double value)</pre>
+<p>Set bad all those elements which equal the supplied value.</p>
+<pre>
+ $a = sequence(10) % 3;
+ $a-&gt;inplace-&gt;setvaltobad( 0 );
+ print &quot;$a\n&quot;;
+ [BAD 1 2 BAD 1 2 BAD 1 2 BAD]</pre>
+<p>This is a simpler version of <a href="#setbadif">setbadif</a>, but this
+function can be done inplace.  See <a href="#setnantobad">setnantobad</a>
+if you want to convert NaN/Inf to the bad value.</p>
+<p>The output always has its bad flag set, even if it does not contain
+any bad values (use <a href="#check_badflag">check_badflag</a> to check
+whether there are any bad values in the output). 
+Any bad values in the input piddles are copied across to the output piddle.</p>
+<p>
+</p>
+<h2><a name="setnantobad">setnantobad</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Sets NaN/Inf values in the input piddle bad
+(only relevant for floating-point piddles).
+Can be done inplace.</p>
+<pre>
+ $b = $a-&gt;setnantobad;
+ $a-&gt;inplace-&gt;setnantobad;</pre>
+<p>Supports bad values.</p>
+<p>
+</p>
+<h2><a name="setbadtonan">setbadtonan</a></h2>
+<pre>
+  Signature: (a(); [o]b())</pre>
+<p>Sets Bad values to NaN
+(only relevant for floating-point piddles).
+Can be done inplace and it clears the bad flag.</p>
+<pre>
+ $b = $a-&gt;setbadtonan;
+ $a-&gt;inplace-&gt;setbadtonan;</pre>
+<p>Supports bad values.</p>
+<p>
+</p>
+<h2><a name="setbadtoval">setbadtoval</a></h2>
+<pre>
+  Signature: (a(); [o]b(); double newval)</pre>
+<p>Replace any bad values by a (non-bad) value.</p>
+<p>Can be done inplace. Also see
+<a href="./Math.html#badmask">badmask</a>.</p>
+<pre>
+ $a-&gt;inplace-&gt;setbadtoval(23); 
+ print &quot;a badflag: &quot;, $a-&gt;badflag, &quot;\n&quot;;
+ a badflag: 0</pre>
+<p>The output always has its bad flag cleared.
+If the input piddle does not have its bad flag set, then
+values are copied with no replacement.</p>
+<p>
+</p>
+<h2><a name="copybad">copybad</a></h2>
+<pre>
+  Signature: (a(); mask(); [o]b())</pre>
+<p>Copies values from one piddle to another, setting them
+bad if they are bad in the supplied mask.</p>
+<p>Can be done inplace.</p>
+<pre>
+ $a = byte( [0,1,3] );
+ $mask = byte( [0,0,0] );
+ set($mask,1,$mask-&gt;badvalue);
+ $a-&gt;inplace-&gt;copybad( $mask );
+ p $a;
+ [0 BAD 3]</pre>
+<p>It is equivalent to:</p>
+<pre>
+ $c = $a + $mask * 0</pre>
+<p>Handles bad values.</p>
+<p>
+</p>
+<hr />
+<h1><a name="changes">CHANGES</a></h1>
+<p>The <em>experimental</em> <code>BADVAL_PER_PDL</code> configuration option,
+which - when set - allows per-piddle bad values, was added
+after the 2.4.2 release of PDL.
+The <code></code> variable can be
+inspected to see if this feature is available.</p>
+<p>
+</p>
+<hr />
+<h1><a name="configuration">CONFIGURATION</a></h1>
+<p>The way the PDL handles the various bad value settings depends on your
+compile-time configuration settings, as held in <code>perldl.conf</code>.</p>
+<dl>
+<dt><strong><a name="_pdl__config_with_badval_" class="item"><code>$PDL::Config{WITH_BADVAL}</code></a></strong></dt>
+
+<dd>
+<p>Set this configuration option to a true value if you want bad value
+support. The default setting is for this to be true.</p>
+</dd>
+<dt><strong><a name="_pdl__config_badval_usenan_" class="item"><code>$PDL::Config{BADVAL_USENAN}</code></a></strong></dt>
+
+<dd>
+<p>Set this configuration option to a true value if you want floating-pont
+numbers to use NaN to represent the bad value. If set to false, you can
+use any number to represent a bad value, which is generally more
+flexible. In the default configuration, this is set to a false value.</p>
+</dd>
+<dt><strong><a name="_pdl__config_badval_per_pdl_" class="item"><code>$PDL::Config{BADVAL_PER_PDL}</code></a></strong></dt>
+
+<dd>
+<p>Set this configuration option to a true value if you want each of your
+piddles to keep track of their own bad values. This means that for one
+piddle you can set the bad value to zero, while in another piddle you
+can set the bad value to NaN (or any other useful number). This is
+usually set to false.</p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Doug Burke (<a href="mailto:djburke@cpan.org">djburke@cpan.org</a>), 2000, 2001, 2003, 2006.</p>
+<p>The per-piddle bad value support is by Heiko Klein (2006).</p>
+<p>CPAN documentation fixes by David Mertens (2010).</p>
+<p>All rights reserved. There is no warranty. You are allowed to
+redistribute this software / documentation under certain conditions. For
+details, see the file COPYING in the PDL distribution. If this file is
+separated from the PDL distribution, the copyright notice should be
+included in the file.</p>
+
+</body>
+
+</html>

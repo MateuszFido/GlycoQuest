@@ -1,0 +1,12 @@
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header.pm
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header/AST.pm
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header/CFITSIO.pm
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header/GSD.pm
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header/Item.pm
+/cluster/apps/perl_modules/1209/lib/perl5/Astro/FITS/Header/NDF.pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header.3pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header::AST.3pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header::CFITSIO.3pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header::GSD.3pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header::Item.3pm
+/cluster/apps/perl_modules/1209/man/man3/Astro::FITS::Header::NDF.3pm

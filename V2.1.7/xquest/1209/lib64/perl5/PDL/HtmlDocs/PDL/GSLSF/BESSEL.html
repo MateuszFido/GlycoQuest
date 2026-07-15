@@ -1,0 +1,308 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::BESSEL - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_bessel_jn">gsl_sf_bessel_Jn</a></li>
+		<li><a href="#gsl_sf_bessel_j_array">gsl_sf_bessel_J_array</a></li>
+		<li><a href="#gsl_sf_bessel_yn">gsl_sf_bessel_Yn</a></li>
+		<li><a href="#gsl_sf_bessel_y_array">gsl_sf_bessel_Y_array</a></li>
+		<li><a href="#gsl_sf_bessel_in">gsl_sf_bessel_In</a></li>
+		<li><a href="#gsl_sf_bessel_i_array">gsl_sf_bessel_I_array</a></li>
+		<li><a href="#gsl_sf_bessel_in_scaled">gsl_sf_bessel_In_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_i_scaled_array">gsl_sf_bessel_I_scaled_array</a></li>
+		<li><a href="#gsl_sf_bessel_kn">gsl_sf_bessel_Kn</a></li>
+		<li><a href="#gsl_sf_bessel_k_array">gsl_sf_bessel_K_array</a></li>
+		<li><a href="#gsl_sf_bessel_kn_scaled">gsl_sf_bessel_Kn_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_k_scaled_array">gsl_sf_bessel_K_scaled_array</a></li>
+		<li><a href="#gsl_sf_bessel_jl">gsl_sf_bessel_jl</a></li>
+		<li><a href="#gsl_sf_bessel_j_array">gsl_sf_bessel_j_array</a></li>
+		<li><a href="#gsl_sf_bessel_yl">gsl_sf_bessel_yl</a></li>
+		<li><a href="#gsl_sf_bessel_y_array">gsl_sf_bessel_y_array</a></li>
+		<li><a href="#gsl_sf_bessel_il_scaled">gsl_sf_bessel_il_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_i_scaled_array">gsl_sf_bessel_i_scaled_array</a></li>
+		<li><a href="#gsl_sf_bessel_kl_scaled">gsl_sf_bessel_kl_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_k_scaled_array">gsl_sf_bessel_k_scaled_array</a></li>
+		<li><a href="#gsl_sf_bessel_jnu">gsl_sf_bessel_Jnu</a></li>
+		<li><a href="#gsl_sf_bessel_ynu">gsl_sf_bessel_Ynu</a></li>
+		<li><a href="#gsl_sf_bessel_inu_scaled">gsl_sf_bessel_Inu_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_inu">gsl_sf_bessel_Inu</a></li>
+		<li><a href="#gsl_sf_bessel_knu_scaled">gsl_sf_bessel_Knu_scaled</a></li>
+		<li><a href="#gsl_sf_bessel_knu">gsl_sf_bessel_Knu</a></li>
+		<li><a href="#gsl_sf_bessel_lnknu">gsl_sf_bessel_lnKnu</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::BESSEL - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_jn">gsl_sf_bessel_Jn</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Regular Bessel Function J_n(x).</p>
+<p>gsl_sf_bessel_Jn does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_j_array">gsl_sf_bessel_J_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of Regular Bessel Functions J_{s}(x) to J_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_J_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_yn">gsl_sf_bessel_Yn</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>IrRegular Bessel Function Y_n(x).</p>
+<p>gsl_sf_bessel_Yn does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_y_array">gsl_sf_bessel_Y_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of Regular Bessel Functions Y_{s}(x) to Y_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_Y_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_in">gsl_sf_bessel_In</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Regular Modified Bessel Function I_n(x).</p>
+<p>gsl_sf_bessel_In does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_i_array">gsl_sf_bessel_I_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of Regular Modified Bessel Functions I_{s}(x) to I_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_I_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_in_scaled">gsl_sf_bessel_In_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Scaled Regular Modified Bessel Function exp(-|x|) I_n(x).</p>
+<p>gsl_sf_bessel_In_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_i_scaled_array">gsl_sf_bessel_I_scaled_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of Scaled Regular Modified Bessel Functions exp(-|x|) I_{s}(x) to exp(-|x|) I_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_I_scaled_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_kn">gsl_sf_bessel_Kn</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>IrRegular Modified Bessel Function K_n(x).</p>
+<p>gsl_sf_bessel_Kn does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_k_array">gsl_sf_bessel_K_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of IrRegular Modified Bessel Functions K_{s}(x) to K_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_K_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_kn_scaled">gsl_sf_bessel_Kn_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Scaled IrRegular Modified Bessel Function exp(-|x|) K_n(x).</p>
+<p>gsl_sf_bessel_Kn_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_k_scaled_array">gsl_sf_bessel_K_scaled_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int s; int n=&gt;num)</pre>
+<p>Array of Scaled IrRegular Modified Bessel Functions exp(-|x|) K_{s}(x) to exp(-|x|) K_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_K_scaled_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_jl">gsl_sf_bessel_jl</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Regular Sphericl Bessel Function J_n(x).</p>
+<p>gsl_sf_bessel_jl does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_j_array">gsl_sf_bessel_j_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num)</pre>
+<p>Array of Spherical Regular Bessel Functions J_{0}(x) to J_{n-1}(x).</p>
+<p>gsl_sf_bessel_j_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_yl">gsl_sf_bessel_yl</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>IrRegular Spherical Bessel Function y_n(x).</p>
+<p>gsl_sf_bessel_yl does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_y_array">gsl_sf_bessel_y_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num)</pre>
+<p>Array of Regular Spherical Bessel Functions y_{0}(x) to y_{n-1}(x).</p>
+<p>gsl_sf_bessel_y_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_il_scaled">gsl_sf_bessel_il_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Scaled Regular Modified Spherical Bessel Function exp(-|x|) i_n(x).</p>
+<p>gsl_sf_bessel_il_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_i_scaled_array">gsl_sf_bessel_i_scaled_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num)</pre>
+<p>Array of Scaled Regular Modified Spherical Bessel Functions exp(-|x|) i_{0}(x) to exp(-|x|) i_{n-1}(x).</p>
+<p>gsl_sf_bessel_i_scaled_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_kl_scaled">gsl_sf_bessel_kl_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int n)</pre>
+<p>Scaled IrRegular Modified Spherical Bessel Function exp(-|x|) k_n(x).</p>
+<p>gsl_sf_bessel_kl_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_k_scaled_array">gsl_sf_bessel_k_scaled_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num)</pre>
+<p>Array of Scaled IrRegular Modified Spherical Bessel Functions exp(-|x|) k_{s}(x) to exp(-|x|) k_{s+n-1}(x).</p>
+<p>gsl_sf_bessel_k_scaled_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_jnu">gsl_sf_bessel_Jnu</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Regular Cylindrical Bessel Function J_nu(x).</p>
+<p>gsl_sf_bessel_Jnu does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_ynu">gsl_sf_bessel_Ynu</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>IrRegular Cylindrical Bessel Function J_nu(x).</p>
+<p>gsl_sf_bessel_Ynu does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_inu_scaled">gsl_sf_bessel_Inu_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Scaled Modified Cylindrical Bessel Function exp(-|x|) I_nu(x).</p>
+<p>gsl_sf_bessel_Inu_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_inu">gsl_sf_bessel_Inu</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Modified Cylindrical Bessel Function I_nu(x).</p>
+<p>gsl_sf_bessel_Inu does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_knu_scaled">gsl_sf_bessel_Knu_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Scaled Modified Cylindrical Bessel Function exp(-|x|) K_nu(x).</p>
+<p>gsl_sf_bessel_Knu_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_knu">gsl_sf_bessel_Knu</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Modified Cylindrical Bessel Function K_nu(x).</p>
+<p>gsl_sf_bessel_Knu does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_bessel_lnknu">gsl_sf_bessel_lnKnu</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double n)</pre>
+<p>Logarithm of Modified Cylindrical Bessel Function K_nu(x).</p>
+<p>gsl_sf_bessel_lnKnu does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

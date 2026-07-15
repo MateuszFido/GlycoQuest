@@ -1,0 +1,64 @@
+### Options relevant for xQuest pipeline ##
+deltashift 1						# Use this option
+inclusion_list 1					# Prints information
+
+### Deltashift options, option for searching isotope pairs
+Isopair_Mr_tolerance_measure ppm 	# amu or ppm
+Isopair_Mr_tolerance 15				# MS1 tolerance
+Isopair_Tr_tolerance 3.0			# Maximum Tr tolerance
+isotopeshift 12.075321				# Deltashift
+tripleshift 0   					# MS1 Tolerance for pairs that are marked and excluded
+Triplepair_Mr_tolerance 0			# MS1 tolerance for pairs that are marked and excluded
+Triplepair_Tr_tolerance 0			# Maximum Tr tolerance for pairs that are marked and excluded
+lightrunids 0						# Param for paring mastermap, leave 0
+heavyrunids 0						# Param for paring mastermap, leave 0
+pairratio 0.01						# minimum l:h pairratio
+featurestatIDs 0
+Isopair_require_same_lcid 0
+printisotopicscanpairs 1			# print isotope pairs
+printlightonlypairs 0				# print light pairs only
+printheavyonlypairs 0				# print heavy pairs only
+
+### options for matching mzXML scans to MS1 features. 
+### Parameters indicated with a * in the description are only relevant if -pseudoSH is not used
+min_Tr 0					# min retention time in minutes
+max_Tr 110					# max retention time in minutes
+charge_states 2,3,4,5,6,7	# charge states to be considered
+mz_tolerance 0.1 			# *m/z tolerance for peak to scan matching: when not used with pseudoSH 0.1
+deltaTr 1.0					# *tolerated retention time in minutes for feature matching: when not used with pseudoSH 1.0
+Trshift 0.0					# *constant Tr shift in minutes. positive value means MS2 scans are later than MS1 Master
+scanlevels 2 				# *define scanlevels, more than on scanlevel is defined as e.g. 2,3
+Tr_offset 0					# *offset for feature matching e.g. 30 mins all features eluting before 30 min. are matched irrespective of deltaTr parameter
+require_same_charge 0 		# *precursor charge in mzXML file needs to match charge that SuperHirn reports. 0 indicates no charge matching, 1 means only matching charges are used
+feature_plusmz 0 			# *add a constant mass to feature mz for significance testing
+matchtype most_intense 		# *Tr_distance_2apex or most_intense
+monotoggle 0 				# *match 2nd isotope
+msInstrumentIDs 0 			# Instrument ID
+
+## END of relevant parameters for xQuest pipeline ##
+
+### scan matching and inclusion list options
+IL_bin_offset 40 		# first segment is from 0 to indicated number 0 means no offest
+IL_bin_overlap	50 		# overlap in % of inclusion list bins
+IL_bin_segmentsize 7 	# inclusion list segmentsize in minutes 
+IL_bin_limits 0,110 	# Tr limits for inclusion list "0" means automatic "20,100" means from 20 to 100 min  
+IL_charges 2,3,4,5,6,7 	# only features with indicated charges are put into inclusion list e.g 2,3 means charge 2+ and 3+, 0 means all charges, 2 means only charge 2+
+IL_nmostintense 0 		# use n-most intense features e.g. 1,1000 means 1 to 1000, 0 means all features
+inclusionlisttype all 	# "inclusion" or "exclusion" or "all" inclusion adds all features that do not have scans in inclusion list, exclusion all features with scan
+bins_min 0 # 0,5,10,30 	# 0: automatic 0,5,10,30,etc defines lower boundaries
+bins_max 0 #10,15,30,40 # 0: automatic 5,10,30,40,etc defines upper boundaries
+
+### Profiler options
+profiler 0
+requiredrunIDs 2,3
+normalize_profiles 0 	# by_max	#by_max or by_sum
+score mse				# abs or mse
+averaging median 		# mean or median
+target x 				# 
+minfeaturecount 1 		#
+renormalize 1			# renomalize averaged profiles
+runIDs 0,1,2,3			# use these runIDs
+minprob	0.5				# peptide prophet probability
+translationtable 0 		# flybase_translation.txt
+normalize_MasterMap 0
+verbose 0

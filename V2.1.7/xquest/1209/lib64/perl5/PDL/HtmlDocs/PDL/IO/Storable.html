@@ -1,0 +1,106 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::IO::Storable - helper functions to make PDL usable with Storable</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#store">store</a></li>
+		<li><a href="#freeze">freeze</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::IO::Storable - helper functions to make PDL usable with Storable</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use Storable;
+  use PDL::IO::Storable;
+  $hash = {
+            'foo' =&gt; 42,
+            'bar' =&gt; zeroes(23,45),
+          };
+  store $hash, 'perlhash.dat';</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><code>Storable</code> implements object persistence for Perl data structures
+that can (in principle) contain arbitrary Perl objects. Complicated
+objects must supply their own methods to be serialized and thawed.
+This module implements the relevant methods to be able to store
+and retrieve piddles via Storable.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="store">store</a></h2>
+<p>store a piddle using <a href="../../Devel/Cover/DB/IO/Storable.html">Storable</a></p>
+<pre>
+  $a = random 12,10;
+  $a-&gt;store('myfile');</pre>
+<p>
+</p>
+<h2><a name="freeze">freeze</a></h2>
+<p>freeze a piddle using <a href="../../Devel/Cover/DB/IO/Storable.html">Storable</a></p>
+<pre>
+  $a = random 12,10;
+  $frozen = $a-&gt;freeze;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>The packed piddles are <em>not</em> stored in a network transparent
+way. As a result expect problems when moving <code>Storable</code> data
+containing piddles across computers.</p>
+<p>This could be fixed by amending the methods <code>pdlpack</code> and
+<code>pdlunpack</code> appropriately. If you want this functionality
+feel free to submit patches.</p>
+<p>If you want to move piddle data
+across platforms I recommend <a href="../NetCDF.html">PDL::NetCDF</a> as
+an excellent (and IMHO superior) workaround.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) 2002 Christian Soeller &lt;<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>&gt;
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

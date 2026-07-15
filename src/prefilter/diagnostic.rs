@@ -11,6 +11,9 @@ pub struct MatchedIon {
     pub expected_mz: f64,
     pub observed_mz: f64,
     pub loss_label: String,
+    pub peak_index: usize,
+    pub intensity: f64,
+    pub error_ppm: f64,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -29,7 +32,7 @@ pub fn match_diagnostic_ions(
     let mut matched_ions = Vec::new();
     let mut families = BTreeSet::new();
 
-    for (obs_mz, _intensity) in &scan.peaks {
+    for (peak_index, (obs_mz, intensity)) in scan.peaks.iter().enumerate() {
         for ion in &targets {
             if within_ppm(*obs_mz, ion.mz, tolerance_ppm) {
                 families.insert(ion.family.clone());
@@ -38,15 +41,20 @@ pub fn match_diagnostic_ions(
                     expected_mz: ion.mz,
                     observed_mz: *obs_mz,
                     loss_label: ion.loss_label.clone(),
+                    peak_index,
+                    intensity: *intensity,
+                    error_ppm: ppm_error(*obs_mz, ion.mz),
                 });
             }
         }
     }
 
     matched_ions.sort_by(|a, b| {
-        a.family
-            .cmp(&b.family)
-            .then(a.expected_mz.partial_cmp(&b.expected_mz).unwrap_or(std::cmp::Ordering::Equal))
+        a.family.cmp(&b.family).then(
+            a.expected_mz
+                .partial_cmp(&b.expected_mz)
+                .unwrap_or(std::cmp::Ordering::Equal),
+        )
     });
 
     let matched_families: Vec<String> = families.into_iter().collect();
@@ -80,7 +88,14 @@ fn within_ppm(observed: f64, expected: f64, tolerance_ppm: f64) -> bool {
     if expected <= 0.0 {
         return false;
     }
-    ((observed - expected).abs() / expected) * 1_000_000.0 <= tolerance_ppm
+    ppm_error(observed, expected).abs() <= tolerance_ppm
+}
+
+fn ppm_error(observed: f64, expected: f64) -> f64 {
+    if expected <= 0.0 {
+        return 0.0;
+    }
+    ((observed - expected) / expected) * 1_000_000.0
 }
 
 #[cfg(test)]
@@ -120,11 +135,14 @@ mod tests {
             retention_time_min: 10.0,
             precursor_mz: 800.0,
             precursor_charge: Some(2),
-            peaks: vec![(204.0867, 5000.0)],
+            peaks: vec![(100.0, 1000.0), (204.0867, 5000.0)],
         };
         let result = match_diagnostic_ions(&scan, &hexnac_library(), 10.0);
         assert!(result.passes);
         assert!(result.matched_families.contains(&"HexNAc".to_string()));
+        assert_eq!(result.matched_ions[0].peak_index, 1);
+        assert_eq!(result.matched_ions[0].intensity, 5000.0);
+        assert!((result.matched_ions[0].error_ppm - 0.264595).abs() < 0.001);
     }
 
     #[test]

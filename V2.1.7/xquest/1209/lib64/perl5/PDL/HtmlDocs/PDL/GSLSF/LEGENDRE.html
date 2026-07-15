@@ -1,0 +1,200 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::LEGENDRE - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_legendre_pl">gsl_sf_legendre_Pl</a></li>
+		<li><a href="#gsl_sf_legendre_pl_array">gsl_sf_legendre_Pl_array</a></li>
+		<li><a href="#gsl_sf_legendre_ql">gsl_sf_legendre_Ql</a></li>
+		<li><a href="#gsl_sf_legendre_plm">gsl_sf_legendre_Plm</a></li>
+		<li><a href="#gsl_sf_legendre_plm_array">gsl_sf_legendre_Plm_array</a></li>
+		<li><a href="#gsl_sf_legendre_sphplm">gsl_sf_legendre_sphPlm</a></li>
+		<li><a href="#gsl_sf_legendre_sphplm_array">gsl_sf_legendre_sphPlm_array</a></li>
+		<li><a href="#gsl_sf_conicalp_half">gsl_sf_conicalP_half</a></li>
+		<li><a href="#gsl_sf_conicalp_mhalf">gsl_sf_conicalP_mhalf</a></li>
+		<li><a href="#gsl_sf_conicalp_0">gsl_sf_conicalP_0</a></li>
+		<li><a href="#gsl_sf_conicalp_1">gsl_sf_conicalP_1</a></li>
+		<li><a href="#gsl_sf_conicalp_sph_reg">gsl_sf_conicalP_sph_reg</a></li>
+		<li><a href="#gsl_sf_conicalp_cyl_reg_e">gsl_sf_conicalP_cyl_reg_e</a></li>
+		<li><a href="#gsl_sf_legendre_h3d">gsl_sf_legendre_H3d</a></li>
+		<li><a href="#gsl_sf_legendre_h3d_array">gsl_sf_legendre_H3d_array</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::LEGENDRE - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_pl">gsl_sf_legendre_Pl</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int l)</pre>
+<p>P_l(x)</p>
+<p>gsl_sf_legendre_Pl does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_pl_array">gsl_sf_legendre_Pl_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int l=&gt;num)</pre>
+<p>P_l(x) from 0 to n-1.</p>
+<p>gsl_sf_legendre_Pl_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_ql">gsl_sf_legendre_Ql</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int l)</pre>
+<p>Q_l(x)</p>
+<p>gsl_sf_legendre_Ql does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_plm">gsl_sf_legendre_Plm</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int l; int m)</pre>
+<p>P_lm(x)</p>
+<p>gsl_sf_legendre_Plm does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_plm_array">gsl_sf_legendre_Plm_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int l=&gt;num; int m)</pre>
+<p>P_lm(x) for l from 0 to n-2+m.</p>
+<p>gsl_sf_legendre_Plm_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_sphplm">gsl_sf_legendre_sphPlm</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int l; int m)</pre>
+<p>P_lm(x), normalized properly for use in spherical harmonics</p>
+<p>gsl_sf_legendre_sphPlm does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_sphplm_array">gsl_sf_legendre_sphPlm_array</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(num); int n=&gt;num; int m)</pre>
+<p>P_lm(x), normalized properly for use in spherical harmonics for l from 0 to n-2+m.</p>
+<p>gsl_sf_legendre_sphPlm_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_half">gsl_sf_conicalP_half</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double lambda)</pre>
+<p>Irregular Spherical Conical Function P^{1/2}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_half does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_mhalf">gsl_sf_conicalP_mhalf</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double lambda)</pre>
+<p>Regular Spherical Conical Function P^{-1/2}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_mhalf does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_0">gsl_sf_conicalP_0</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double lambda)</pre>
+<p>Conical Function P^{0}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_0 does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_1">gsl_sf_conicalP_1</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); double lambda)</pre>
+<p>Conical Function P^{1}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_1 does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_sph_reg">gsl_sf_conicalP_sph_reg</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int l; double lambda)</pre>
+<p>Regular Spherical Conical Function P^{-1/2-l}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_sph_reg does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_conicalp_cyl_reg_e">gsl_sf_conicalP_cyl_reg_e</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e(); int m; double lambda)</pre>
+<p>Regular Cylindrical Conical Function P^{-m}_{-1/2 + I lambda}(x)</p>
+<p>gsl_sf_conicalP_cyl_reg_e does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_h3d">gsl_sf_legendre_H3d</a></h2>
+<pre>
+  Signature: (double [o]y(); double [o]e(); int l; double lambda; double eta)</pre>
+<p>lth radial eigenfunction of the Laplacian on the 3-dimensional hyperbolic space.</p>
+<p>gsl_sf_legendre_H3d does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_legendre_h3d_array">gsl_sf_legendre_H3d_array</a></h2>
+<pre>
+  Signature: (double [o]y(num); int l=&gt;num; double lambda; double eta)</pre>
+<p>Array of H3d(ell), for l from 0 to n-1.</p>
+<p>gsl_sf_legendre_H3d_array does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

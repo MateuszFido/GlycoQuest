@@ -1,0 +1,236 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::FFT - FFTs for PDL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#data_types">DATA TYPES</a></li>
+	<li><a href="#frequencies">FREQUENCIES</a></li>
+	<li><a href="#alternative_fft_packages">ALTERNATIVE FFT PACKAGES</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#fft__"><code>fft()</code></a></li>
+		<li><a href="#ifft__"><code>ifft()</code></a></li>
+		<li><a href="#realfft__"><code>realfft()</code></a></li>
+		<li><a href="#realifft__"><code>realifft()</code></a></li>
+		<li><a href="#fftnd__"><code>fftnd()</code></a></li>
+		<li><a href="#ifftnd__"><code>ifftnd()</code></a></li>
+		<li><a href="#fftconvolve__"><code>fftconvolve()</code></a></li>
+		<li><a href="#convmath">convmath</a></li>
+		<li><a href="#cmul">cmul</a></li>
+		<li><a href="#cdiv">cdiv</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::FFT - FFTs for PDL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>FFTs for PDL.  These work for arrays of any dimension, although ones
+with small prime factors are likely to be the quickest.</p>
+<p>For historical reasons, these routines work in-place and do not recognize
+the in-place flag.  That should be fixed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use PDL::FFT qw/:Func/;</pre>
+<pre>
+        fft($real, $imag);
+        ifft($real, $imag);
+        realfft($real);
+        realifft($real);</pre>
+<pre>
+        fftnd($real,$imag);
+        ifftnd($real,$imag);</pre>
+<pre>
+        $kernel = kernctr($image,$smallk);
+        fftconvolve($image,$kernel);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="data_types">DATA TYPES</a></h1>
+<p>The underlying C library upon which this module is based performs FFTs
+on both single precision and double precision floating point piddles.
+Performing FFTs on integer data types is not reliable.  Consider the
+following FFT on piddles of type 'double':</p>
+<pre>
+        $r = pdl(0,1,0,1);
+        $i = zeroes($r);
+        fft($r,$i);
+        print $r,$i;
+        [2 0 -2 0] [0 0 0 0]</pre>
+<p>But if $r and $i are unsigned short integers (ushorts):</p>
+<pre>
+        $r = pdl(ushort,0,1,0,1);
+        $i = zeroes($r);
+        fft($r,$i);
+        print $r,$i;
+        [2 0 65534 0] [0 0 0 0]</pre>
+<p>This used to occur because <a href="./PP.html">PDL::PP</a> converts the ushort
+piddles to floats or doubles, performs the FFT on them, and then
+converts them back to ushort, causing the overflow where the amplitude
+of the frequency should be -2.</p>
+<p>Therefore, if you pass in a piddle of integer datatype (byte, short,
+ushort, long) to any of the routines in PDL::FFT, your data will be
+promoted to a double-precision piddle.  If you pass in a float, the
+single-precision FFT will be performed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="frequencies">FREQUENCIES</a></h1>
+<p>For even-sized input arrays, the frequencies are packed like normal
+for FFTs (where N is the size of the array and D is the physical step
+size between elements):</p>
+<pre>
+ 0, 1/ND, 2/ND, ..., (N/2-1)/ND, 1/2D, -(N/2-1)/ND, ..., -1/ND.</pre>
+<p>which can easily be obtained (taking the Nyquist frequency to be
+positive) using</p>
+<p><code>$kx = $real-&gt;xlinvals(-($N/2-1)/$N/$D,1/2/$D)-&gt;rotate(-($N/2 -1));</code></p>
+<p>For odd-sized input arrays the Nyquist frequency is not directly
+acessible, and the frequencies are</p>
+<pre>
+ 0, 1/ND, 2/ND, ..., (N/2-0.5)/ND, -(N/2-0.5)/ND, ..., -1/ND.</pre>
+<p>which can easily be obtained using</p>
+<p><code>$kx = $real-&gt;xlinvals(-($N/2-0.5)/$N/$D,($N/2-0.5)/$N/$D)-&gt;rotate(-($N-1)/2);</code></p>
+<p>
+</p>
+<hr />
+<h1><a name="alternative_fft_packages">ALTERNATIVE FFT PACKAGES</a></h1>
+<p>Various other modules - such as 
+<a href="./FFTW.html">PDL::FFTW</a> and <a href="./Slatec.html">PDL::Slatec</a> - 
+contain FFT routines.
+However, unlike PDL::FFT, these modules are optional,
+and so may not be installed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="fft__"><code>fft()</code></a></h2>
+<p>Complex FFT of the &quot;real&quot; and &quot;imag&quot; arrays [inplace].</p>
+<p><code>fft($real,$imag)</code>;</p>
+<p>
+</p>
+<h2><a name="ifft__"><code>ifft()</code></a></h2>
+<p>Complex inverse FFT of the &quot;real&quot; and &quot;imag&quot; arrays [inplace].</p>
+<p><code>ifft($real,$imag)</code>;</p>
+<p>
+</p>
+<h2><a name="realfft__"><code>realfft()</code></a></h2>
+<p>One-dimensional FFT of real function [inplace].</p>
+<p>The real part of the transform ends up in the first half of the array
+and the imaginary part of the transform ends up in the second half of
+the array.</p>
+<pre>
+        realfft($real);</pre>
+<p>
+</p>
+<h2><a name="realifft__"><code>realifft()</code></a></h2>
+<p>Inverse of one-dimensional realfft routine [inplace].</p>
+<pre>
+        realifft($real);</pre>
+<p>
+</p>
+<h2><a name="fftnd__"><code>fftnd()</code></a></h2>
+<p>N-dimensional FFT (inplace)</p>
+<pre>
+        fftnd($real,$imag);</pre>
+<p>
+</p>
+<h2><a name="ifftnd__"><code>ifftnd()</code></a></h2>
+<p>N-dimensional inverse FFT</p>
+<pre>
+        ifftnd($real,$imag);</pre>
+<p>
+</p>
+<h2><a name="fftconvolve__"><code>fftconvolve()</code></a></h2>
+<p>N-dimensional convolution with periodic boundaries (FFT method)</p>
+<pre>
+        $kernel = kernctr($image,$smallk);
+        fftconvolve($image,$kernel);</pre>
+<p>fftconvolve works inplace, and returns an error array in kernel as an
+accuracy check -- all the values in it should be negligible.</p>
+<p>See also <a href="./ImageND.html#convolvend">PDL::ImageND::convolveND</a>, which 
+performs speed-optimized convolution with a variety of boundary conditions.</p>
+<p>The sizes of the image and the kernel must be the same.
+<a href="./ImageND.html#kernctr">kernctr</a> centres a small kernel to emulate the
+behaviour of the direct convolution routines.</p>
+<p>The speed cross-over between using straight convolution 
+(<a href="./Image2D.html#conv2d">PDL::Image2D::conv2d()</a>) and
+these fft routines is for kernel sizes roughly 7x7.</p>
+<p>
+</p>
+<h2><a name="convmath">convmath</a></h2>
+<pre>
+  Signature: ([o,nc]a(m); [o,nc]b(m))</pre>
+<p>Internal routine doing maths for convolution</p>
+<p>convmath does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cmul">cmul</a></h2>
+<pre>
+  Signature: (ar(); ai(); br(); bi(); [o]cr(); [o]ci())</pre>
+<p>Complex multiplication</p>
+<p>cmul does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cdiv">cdiv</a></h2>
+<pre>
+  Signature: (ar(); ai(); br(); bi(); [o]cr(); [o]ci())</pre>
+<p>Complex division</p>
+<p>cdiv does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Where the source is marked `FIX', could re-implement using phase-shift
+factors on the transforms and some real-space bookkeeping, to save
+some temporary space and redundant transforms.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1997, 1998 R.J.R. Williams
+(<a href="mailto:rjrw@ast.leeds.ac.uk">rjrw@ast.leeds.ac.uk</a>), Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>),
+Tuomas J. Lukka, (<a href="mailto:lukka@husc.harvard.edu">lukka@husc.harvard.edu</a>)  All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

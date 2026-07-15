@@ -1,0 +1,169 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSL::DIFF - PDL interface to numerical differentiation routines in GSL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsldiff__"><code>gsldiff()</code></a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#diff_central">diff_central</a></li>
+		<li><a href="#diff_backward">diff_backward</a></li>
+		<li><a href="#diff_forward">diff_forward</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSL::DIFF - PDL interface to numerical differentiation routines in GSL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the numerical differentiation package present in the 
+GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use PDL;
+   use PDL::GSL::DIFF;</pre>
+<pre>
+   my $x0 = 3.3;</pre>
+<pre>
+   my @res = gsldiff(\&amp;myfunction,$x0);
+   # same as above:
+   @res = gsldiff(\&amp;myfunction,$x0,{Method =&gt; 'central'});</pre>
+<pre>
+   # use only values greater than $x0 to get the derivative 
+   @res =  gsldiff(\&amp;myfunction,$x0,{Method =&gt; 'forward'});
+   
+   # use only values smaller than $x0 to get the derivative 
+   @res = gsldiff(\&amp;myfunction,$x0,{Method =&gt; 'backward'});</pre>
+<pre>
+   sub myfunction{
+     my ($x) = @_;
+     return $x**2;
+   }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsldiff__"><code>gsldiff()</code></a></h2>
+<p>This functions serves as an interface to the three differentiation 
+functions present in GSL: gsl_diff_central, gsl_diff_backward and 
+gsl_diff_forward. To compute the derivative, the central method uses 
+values greater and smaller than the point at which the derivative is 
+to be evaluated, while backward and forward use only values smaller 
+and greater respectively. <code>gsldiff()</code> returns both the derivative 
+and an absolute error estimate. The default  method is 'central', 
+others can be specified by passing an option.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($d,$abserr) = gsldiff($function_ref,$x,{Method =&gt; $method});</pre>
+<p>Example:</p>
+<pre>
+  #derivative using default method ('central')
+  ($d,$abserr) = gsldiff(\&amp;myf,3.3);</pre>
+<pre>
+  #same as above with method set explicitly
+  ($d,$abserr) = gsldiff(\&amp;myf,3.3,{Method =&gt; 'central'});</pre>
+<pre>
+  #using backward &amp; forward methods
+  ($d,$abserr) = gsldiff(\&amp;myf,3.3,{Method =&gt; 'backward'});
+  ($d,$abserr) = gsldiff(\&amp;myf,3.3,{Method =&gt; 'forward'});</pre>
+<pre>
+  sub myf{
+    my ($x) = @_;
+    return exp($x);
+  }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Feedback is welcome. Log bugs in the PDL bug database (the
+database is always linked from <a href="http://pdl.perl.org">http://pdl.perl.org</a>).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../PDL.html">the PDL manpage</a></p>
+<p>The GSL documentation is online at</p>
+<pre>
+  <a href="http://sources.redhat.com/gsl/ref/gsl-ref_toc.html">http://sources.redhat.com/gsl/ref/gsl-ref_toc.html</a></pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 2003 Andres Jordan &lt;<a href="mailto:andresj@physics.rutgers.edu">andresj@physics.rutgers.edu</a>&gt;
+All rights reserved. There is no warranty. You are allowed to redistribute 
+this software documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL differentiation routines were written by David Morrison.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="diff_central">diff_central</a></h2>
+<pre>
+  Signature: (double x(); double [o] res(); double [o] abserr(); SV* funcion)</pre>
+<p>info not available</p>
+<p>diff_central does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="diff_backward">diff_backward</a></h2>
+<pre>
+  Signature: (double x(); double [o] res(); double [o] abserr(); SV* funcion)</pre>
+<p>info not available</p>
+<p>diff_backward does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="diff_forward">diff_forward</a></h2>
+<pre>
+  Signature: (double x(); double [o] res(); double [o] abserr(); SV* funcion)</pre>
+<p>info not available</p>
+<p>diff_forward does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+
+</body>
+
+</html>

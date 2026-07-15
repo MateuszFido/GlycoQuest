@@ -1,0 +1,1175 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Primitive - primitive operations for pdl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#inner">inner</a></li>
+		<li><a href="#outer">outer</a></li>
+		<li><a href="#x">x</a></li>
+		<li><a href="#matmult">matmult</a></li>
+		<li><a href="#innerwt">innerwt</a></li>
+		<li><a href="#inner2">inner2</a></li>
+		<li><a href="#inner2d">inner2d</a></li>
+		<li><a href="#inner2t">inner2t</a></li>
+		<li><a href="#crossp">crossp</a></li>
+		<li><a href="#norm">norm</a></li>
+		<li><a href="#indadd">indadd</a></li>
+		<li><a href="#conv1d">conv1d</a></li>
+		<li><a href="#in">in</a></li>
+		<li><a href="#uniq">uniq</a></li>
+		<li><a href="#uniqind">uniqind</a></li>
+		<li><a href="#uniqvec">uniqvec</a></li>
+		<li><a href="#hclip">hclip</a></li>
+		<li><a href="#lclip">lclip</a></li>
+		<li><a href="#clip">clip</a></li>
+		<li><a href="#wtstat">wtstat</a></li>
+		<li><a href="#statsover">statsover</a></li>
+		<li><a href="#stats">stats</a></li>
+		<li><a href="#histogram">histogram</a></li>
+		<li><a href="#whistogram">whistogram</a></li>
+		<li><a href="#histogram2d">histogram2d</a></li>
+		<li><a href="#whistogram2d">whistogram2d</a></li>
+		<li><a href="#fibonacci">fibonacci</a></li>
+		<li><a href="#append">append</a></li>
+		<li><a href="#glue">glue</a></li>
+		<li><a href="#axisvalues">axisvalues</a></li>
+		<li><a href="#random">random</a></li>
+		<li><a href="#randsym">randsym</a></li>
+		<li><a href="#grandom">grandom</a></li>
+		<li><a href="#vsearch">vsearch</a></li>
+		<li><a href="#interpolate">interpolate</a></li>
+		<li><a href="#interpol">interpol</a></li>
+		<li><a href="#interpnd">interpND</a></li>
+		<li><a href="#one2nd">one2nd</a></li>
+		<li><a href="#which">which</a></li>
+		<li><a href="#which_both">which_both</a></li>
+		<li><a href="#where">where</a></li>
+		<li><a href="#wherend">whereND</a></li>
+		<li><a href="#whichnd">whichND</a></li>
+		<li><a href="#setops">setops</a></li>
+		<li><a href="#intersect">intersect</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Primitive - primitive operations for pdl</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides some primitive and useful functions defined
+using PDL::PP and able to use the new indexing tricks.</p>
+<p>See <a href="./Indexing.html">PDL::Indexing</a> for how to use indices creatively.
+For explanation of the signature format, see <a href="./PP.html">PDL::PP</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ # Pulls in PDL::Primitive, among other modules.
+ use PDL;
+ 
+ # Only pull in PDL::Primitive:
+ use PDL::Primitive;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="inner">inner</a></h2>
+<pre>
+  Signature: (a(n); b(n); [o]c())</pre>
+<p>Inner product over one dimension</p>
+<pre>
+ c = sum_i a_i * b_i</pre>
+<p>If <code>a() * b()</code> contains only bad data,
+<code>c()</code> is set bad. Otherwise <code>c()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="outer">outer</a></h2>
+<pre>
+  Signature: (a(n); b(m); [o]c(n,m))</pre>
+<p>outer product over one dimension</p>
+<p>Naturally, it is possible to achieve the effects of outer
+product simply by threading over the &quot;<code>*</code>&quot;
+operator but this function is provided for convenience.</p>
+<p>outer does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="x">x</a></h2>
+<pre>
+ Signature: (a(i,z), b(x,i),[o]c(x,z))</pre>
+<p>Matrix multiplication</p>
+<p>PDL overloads the <code>x</code> operator (normally the repeat operator) for
+matrix multiplication.  The number of columns (size of the 0
+dimension) in the left-hand argument must normally equal the number of 
+rows (size of the 1 dimension) in the right-hand argument.</p>
+<p>Row vectors are represented as (N x 1) two-dimensional PDLs, or you
+may be sloppy and use a one-dimensional PDL.  Column vectors are 
+represented as (1 x N) two-dimensional PDLs.</p>
+<p>Threading occurs in the usual way, but as both the 0 and 1 dimension
+(if present) are included in the operation, you must be sure that 
+you don't try to thread over either of those dims.</p>
+<p>EXAMPLES</p>
+<p>Here are some simple ways to define vectors and matrices:</p>
+<pre>
+ pdl&gt; $r = pdl(1,2);                # A row vector 
+ pdl&gt; $c = pdl([[3],[4]]);          # A column vector 
+ pdl&gt; $c = pdl(3,4)-&gt;(*1);          # A column vector, using NiceSlice
+ pdl&gt; $m = pdl([[1,2],[3,4]]);      # A 2x2 matrix</pre>
+<p>Now that we have a few objects prepared, here is how to
+matrix-multiply them:</p>
+<pre>
+ pdl&gt; print $r x $m                 # row x matrix = row
+ [
+  [ 7 10]
+ ]</pre>
+<pre>
+ pdl&gt; print $m x $r                 # matrix x row = ERROR
+ PDL: Dim mismatch in matmult of [2x2] x [2x1]: 2 != 1</pre>
+<pre>
+ pdl&gt; print $m x $c                 # matrix x column = column
+ [
+  [ 5]
+  [11]
+ ]</pre>
+<pre>
+ pdl&gt; print $m x 2                  # Trivial case: scalar mult.
+ [
+  [2 4]
+  [6 8]
+ ]</pre>
+<pre>
+ pdl&gt; print $r x $c                 # row x column = scalar
+ [
+  [11]
+ ]</pre>
+<pre>
+ pdl&gt; print $c x $r                 # column x row = matrix
+ [
+  [3 6]
+  [4 8]
+ ]</pre>
+<p>INTERNALS</p>
+<p>The mechanics of the multiplication are carried out by the
+<a href="#matmult">matmult</a> method.</p>
+<p>
+</p>
+<h2><a name="matmult">matmult</a></h2>
+<pre>
+  Signature: (a(t,h); b(w,t); [o]c(w,h))</pre>
+<p>Matrix multiplication</p>
+<p>Notionally, matrix multiplication $a x $b is equivalent to the
+threading expression</p>
+<pre>
+    $a-&gt;dummy(1)-&gt;inner($b-&gt;xchg(0,1)-&gt;dummy(2),$c);</pre>
+<p>but for large matrices that breaks CPU cache and is slow.  Instead,
+matmult calculates its result in 32x32x32 tiles, to keep the memory
+footprint within cache as long as possible on most modern CPUs.</p>
+<p>For usage, see <a href="#x">x</a>, a description of the overloaded 'x' operator</p>
+<p>matmult ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="innerwt">innerwt</a></h2>
+<pre>
+  Signature: (a(n); b(n); c(n); [o]d())</pre>
+<p>Weighted (i.e. triple) inner product</p>
+<pre>
+ d = sum_i a(i) b(i) c(i)</pre>
+<p>innerwt does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="inner2">inner2</a></h2>
+<pre>
+  Signature: (a(n); b(n,m); c(m); [o]d())</pre>
+<p>Inner product of two vectors and a matrix</p>
+<pre>
+ d = sum_ij a(i) b(i,j) c(j)</pre>
+<p>Note that you should probably not thread over <code>a</code> and <code>c</code> since that would be  
+very wasteful. Instead, you should use a temporary for <code>b*c</code>.</p>
+<p>inner2 does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="inner2d">inner2d</a></h2>
+<pre>
+  Signature: (a(n,m); b(n,m); [o]c())</pre>
+<p>Inner product over 2 dimensions.</p>
+<p>Equivalent to</p>
+<pre>
+ $c = inner($a-&gt;clump(2), $b-&gt;clump(2))</pre>
+<p>inner2d does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="inner2t">inner2t</a></h2>
+<pre>
+  Signature: (a(j,n); b(n,m); c(m,k); [t]tmp(n,k); [o]d(j,k)))</pre>
+<p>Efficient Triple matrix product <code>a*b*c</code></p>
+<p>Efficiency comes from by using the temporary <code>tmp</code>. This operation only 
+scales as <code>N**3</code> whereas threading using <a href="#inner2">inner2</a> would scale 
+as <code>N**4</code>.</p>
+<p>The reason for having this routine is that you do not need to
+have the same thread-dimensions for <code>tmp</code> as for the other arguments,
+which in case of large numbers of matrices makes this much more
+memory-efficient.</p>
+<p>It is hoped that things like this could be taken care of as a kind of
+closures at some point.</p>
+<p>inner2t does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="crossp">crossp</a></h2>
+<pre>
+  Signature: (a(tri=3); b(tri); [o] c(tri))</pre>
+<p>Cross product of two 3D vectors</p>
+<p>After</p>
+<pre>
+ $c = crossp $a, $b</pre>
+<p>the inner product <code>$c*$a</code> and <code>$c*$b</code> will be zero, i.e. <code>$c</code> is
+orthogonal to <code>$a</code> and <code>$b</code></p>
+<p>crossp does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="norm">norm</a></h2>
+<pre>
+  Signature: (vec(n); [o] norm(n))</pre>
+<p>Normalises a vector to unit Euclidean length</p>
+<p>norm does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="indadd">indadd</a></h2>
+<pre>
+  Signature: (a(); int ind(); [o] sum(m))</pre>
+<p>Threaded Index Add: Add <code>a</code> to the <code>ind</code> element of <code>sum</code>, i.e:</p>
+<pre>
+ sum(ind) += a</pre>
+<p>Simple Example:</p>
+<pre>
+  $a = 2;
+  $ind = 3;
+  $sum = zeroes(10);
+  indadd($a,$ind, $sum);
+  print $sum
+  #Result: ( 2 added to element 3 of $sum)
+  # [0 0 0 2 0 0 0 0 0 0]</pre>
+<p>Threaded Example:</p>
+<pre>
+  $a = pdl( 1,2,3);
+  $ind = pdl( 1,4,6);
+  $sum = zeroes(10);
+  indadd($a,$ind, $sum);
+  print $sum.&quot;\n&quot;;
+  #Result: ( 1, 2, and 3 added to elements 1,4,6 $sum)
+  # [0 1 0 0 2 0 3 0 0 0]</pre>
+<p>The routine barfs if any of the indices are bad.</p>
+<p>
+</p>
+<h2><a name="conv1d">conv1d</a></h2>
+<pre>
+  Signature: (a(m); kern(p); [o]b(m); int reflect)</pre>
+<p>1D convolution along first dimension</p>
+<p>The m-th element of the discrete convolution of an input piddle
+<code>$a</code> of size <code>$M</code>, and a kernel piddle <code>$kern</code> of size <code>$P</code>, is
+calculated as</p>
+<pre>
+                              n = ($P-1)/2
+                              ====
+                              \
+  ($a conv1d $kern)[m]   =     &gt;      $a_ext[m - n] * $kern[n]
+                              /
+                              ====
+                              n = -($P-1)/2</pre>
+<p>where <code>$a_ext</code> is either the periodic (or reflected) extension of
+<code>$a</code> so it is equal to <code>$a</code> on <code> 0..$M-1 </code> and equal to the
+corresponding periodic/reflected image of <code>$a</code> outside that range.</p>
+<pre>
+  $con = conv1d sequence(10), pdl(-1,0,1);</pre>
+<pre>
+  $con = conv1d sequence(10), pdl(-1,0,1), {Boundary =&gt; 'reflect'};</pre>
+<p>By default, periodic boundary conditions are assumed (i.e. wrap around).
+Alternatively, you can request reflective boundary conditions using
+the <code>Boundary</code> option:</p>
+<pre>
+  {Boundary =&gt; 'reflect'} # case in 'reflect' doesn't matter</pre>
+<p>The convolution is performed along the first dimension. To apply it across
+another dimension use the slicing routines, e.g.</p>
+<pre>
+  $b = $a-&gt;mv(2,0)-&gt;conv1d($kernel)-&gt;mv(0,2); # along third dim</pre>
+<p>This function is useful for threaded filtering of 1D signals.</p>
+<p>Compare also <a href="./Image2D.html#conv2d">conv2d</a>, <a href="./ImageND.html#convolve">convolve</a>,
+<a href="./FFT.html#fftconvolve__">fftconvolve</a>, <a href="./FFTW.html#fftwconv">fftwconv</a>,
+<a href="./FFTW.html#rfftwconv">rfftwconv</a></p>
+<p>conv1d does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="in">in</a></h2>
+<pre>
+  Signature: (a(); b(n); [o] c())</pre>
+<p>test if a is in the set of values b</p>
+<pre>
+   $goodmsk = $labels-&gt;in($goodlabels);
+   print pdl(4,3,1)-&gt;in(pdl(2,3,3));
+  [0 1 0]</pre>
+<p><code>in</code> is akin to the <em>is an element of</em> of set theory. In priciple,
+PDL threading could be used to achieve its functionality by using a
+construct like</p>
+<pre>
+   $msk = ($labels-&gt;dummy(0) == $goodlabels)-&gt;orover;</pre>
+<p>However, <code>in</code> doesn't create a (potentially large) intermediate
+and is generally faster.</p>
+<p>in does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="uniq">uniq</a></h2>
+<p>return all unique elements of a piddle</p>
+<p>The unique elements are returned in ascending order.</p>
+<pre>
+  PDL&gt; p pdl(2,2,2,4,0,-1,6,6)-&gt;uniq
+  [-1 0 2 4 6]     # 0 is returned 2nd (sorted order)</pre>
+<pre>
+  PDL&gt; p pdl(2,2,2,4,nan,-1,6,6)-&gt;uniq
+  [-1 2 4 6 nan]   # NaN value is returned at end</pre>
+<p>Note: The returned pdl is 1D; any structure of the input
+piddle is lost.  <code>NaN</code> values are never compare equal to
+any other values, even themselves.  As a result, they are
+always unique. <code>uniq</code> returns the NaN values at the end
+of the result piddle.  This follows the Matlab usage.</p>
+<p>See <a href="#uniqind">uniqind</a> if you need the indices of the unique
+elements rather than the values.</p>
+<p>Bad values are not considered unique by uniq and are ignored.</p>
+<pre>
+ $a=sequence(10);
+ $a=$a-&gt;setbadif($a%3);
+ print $a-&gt;uniq;
+ [0 3 6 9]</pre>
+<p>
+</p>
+<h2><a name="uniqind">uniqind</a></h2>
+<p>Return the indices of all unique elements of a piddle
+The order is in the order of the values to be consistent
+with uniq. <code>NaN</code> values never compare equal with any
+other value and so are always unique.  This follows the
+Matlab usage.</p>
+<pre>
+  PDL&gt; p pdl(2,2,2,4,0,-1,6,6)-&gt;uniqind
+  [5 4 1 3 6]     # the 0 at index 4 is returned 2nd, but...</pre>
+<pre>
+  PDL&gt; p pdl(2,2,2,4,nan,-1,6,6)-&gt;uniqind
+  [5 1 3 6 4]     # ...the NaN at index 4 is returned at end</pre>
+<p>Note: The returned pdl is 1D; any structure of the input
+piddle is lost.</p>
+<p>See <a href="#uniq">uniq</a> if you want the unique values instead of the
+indices.</p>
+<p>Bad values are not considered unique by uniqind and are ignored.</p>
+<p>
+</p>
+<h2><a name="uniqvec">uniqvec</a></h2>
+<p>Return all unique vectors out of a collection</p>
+<pre>
+  NOTE: If any vectors in the input piddle have NaN values
+  they are returned at the end of the non-NaN ones.  This is
+  because, by definition, NaN values never compare equal with
+  any other value.</pre>
+<pre>
+  NOTE: The current implementation does not sort the vectors
+  containing NaN values.</pre>
+<p>The unique vectors are returned in lexicographically sorted
+ascending order. The 0th dimension of the input PDL is treated
+as a dimensional index within each vector, and the 1st and any
+higher dimensions are taken to run across vectors. The return
+value is always 2D; any structure of the input PDL (beyond using
+the 0th dimension for vector index) is lost.</p>
+<p>See also <a href="#uniq">uniq</a> for a uniqe list of scalars; and
+<a href="./Ufunc.html#qsortvec">qsortvec</a> for sorting a list of vectors
+lexicographcally.</p>
+<p>If a vector contains all bad values, it is ignored as in <a href="#uniq">uniq</a>.
+If some of the values are good, it is treated as a normal vector. For
+example, [1 2 BAD] and [BAD 2 3] could be returned, but [BAD BAD BAD] 
+could not.  Vectors containing BAD values will be returned after any
+non-NaN and non-BAD containing vectors, followed by the NaN vectors.</p>
+<p>
+</p>
+<h2><a name="hclip">hclip</a></h2>
+<pre>
+  Signature: (a(); b(); [o] c())</pre>
+<p>clip (threshold) <code>$a</code> by <code>$b</code> (<code>$b</code> is upper bound)</p>
+<p>hclip does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="lclip">lclip</a></h2>
+<pre>
+  Signature: (a(); b(); [o] c())</pre>
+<p>clip (threshold) <code>$a</code> by <code>$b</code> (<code>$b</code> is lower bound)</p>
+<p>lclip does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="clip">clip</a></h2>
+<p>Clip (threshold) a piddle by (optional) upper or lower bounds.</p>
+<pre>
+ $b = $a-&gt;clip(0,3);
+ $c = $a-&gt;clip(undef, $x);</pre>
+<p>clip handles bad values since it is just a
+wrapper around <a href="#hclip">hclip</a> and
+<a href="#lclip">lclip</a>.</p>
+<p>
+</p>
+<h2><a name="wtstat">wtstat</a></h2>
+<pre>
+  Signature: (a(n); wt(n); avg(); [o]b(); int deg)</pre>
+<p>Weighted statistical moment of given degree</p>
+<p>This calculates a weighted statistic over the vector <code>a</code>.
+The formula is</p>
+<pre>
+ b() = (sum_i wt_i * (a_i ** degree - avg)) / (sum_i wt_i)</pre>
+<p>Bad values are ignored in any calculation; <code>$b</code> will only
+have its bad flag set if the output contains any bad data.</p>
+<p>
+</p>
+<h2><a name="statsover">statsover</a></h2>
+<pre>
+  Signature: (a(n); w(n); float+ [o]avg(); float+ [o]prms(); int+ [o]median(); int+ [o]min(); int+ [o]max(); float+ [o]adev(); float+ [o]rms())</pre>
+<p>Calculate useful statistics over a dimension of a piddle</p>
+<pre>
+  ($mean,$prms,$median,$min,$max,$adev,$rms) = statsover($piddle, $weights);</pre>
+<p>This utility function calculates various useful
+quantities of a piddle. These are:</p>
+<ul>
+<li><strong><a name="the_mean" class="item">the mean:</a></strong>
+
+<pre>
+  MEAN = sum (x)/ N</pre>
+<p>with <code>N</code> being the number of elements in x</p>
+</li>
+<li><strong><a name="the_population_rms_deviation_from_the_mean" class="item">the population RMS deviation from the mean:</a></strong>
+
+<pre>
+  PRMS = sqrt( sum( (x-mean(x))^2 )/(N-1)</pre>
+<p>The population deviation is the best-estimate of the deviation 
+of the population from which a sample is drawn.</p>
+</li>
+<li><strong><a name="the_median" class="item">the median</a></strong>
+
+<p>The median is the 50th percentile data value.  Median is found by
+<a href="./Ufunc.html#medover">medover</a>, so WEIGHTING IS IGNORED FOR THE MEDIAN CALCULATION.</p>
+</li>
+<li><strong><a name="the_minimum" class="item">the minimum</a></strong>
+
+</li>
+<li><strong><a name="the_maximum" class="item">the maximum</a></strong>
+
+</li>
+<li><strong><a name="the_average_absolute_deviation" class="item">the average absolute deviation:</a></strong>
+
+<pre>
+  AADEV = sum( abs(x-mean(x)) )/N</pre>
+</li>
+<li><strong><a name="rms_deviation_from_the_mean" class="item">RMS deviation from the mean:</a></strong>
+
+<pre>
+  RMS = sqrt(sum( (x-mean(x))^2 )/N)</pre>
+<p>(also known as the root-mean-square deviation, or the square root of the
+variance)</p>
+</li>
+</ul>
+<p>This operator is a projection operator so the calculation
+will take place over the final dimension. Thus if the input 
+is N-dimensional each returned value will be N-1 dimensional, 
+to calculate the statistics for the entire piddle either
+use <code>clump(-1)</code> directly on the piddle or call <code>stats</code>.</p>
+<p>Bad values are simply ignored in the calculation, effectively reducing
+the sample size.  If all data are bad then the output data are marked bad.</p>
+<p>
+</p>
+<h2><a name="stats">stats</a></h2>
+<p>Calculates useful statistics on a piddle</p>
+<pre>
+ ($mean,$prms,$median,$min,$max,$adev,$rms) = stats($piddle,[$weights]);</pre>
+<p>This utility calculates all the most useful quantities in one call.
+It works the same way as <a href="#statsover">statsover</a>, except that the quantities are
+calculated considering the entire input PDL as a single sample, rather
+than as a collection of rows. See <a href="#statsover">statsover</a> for definitions of the
+returned quantities.</p>
+<p>Bad values are handled; if all input values are bad, then all of the output
+values are flagged bad.</p>
+<p>
+</p>
+<h2><a name="histogram">histogram</a></h2>
+<pre>
+  Signature: (in(n); int+[o] hist(m); double step; double min; int msize =&gt; m)</pre>
+<p>Calculates a histogram for given stepsize and minimum.</p>
+<pre>
+ $h = histogram($data, $step, $min, $numbins);
+ $hist = zeroes $numbins;  # Put histogram in existing piddle.
+ histogram($data, $hist, $step, $min, $numbins);</pre>
+<p>The histogram will contain <code>$numbins</code> bins starting from <code>$min</code>, each
+<code>$step</code> wide. The value in each bin is the number of
+values in <code>$data</code> that lie within the bin limits.</p>
+<p>Data below the lower limit is put in the first bin, and data above the
+upper limit is put in the last bin.</p>
+<p>The output is reset in a different threadloop so that you
+can take a histogram of <code>$a(10,12)</code> into <code>$b(15)</code> and get the result
+you want.</p>
+<p>For a higher-level interface, see <a href="./Basic.html#hist">hist</a>.</p>
+<pre>
+ pdl&gt; p histogram(pdl(1,1,2),1,0,3)
+ [0 2 1]</pre>
+<p>histogram does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="whistogram">whistogram</a></h2>
+<pre>
+  Signature: (in(n); float+ wt(n);float+[o] hist(m); double step; double min; int msize =&gt; m)</pre>
+<p>Calculates a histogram from weighted data for given stepsize and minimum.</p>
+<pre>
+ $h = whistogram($data, $weights, $step, $min, $numbins);
+ $hist = zeroes $numbins;  # Put histogram in existing piddle.
+ whistogram($data, $weights, $hist, $step, $min, $numbins);</pre>
+<p>The histogram will contain <code>$numbins</code> bins starting from <code>$min</code>, each
+<code>$step</code> wide. The value in each bin is the sum of the values in <code>$weights</code>
+that correspond to values in <code>$data</code> that lie within the bin limits.</p>
+<p>Data below the lower limit is put in the first bin, and data above the
+upper limit is put in the last bin.</p>
+<p>The output is reset in a different threadloop so that you
+can take a histogram of <code>$a(10,12)</code> into <code>$b(15)</code> and get the result
+you want.</p>
+<pre>
+ pdl&gt; p whistogram(pdl(1,1,2), pdl(0.1,0.1,0.5), 1, 0, 4)
+ [0 0.2 0.5 0]</pre>
+<p>whistogram does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="histogram2d">histogram2d</a></h2>
+<pre>
+  Signature: (ina(n); inb(n); int+[o] hist(ma,mb); double stepa; double mina; int masize =&gt; ma;
+                     double stepb; double minb; int mbsize =&gt; mb;)</pre>
+<p>Calculates a 2d histogram.</p>
+<pre>
+ $h = histogram2d($datax, $datay, $stepx, $minx,
+       $nbinx, $stepy, $miny, $nbiny);
+ $hist = zeroes $nbinx, $nbiny;  # Put histogram in existing piddle.
+ histogram2d($datax, $datay, $hist, $stepx, $minx, 
+       $nbinx, $stepy, $miny, $nbiny);</pre>
+<p>The histogram will contain <code>$nbinx</code> x <code>$nbiny</code> bins, with the lower
+limits of the first one at <code>($minx, $miny)</code>, and with bin size
+<code>($stepx, $stepy)</code>. 
+The value in each bin is the number of
+values in <code>$datax</code> and <code>$datay</code> that lie within the bin limits.</p>
+<p>Data below the lower limit is put in the first bin, and data above the
+upper limit is put in the last bin.</p>
+<pre>
+ pdl&gt; p histogram2d(pdl(1,1,1,2,2),pdl(2,1,1,1,1),1,0,3,1,0,3)
+ [
+  [0 0 0]
+  [0 2 2]
+  [0 1 0]
+ ]</pre>
+<p>histogram2d does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="whistogram2d">whistogram2d</a></h2>
+<pre>
+  Signature: (ina(n); inb(n); float+ wt(n);float+[o] hist(ma,mb); double stepa; double mina; int masize =&gt; ma;
+                     double stepb; double minb; int mbsize =&gt; mb;)</pre>
+<p>Calculates a 2d histogram from weighted data.</p>
+<pre>
+ $h = whistogram2d($datax, $datay, $weights,
+       $stepx, $minx, $nbinx, $stepy, $miny, $nbiny);
+ $hist = zeroes $nbinx, $nbiny;  # Put histogram in existing piddle.
+ whistogram2d($datax, $datay, $weights, $hist,
+       $stepx, $minx, $nbinx, $stepy, $miny, $nbiny);</pre>
+<p>The histogram will contain <code>$nbinx</code> x <code>$nbiny</code> bins, with the lower
+limits of the first one at <code>($minx, $miny)</code>, and with bin size
+<code>($stepx, $stepy)</code>. 
+The value in each bin is the sum of the values in
+<code>$weights</code> that correspond to values in <code>$datax</code> and <code>$datay</code> that lie within the bin limits.</p>
+<p>Data below the lower limit is put in the first bin, and data above the
+upper limit is put in the last bin.</p>
+<pre>
+ pdl&gt; p whistogram2d(pdl(1,1,1,2,2),pdl(2,1,1,1,1),pdl(0.1,0.2,0.3,0.4,0.5),1,0,3,1,0,3)
+ [
+  [  0   0   0]
+  [  0 0.5 0.9]
+  [  0 0.1   0]
+ ]</pre>
+<p>whistogram2d does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="fibonacci">fibonacci</a></h2>
+<pre>
+  Signature: ([o]x(n))</pre>
+<p>Constructor - a vector with Fibonacci's sequence</p>
+<p>fibonacci does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="append">append</a></h2>
+<pre>
+  Signature: (a(n); b(m); [o] c(mn))</pre>
+<p>append two or more piddles by concatenating along their first dimensions</p>
+<pre>
+ $a = ones(2,4,7);
+ $b = sequence 5;
+ $c = $a-&gt;append($b);  # size of $c is now (7,4,7) (a jumbo-piddle ;)</pre>
+<p><code>append</code> appends two piddles along their first dims. Rest of the dimensions
+must be compatible in the threading sense. Resulting size of first dim is
+the sum of the sizes of the first dims of the two argument piddles -
+ie <code>n + m</code>.</p>
+<p>Similar functions include <a href="#glue">glue</a> (below) and <a href="./Core.html#cat">cat</a>.</p>
+<p>append does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="glue">glue</a></h2>
+<pre>
+  $c = $a-&gt;glue(&lt;dim&gt;,$b,...)</pre>
+<p>Glue two or more PDLs together along an arbitrary dimension 
+(N-D <a href="#append">append</a>).</p>
+<p>Sticks $a, $b, and all following arguments together along the
+specified dimension.  All other dimensions must be compatible in the 
+threading sense.</p>
+<p>Glue is permissive, in the sense that every PDL is treated as having an
+infinite number of trivial dimensions of order 1 -- so <code>$a-&gt;glue(3,$b)</code>
+works, even if $a and $b are only one dimensional.</p>
+<p>If one of the PDLs has no elements, it is ignored.  Likewise, if one
+of them is actually the undefined value, it is treated as if it had no
+elements.</p>
+<p>If the first parameter is a defined perl scalar rather than a pdl,
+then it is taken as a dimension along which to glue everything else,
+so you can say <code>$cube = PDL::glue(3,@image_list);</code> if you like.</p>
+<p><code>glue</code> is implemented in pdl, using a combination of <a href="./Slices.html#xchg">xchg</a> and
+<a href="#append">append</a>.  It should probably be updated (one day) to a pure PP
+function.</p>
+<p>Similar functions include <a href="#append">append</a> (above) and <a href="./Core.html#cat">cat</a>.</p>
+<p>
+</p>
+<h2><a name="axisvalues">axisvalues</a></h2>
+<pre>
+  Signature: ([o,nc]a(n))</pre>
+<p>Internal routine</p>
+<p><code>axisvalues</code> is the internal primitive that implements 
+<a href="./Basic.html#axisvals">axisvals</a> 
+and alters its argument.</p>
+<p>axisvalues does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="random">random</a></h2>
+<p>Constructor which returns piddle of random numbers</p>
+<pre>
+ $a = random([type], $nx, $ny, $nz,...);
+ $a = random $b;</pre>
+<p>etc (see <a href="./Core.html#zeroes">zeroes</a>).</p>
+<p>This is the uniform distribution between 0 and 1 (assumedly
+excluding 1 itself). The arguments are the same as <code>zeroes</code>
+(q.v.) - i.e. one can specify dimensions, types or give
+a template.</p>
+<p>You can use the perl function <em>srand</em> to seed the random
+generator. For further details consult Perl's  <em>srand</em>
+documentation.</p>
+<p>
+</p>
+<h2><a name="randsym">randsym</a></h2>
+<p>Constructor which returns piddle of random numbers</p>
+<pre>
+ $a = randsym([type], $nx, $ny, $nz,...);
+ $a = randsym $b;</pre>
+<p>etc (see <a href="./Core.html#zeroes">zeroes</a>).</p>
+<p>This is the uniform distribution between 0 and 1 (excluding both 0 and
+1, cf <a href="#random">random</a>). The arguments are the same as <code>zeroes</code> (q.v.) -
+i.e. one can specify dimensions, types or give a template.</p>
+<p>You can use the perl function <em>srand</em> to seed the random
+generator. For further details consult Perl's  <em>srand</em>
+documentation.</p>
+<p>
+</p>
+<h2><a name="grandom">grandom</a></h2>
+<p>Constructor which returns piddle of Gaussian random numbers</p>
+<pre>
+ $a = grandom([type], $nx, $ny, $nz,...);
+ $a = grandom $b;</pre>
+<p>etc (see <a href="./Core.html#zeroes">zeroes</a>).</p>
+<p>This is generated using the math library routine <code>ndtri</code>.</p>
+<p>Mean = 0, Stddev = 1</p>
+<p>You can use the perl function <em>srand</em> to seed the random
+generator. For further details consult Perl's  <em>srand</em>
+documentation.</p>
+<p>
+</p>
+<h2><a name="vsearch">vsearch</a></h2>
+<pre>
+  Signature: (i(); x(n); int [o]ip())</pre>
+<p>routine for searching 1D values i.e. step-function interpolation.</p>
+<pre>
+ $inds = vsearch($vals, $xs);</pre>
+<p>Returns for each value of <code>$vals</code> the index of the least larger member
+of <code>$xs</code> (which need to be in increasing order). If the value is larger
+than any member of <code>$xs</code>, the index to the last element of <code>$xs</code> is 
+returned.</p>
+<p>This function is useful e.g. when you have a list of probabilities
+for events and want to generate indices to events:</p>
+<pre>
+ $a = pdl(.01,.86,.93,1); # Barnsley IFS probabilities cumulatively
+ $b = random 20;
+ $c = vsearch($b, $a); # Now, $c will have the appropriate distr.</pre>
+<p>It is possible to use the <a href="./Ufunc.html#cumusumover">cumusumover</a>
+function to obtain cumulative probabilities from absolute probabilities.</p>
+<p>needs major (?) work to handles bad values</p>
+<p>
+</p>
+<h2><a name="interpolate">interpolate</a></h2>
+<pre>
+  Signature: (xi(); x(n); y(n); [o] yi(); int [o] err())</pre>
+<p>routine for 1D linear interpolation</p>
+<pre>
+ ( $yi, $err ) = interpolate($xi, $x, $y)</pre>
+<p>Given a set of points <code>($x,$y)</code>, use linear interpolation
+to find the values <code>$yi</code> at a set of points <code>$xi</code>.</p>
+<p><code>interpolate</code> uses a binary search to find the suspects, er...,
+interpolation indices and therefore abscissas (ie <code>$x</code>)
+have to be <em>strictly</em> ordered (increasing or decreasing). 
+For interpolation at lots of
+closely spaced abscissas an approach that uses the last index found as
+a start for the next search can be faster (compare Numerical Recipes
+<code>hunt</code> routine). Feel free to implement that on top of the binary
+search if you like. For out of bounds values it just does a linear
+extrapolation and sets the corresponding element of <code>$err</code> to 1,
+which is otherwise 0.</p>
+<p>See also <a href="#interpol">interpol</a>, which uses the same routine,
+differing only in the handling of extrapolation - an error message
+is printed rather than returning an error piddle.</p>
+<p>needs major (?) work to handles bad values</p>
+<p>
+</p>
+<h2><a name="interpol">interpol</a></h2>
+<pre>
+ Signature: (xi(); x(n); y(n); [o] yi())</pre>
+<p>routine for 1D linear interpolation</p>
+<pre>
+ $yi = interpol($xi, $x, $y)</pre>
+<p><code>interpol</code> uses the same search method as <a href="#interpolate">interpolate</a>,
+hence <code>$x</code> must be <em>strictly</em> ordered (either increasing or decreasing).
+The difference occurs in the handling of out-of-bounds values; here
+an error message is printed.</p>
+<p>
+</p>
+<h2><a name="interpnd">interpND</a></h2>
+<p>Interpolate values from an N-D piddle, with switchable method</p>
+<pre>
+  $source = 10*xvals(10,10) + yvals(10,10);
+  $index = pdl([[2.2,3.5],[4.1,5.0]],[[6.0,7.4],[8,9]]);
+  print $source-&gt;interpND( $index );</pre>
+<p>InterpND acts like <a href="./Slices.html#indexnd">indexND</a>,
+collapsing <code>$index</code> by lookup
+into <code>$source</code>; but it does interpolation rather than direct sampling.  
+The interpolation method and boundary condition are switchable via 
+an options hash.</p>
+<p>By default, linear or sample interpolation is used, with constant
+value outside the boundaries of the source pdl.  No dataflow occurs,
+because in general the output is computed rather than indexed.</p>
+<p>All the interpolation methods treat the pixels as value-centered, so
+the <code>sample</code> method will return <code>$a-&gt;(0)</code> for coordinate values on 
+the set [-0.5,0.5), and all methods will return <code>$a-&gt;(1)</code> for 
+a coordinate value of exactly 1.</p>
+<p>Recognized options:</p>
+<dl>
+<dt><strong><a name="method" class="item">method</a></strong></dt>
+
+<dd>
+<p>Values can be:</p>
+<ul>
+<li><strong><a name="sample" class="item">0, s, sample, Sample (default for integer source types)</a></strong>
+
+<p>The nearest value is taken. Pixels are regarded as centered on their
+respective integer coordinates (no offset from the linear case).</p>
+</li>
+<li><strong><a name="linear" class="item">1, l, linear, Linear (default for floating point source types)</a></strong>
+
+<p>The values are N-linearly interpolated from an N-dimensional cube of size 2.</p>
+</li>
+<li><strong><a name="3_c_cube_cubic_cubic" class="item">3, c, cube, cubic, Cubic</a></strong>
+
+<p>The values are interpolated using a local cubic fit to the data.  The
+fit is constrained to match the original data and its derivative at the
+data points.  The second derivative of the fit is not continuous at the 
+data points.  Multidimensional datasets are interpolated by the 
+successive-collapse method.</p>
+<p>(Note that the constraint on the first derivative causes a small amount
+of ringing around sudden features such as step functions).</p>
+</li>
+<li><strong><a name="f_fft_fourier_fourier" class="item">f, fft, fourier, Fourier</a></strong>
+
+<p>The source is Fourier transformed, and the interpolated values are
+explicitly calculated from the coefficients.  The boundary condition
+option is ignored -- periodic boundaries are imposed.</p>
+<p>If you pass in the option &quot;fft&quot;, and it is a list (ARRAY) ref, then it
+is a stash for the magnitude and phase of the source FFT.  If the list
+has two elements then they are taken as already computed; otherwise
+they are calculated and put in the stash.</p>
+</li>
+</ul>
+</dd>
+<dt><strong><a name="b_bound_boundary_boundary2" class="item">b, bound, boundary, Boundary</a></strong></dt>
+
+<dd>
+<p>This option is passed unmodified into <a href="./Slices.html#indexnd">indexND</a>, 
+which is used as the indexing engine for the interpolation.
+Some current allowed values are 'extend', 'periodic', 'truncate', and 'mirror'
+(default is 'truncate').</p>
+</dd>
+<dt><strong><a name="bad" class="item">bad</a></strong></dt>
+
+<dd>
+<p>contains the fill value used for 'truncate' boundary.  (default 0)</p>
+</dd>
+<dt><strong><a name="fft" class="item">fft</a></strong></dt>
+
+<dd>
+<p>An array ref whose associated list is used to stash the FFT of the source
+data, for the FFT method.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="one2nd">one2nd</a></h2>
+<p>Converts a one dimensional index piddle to a set of ND coordinates</p>
+<pre>
+ @coords=one2nd($a, $indices)</pre>
+<p>returns an array of piddles containing the ND indexes corresponding to
+the one dimensional list indices. The indices are assumed to
+correspond to array <code>$a</code> clumped using <code>clump(-1)</code>. This routine is
+used in the old vector form of <a href="#whichnd">whichND</a>, but is useful on
+its own occasionally.</p>
+<pre>
+ pdl&gt; $a=pdl [[[1,2],[-1,1]], [[0,-3],[3,2]]]; $c=$a-&gt;clump(-1)
+ pdl&gt; $maxind=maximum_ind($c); p $maxind;
+ 6
+ pdl&gt; print one2nd($a, maximum_ind($c))
+ 0 1 1
+ pdl&gt; p $a-&gt;at(0,1,1)
+ 3</pre>
+<p>
+</p>
+<h2><a name="which">which</a></h2>
+<pre>
+  Signature: (mask(n); int [o] inds(m))</pre>
+<p>Returns indices of non-zero values from a 1-D PDL</p>
+<pre>
+ $i = which($mask);</pre>
+<p>returns a pdl with indices for all those elements that are nonzero in
+the mask. Note that the returned indices will be 1D. If you feed in a
+multidimensional mask, it will be flattened before the indices are
+calculated.  See also <a href="#whichnd">whichND</a> for multidimensional masks.</p>
+<p>If you want to index into the original mask or a similar piddle
+with output from <code>which</code>, remember to flatten it before calling index:</p>
+<pre>
+  $data = random 5, 5;
+  $idx = which $data &gt; 0.5; # $idx is now 1D
+  $bigsum = $data-&gt;flat-&gt;index($idx)-&gt;sum;  # flatten before indexing</pre>
+<p>Compare also <a href="#where">where</a> for similar functionality.</p>
+<p>SEE ALSO:</p>
+<p><a href="#which_both">which_both</a> returns separately the indices of both
+zero and nonzero values in the mask.</p>
+<p><a href="#where">where</a> returns associated values from a data PDL, rather than 
+indices into the mask PDL.</p>
+<p><a href="#whichnd">whichND</a> returns N-D indices into a multidimensional PDL.</p>
+<pre>
+ pdl&gt; $x = sequence(10); p $x
+ [0 1 2 3 4 5 6 7 8 9]
+ pdl&gt; $indx = which($x&gt;6); p $indx
+ [7 8 9]</pre>
+<p>which does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="which_both">which_both</a></h2>
+<pre>
+  Signature: (mask(n); int [o] inds(m); int [o]notinds(q))</pre>
+<p>Returns indices of zero and nonzero values in a mask PDL</p>
+<pre>
+ ($i, $c_i) = which_both($mask);</pre>
+<p>This works just as <a href="#which">which</a>, but the complement of <code>$i</code> will be in
+<code>$c_i</code>.</p>
+<pre>
+ pdl&gt; $x = sequence(10); p $x
+ [0 1 2 3 4 5 6 7 8 9]
+ pdl&gt; ($small, $big) = which_both ($x &gt;= 5); p &quot;$small\n $big&quot;
+ [5 6 7 8 9]
+ [0 1 2 3 4]</pre>
+<p>which_both does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="where">where</a></h2>
+<p>Use a mask to select values from one or more data PDLs</p>
+<p><code>where</code> accepts one or more data piddles and a mask piddle.  It
+returns a list of output piddles, corresponding to the input data
+piddles.  Each output piddle is a 1-dimensional list of values in its
+corresponding data piddle. The values are drawn from locations where
+the mask is nonzero.</p>
+<p>The output PDLs are still connected to the original data PDLs, for the
+purpose of dataflow.</p>
+<p><code>where</code> combines the functionality of <a href="#which">which</a> and <a href="./Slices.html#index">index</a>
+into a single operation.</p>
+<p>BUGS:</p>
+<p>While <code>where</code> works OK for most N-dimensional cases, it does not
+thread properly over (for example) the (N+1)th dimension in data
+that is compared to an N-dimensional mask.  Use <code>whereND</code> for that.</p>
+<pre>
+ $i = $x-&gt;where($x+5 &gt; 0); # $i contains those elements of $x
+                           # where mask ($x+5 &gt; 0) is 1
+ $i .= -5;  # Set those elements (of $x) to -5. Together, these
+            # commands clamp $x to a maximum of -5.</pre>
+<p>It is also possible to use the same mask for several piddles with
+the same call:</p>
+<pre>
+ ($i,$j,$k) = where($x,$y,$z, $x+5&gt;0);</pre>
+<p>Note: <code>$i</code> is always 1-D, even if <code>$x</code> is &gt;1-D.</p>
+<p>WARNING: The first argument
+(the values) and the second argument (the mask) currently have to have
+the exact same dimensions (or horrible things happen). You *cannot*
+thread over a smaller mask, for example.</p>
+<p>
+</p>
+<h2><a name="wherend">whereND</a></h2>
+<p><code>where</code> with support for ND masks and threading</p>
+<p><code>whereND</code> accepts one or more data piddles and a
+mask piddle.  It returns a list of output piddles,
+corresponding to the input data piddles.  The values
+are drawn from locations where the mask is nonzero.</p>
+<p><code>whereND</code> differs from <code>where</code> in that the mask
+dimensionality is preserved which allows for
+proper threading of the selection operation over
+higher dimensions.</p>
+<p>As with <code>where</code> the output PDLs are still connected
+to the original data PDLs, for the purpose of dataflow.</p>
+<pre>
+  $sdata = whereND $data, $mask
+  ($s1, $s2, ..., $sn) = whereND $d1, $d2, ..., $dn, $mask</pre>
+<pre>
+  where</pre>
+<pre>
+    $data is M dimensional
+    $mask is N &lt; M dimensional
+    dims($data) 1..N == dims($mask) 1..N
+    with threading over N+1 to M dimensions</pre>
+<pre>
+  $data   = sequence(4,3,2);   # example data array
+  $mask4  = (random(4)&gt;0.5);   # example 1-D mask array, has $n4 true values
+  $mask43 = (random(4,3)&gt;0.5); # example 2-D mask array, has $n43 true values
+  $sdat4  = whereND $data, $mask4;   # $sdat4 is a [$n4,3,2] pdl
+  $sdat43 = whereND $data, $mask43;  # $sdat43 is a [$n43,2] pdl</pre>
+<p>Just as with <code>where</code>, you can use the returned value in an
+assignment. That means that both of these examples are valid:</p>
+<pre>
+  # Used to create a new slice stored in $sdat4:
+  $sdat4 = $data-&gt;whereND($mask4);
+  $sdat4 .= 0;
+  # Used in lvalue context:
+  $data-&gt;whereND($mask4) .= 0;</pre>
+<p>
+</p>
+<h2><a name="whichnd">whichND</a></h2>
+<p>Return the coordinates of non-zero values in a mask.</p>
+<p>WhichND returns the N-dimensional coordinates of each nonzero value in
+a mask PDL with any number of dimensions.  The returned values arrive
+as an array-of-vectors suitable for use in
+<a href="./Slices.html#indexnd">indexND</a> or <a href="./Slices.html#range">range</a>.</p>
+<pre>
+ $coords = whichND($mask);</pre>
+<p>returns a PDL containing the coordinates of the elements that are non-zero 
+in <code>$mask</code>, suitable for use in indexND.  The 0th dimension contains the
+full coordinate listing of each point; the 1st dimension lists all the points.
+For example, if $mask has rank 4 and 100 matching elements, then $coords has
+dimension 4x100.</p>
+<p>If no such elements exist, then whichND returns a structured empty PDL:
+an Nx0 PDL that contains no values (but matches, threading-wise, with 
+the vectors that would be produced if such elements existed).</p>
+<p>DEPRECATED BEHAVIOR IN LIST CONTEXT:</p>
+<p>whichND once delivered different values in list context than in scalar
+context, for historical reasons.  In list context, it returned the 
+coordinates transposed, as a collection of 1-PDLs (one per dimension) 
+in a list.  This usage is deprecated in PDL 2.4.10, and will cause a 
+warning to be issued every time it is encountered.  To avoid the
+warning, you can set the global variable &quot;$PDL::whichND&quot; to 's' to 
+get scalar behavior in all contexts, or to 'l' to get list behavior in
+list context.</p>
+<p>In later versions of PDL, the deprecated behavior will disappear.  Deprecated
+list context whichND expressions can be replaced with:</p>
+<pre>
+    @list = $a-&gt;whichND-&gt;mv(0,-1)-&gt;dog;</pre>
+<p>SEE ALSO:</p>
+<p><a href="#which">which</a> finds coordinates of nonzero values in a 1-D mask.</p>
+<p><a href="#where">where</a> extracts values from a data PDL that are associated 
+with nonzero values in a mask PDL.</p>
+<pre>
+ pdl&gt; $a=sequence(10,10,3,4)
+ pdl&gt; ($x, $y, $z, $w)=whichND($a == 203); p $x, $y, $z, $w
+ [3] [0] [2] [0]
+ pdl&gt; print $a-&gt;at(list(cat($x,$y,$z,$w)))
+ 203</pre>
+<p>
+</p>
+<h2><a name="setops">setops</a></h2>
+<p>Implements simple set operations like union and intersection</p>
+<pre>
+   Usage: $set = setops($a, &lt;OPERATOR&gt;, $b);</pre>
+<p>The operator can be <a href="#or"><code>OR</code></a>, <a href="#xor"><code>XOR</code></a> or <a href="#and"><code>AND</code></a>. This is then applied
+to <code>$a</code> viewed as a set and <code>$b</code> viewed as a set. Set theory says
+that a set may not have two or more identical elements, but setops 
+takes care of this for you, so <code>$a=pdl(1,1,2)</code> is OK. The functioning 
+is as follows:</p>
+<dl>
+<dt><strong><a name="or" class="item"><code>OR</code></a></strong></dt>
+
+<dd>
+<p>The resulting vector will contain the elements that are either in <code>$a</code>
+<em>or</em> in <code>$b</code> or both. This is the union in set operation terms</p>
+</dd>
+<dt><strong><a name="xor" class="item"><code>XOR</code></a></strong></dt>
+
+<dd>
+<p>The resulting vector will contain the elements that are either in <code>$a</code>
+or <code>$b</code>, but not in both. This is</p>
+<pre>
+     Union($a, $b) - Intersection($a, $b)</pre>
+<p>in set operation terms.</p>
+</dd>
+<dt><strong><a name="and" class="item"><code>AND</code></a></strong></dt>
+
+<dd>
+<p>The resulting vector will contain the intersection of <code>$a</code> and <code>$b</code>, so
+the elements that are in both <code>$a</code> and <code>$b</code>. Note that for convenience
+this operation is also aliased to <a href="#intersect">intersect</a></p>
+</dd>
+</dl>
+<p>It should be emphasized that these routines are used when one or both of
+the sets <code>$a</code>, <code>$b</code> are hard to calculate or that you get from a separate
+subroutine.</p>
+<p>Finally IDL users might be familiar with Craig Markwardt's <code>cmset_op.pro</code>
+routine which has inspired this routine although it was written independently
+However the present routine has a few less options (but see the exampels)</p>
+<p>You will very often use these functions on an index vector, so that is
+what we will show here. We will in fact something slightly silly. First
+we will find all squares that are also cubes below 10000.</p>
+<p>Create a sequence vector:</p>
+<pre>
+  pdl&gt; $x = sequence(10000)</pre>
+<p>Find all odd and even elements:</p>
+<pre>
+  pdl&gt; ($even, $odd) = which_both( ($x % 2) == 0)</pre>
+<p>Find all squares</p>
+<pre>
+  pdl&gt; $squares= which(ceil(sqrt($x)) == floor(sqrt($x)))</pre>
+<p>Find all cubes (being careful with roundoff error!)</p>
+<pre>
+  pdl&gt; $cubes= which(ceil($x**(1.0/3.0)) == floor($x**(1.0/3.0)+1e-6))</pre>
+<p>Then find all squares that are cubes:</p>
+<pre>
+  pdl&gt; $both = setops($squares, 'AND', $cubes)</pre>
+<p>And print these (assumes that <code>PDL::NiceSlice</code> is loaded!)</p>
+<pre>
+  pdl&gt; p $x($both)
+   [0 1 64 729 4096]</pre>
+<p>Then find all numbers that are either cubes or squares, but not both:</p>
+<pre>
+  pdl&gt; $cube_xor_square = setops($squares, 'XOR', $cubes)</pre>
+<pre>
+  pdl&gt; p $cube_xor_square-&gt;nelem()
+   112</pre>
+<p>So there are a total of 112 of these!</p>
+<p>Finally find all odd squares:</p>
+<pre>
+  pdl&gt; $odd_squares = setops($squares, 'AND', $odd)</pre>
+<p>Another common occurance is to want to get all objects that are
+in <code>$a</code> and in the complement of <code>$b</code>. But it is almost always best
+to create the complement explicitly since the universe that both are
+taken from is not known. Thus use <a href="#which_both">which_both</a> if possible
+to keep track of complements.</p>
+<p>If this is impossible the best approach is to make a temporary:</p>
+<p>This creates an index vector the size of the universe of the sets and
+set all elements in <code>$b</code> to 0</p>
+<pre>
+  pdl&gt; $tmp = ones($n_universe); $tmp($b) .= 0;</pre>
+<p>This then finds the complement of <code>$b</code></p>
+<pre>
+  pdl&gt; $C_b = which($tmp == 1);</pre>
+<p>and this does the final selection:</p>
+<pre>
+  pdl&gt; $set = setops($a, 'AND', $C_b)</pre>
+<p>
+</p>
+<h2><a name="intersect">intersect</a></h2>
+<p>Calculate the intersection of two piddles</p>
+<pre>
+   Usage: $set = intersect($a, $b);</pre>
+<p>This routine is merely a simple interface to <a href="#setops">setops</a>. See
+that for more information</p>
+<p>Find all numbers less that 100 that are of the form 2*y and 3*x</p>
+<pre>
+ pdl&gt; $x=sequence(100)
+ pdl&gt; $factor2 = which( ($x % 2) == 0)
+ pdl&gt; $factor3 = which( ($x % 3) == 0)
+ pdl&gt; $ii=intersect($factor2, $factor3)
+ pdl&gt; p $x($ii)
+ [0 6 12 18 24 30 36 42 48 54 60 66 72 78 84 90 96]</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) Tuomas J. Lukka 1997 (<a href="mailto:lukka@husc.harvard.edu">lukka@husc.harvard.edu</a>) Contributions
+by Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>), Karl Glazebrook
+(<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>), Craig DeForest (<a href="mailto:deforest@boulder.swri.edu">deforest@boulder.swri.edu</a>)
+and Jarle Brinchmann (<a href="mailto:jarle@astro.up.pt">jarle@astro.up.pt</a>)
+All rights reserved. There is no warranty. You are allowed
+to redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution,
+the copyright notice should be included in the file.</p>
+<p>Updated for CPAN viewing compatibility by David Mertens.</p>
+
+</body>
+
+</html>

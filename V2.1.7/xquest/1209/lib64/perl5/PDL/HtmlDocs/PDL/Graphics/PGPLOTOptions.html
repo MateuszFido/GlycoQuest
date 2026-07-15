@@ -1,0 +1,186 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Graphics::PGPLOTOptions - Setting PGPLOT options</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#options">OPTIONS</a></li>
+	<ul>
+
+		<li><a href="#window_specfic_options">Window specfic options</a></li>
+		<li><a href="#plot_specific_options">Plot specific options</a></li>
+		<li><a href="#set_pgplot_options">set_pgplot_options</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Graphics::PGPLOTOptions - Setting PGPLOT options</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>use PGPLOTOptions qw('default_options');</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This package contains one function (at present) which returns PDL::Option
+objects for default settings for plot windows and plot commands. This
+should be complemented by functions that could affect this such as
+file reading commands etc.</p>
+<p>
+</p>
+<hr />
+<h1><a name="options">OPTIONS</a></h1>
+<p>The following is a listing of options that are set in this file and what
+they do and what their default value is</p>
+<p>
+</p>
+<h2><a name="window_specfic_options">Window specfic options</a></h2>
+<p>These options modify the appearance of windows and can also modify the
+default settings for creation of plot axes etc.</p>
+<dl>
+<dt><strong><a name="device" class="item">Device</a></strong></dt>
+
+<dd>
+<p>The default PGPLOT device to use. The default value is set to the PGPLOT_DEV
+environment variable if set, otherwise to '?'.</p>
+</dd>
+<dt><strong><a name="axiscolour" class="item">AxisColour</a></strong></dt>
+
+<dd>
+<p>The colour with which to draw axes. Default value=3 (Green)</p>
+</dd>
+<dt><strong><a name="hardlw_hardch_hardfont_hardaxiscolour_hardcolour" class="item">HardLW, HardCH, HardFont, HardAxisColour, HardColour</a></strong></dt>
+
+<dd>
+<p>The linewidth, character height, font and axis colour to use on hardcopy
+devices. The default values are HardLW=1, HardCH=1.4, HardFont=2 (Roman),
+HardAxisColour=1 (Black) and HardColour=1 as well. The latter is the default
+plot colour to use on hardcopy devices.</p>
+</dd>
+<dt><strong><a name="axis" class="item">Axis</a></strong></dt>
+
+<dd>
+<p>The axis style to use. See the <a href="PGPLOT/Window.html">the PDL::Graphics::PGPLOT::Window manpage</a> documentation
+for details. It defaults to 'Normal' which is a labelled box. Valid arguments
+are 'Empty', 'Box', 'Normal', 'Axes', 'Grid', 'LogX', 'LogY', 'LogXY'.</p>
+</dd>
+<dt><strong><a name="aspectratio" class="item">AspectRatio</a></strong></dt>
+
+<dd>
+<p>The aspect ratio of the output device. The default value is device dependent.</p>
+</dd>
+<dt><strong><a name="windowwidth" class="item">WindowWidth</a></strong></dt>
+
+<dd>
+<p>The width of the output window in inches and defaults to as big as possible.</p>
+</dd>
+<dt><strong><a name="windowxsize_and_windowysize" class="item">WindowXSize and WindowYSize</a></strong></dt>
+
+<dd>
+<p>These are alternatives to AspectRatio and WindowWidth.</p>
+</dd>
+<dt><strong><a name="windowname" class="item">WindowName</a></strong></dt>
+
+<dd>
+<p>The name of the window - can later be retrieved using <code>name()</code>. It defaults
+to 'Window'+Window ID.</p>
+</dd>
+<dt><strong><a name="nxpanel" class="item">NXPanel</a></strong></dt>
+
+<dd>
+<p>The number of panels in the X-direction - defaults to 1</p>
+</dd>
+<dt><strong><a name="nypanel" class="item">NYPanel</a></strong></dt>
+
+<dd>
+<p>The number of panels in the Y-direction - defaults to 1</p>
+</dd>
+<dt><strong><a name="justify" class="item">Justify</a></strong></dt>
+
+<dd>
+<p>A boolean value which, if true, causes both axes to drawn
+to the same scale; see
+the PGPLOT <code>pgenv()</code> command for more information.</p>
+</dd>
+<dt><strong><a name="tightlabels" class="item">TightLabels</a></strong></dt>
+
+<dd>
+<p>Boolean value which, if true, causes axis labels to be pulled
+slightly closer to the main viewport than usual.  That's handy
+for making multi-panel plots.  Undef (the default) is equivalent
+to 0 for panels with NYPanels &lt;= 1 and 1 for panels with NYPanels &gt; 1.</p>
+</dd>
+<dt><strong><a name="titlesize" class="item">TitleSize</a></strong></dt>
+
+<dd>
+<p>The relative size of a plot or image title, compared to other annotations.
+Defaults to 1.0 (original behavior) but can be set to, e.g., 1.5 to 
+emphasize graph titles in a multipanel plot.</p>
+</dd>
+<dt><strong><a name="border" class="item">Border</a></strong></dt>
+
+<dd>
+<p>Adjust the spacing around the plot. See the documentation in
+<a href="PGPLOT/Window.html">the PDL::Graphics::PGPLOT::Window manpage</a> for details.</p>
+</dd>
+<dt><strong><a name="charsize" class="item">CharSize</a></strong></dt>
+
+<dd>
+<p>The default charsize for the plot - used when annotating the axes for
+instance. It defaults to 1.</p>
+</dd>
+<dt><strong><a name="plotposition" class="item">PlotPosition</a></strong></dt>
+
+<dd>
+<p>The position of the plot in normalised coordinates.</p>
+</dd>
+<dt><strong><a name="erase" class="item">Erase</a></strong></dt>
+
+<dd>
+<p>Explicitly erase the plotting surface, normally required when making new
+plots with PlotPosition.</p>
+</dd>
+</dl>
+<p>
+</p>
+<h2><a name="plot_specific_options">Plot specific options</a></h2>
+<p>For the moment see the <code>PDL::Graphics::PGPLOT::Window</code> documentation for
+these.</p>
+<p>
+</p>
+<h2><a name="set_pgplot_options">set_pgplot_options</a></h2>
+<p>This function allows the user to set the default PGPLOT options. It
+is particularly useful in the <code>.perldlrc</code> file since one can do</p>
+<pre>
+  use PDL::Graphics::PGPLOTOptions ('set_pgplot_options');
+  set_pgplot_options('Device' =&gt; '/xs', 'HardLW' =&gt; 3);</pre>
+<p>for instance to set the default values. The main drawback is that the
+routine is rather unflexible with no synonyms or case-insensitivity.</p>
+
+</body>
+
+</html>

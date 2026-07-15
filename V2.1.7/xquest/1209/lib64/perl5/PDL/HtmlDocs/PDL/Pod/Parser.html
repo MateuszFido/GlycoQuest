@@ -1,0 +1,586 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Pod::Parser - base class for creating pod filters and translators</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#section_specifications">SECTION SPECIFICATIONS</a></li>
+	</ul>
+
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#version__"><code>version()</code></a></li>
+	</ul>
+
+	<li><a href="#instance_methods">INSTANCE METHODS</a></li>
+	<ul>
+
+		<li><a href="#new__"><code>new()</code></a></li>
+		<li><a href="#initialize__"><code>initialize()</code></a></li>
+		<li><a href="#select__section_spec1___section_spec2______">select($section_spec1, $section_spec2, ...)</a></li>
+		<li><a href="#want_section__head1_title___head2_title______">want_section($head1_title, $head2_title, ...)</a></li>
+		<li><a href="#begin_input__"><code>begin_input()</code></a></li>
+		<li><a href="#end_input__"><code>end_input()</code></a></li>
+		<li><a href="#preprocess_line__text_"><code>preprocess_line($text)</code></a></li>
+		<li><a href="#preprocess_paragraph__text_"><code>preprocess_paragraph($text)</code></a></li>
+		<li><a href="#parse_pragmas__cmd___text___sep_">parse_pragmas($cmd, $text, $sep)</a></li>
+		<li><a href="#pragma__pragma_name___pragma_value_">pragma($pragma_name, $pragma_value)</a></li>
+		<li><a href="#command__cmd___text___sep_">command($cmd, $text, $sep)</a></li>
+		<li><a href="#verbatim__text_"><code>verbatim($text)</code></a></li>
+		<li><a href="#textblock__text_"><code>textblock($text)</code></a></li>
+		<li><a href="#interior_sequence__seq_cmd___seq_arg_">interior_sequence($seq_cmd, $seq_arg)</a></li>
+		<li><a href="#interpolate__text___end_re_">interpolate($text, $end_re)</a></li>
+		<li><a href="#parse_paragraph__text_"><code>parse_paragraph($text)</code></a></li>
+		<li><a href="#parse_from_filehandle__infilehandle___outfilehandle_">parse_from_filehandle($infilehandle, $outfilehandle)</a></li>
+		<li><a href="#parse_from_file__filename___outfile_">parse_from_file($filename, $outfile)</a></li>
+	</ul>
+
+	<li><a href="#instance_data">INSTANCE DATA</a></li>
+	<ul>
+
+		<li><a href="#_self___input_">$self-&gt;{INPUT}</a></li>
+		<li><a href="#_self___output_">$self-&gt;{OUTPUT}</a></li>
+		<li><a href="#_self___infile_">$self-&gt;{INFILE}</a></li>
+		<li><a href="#_self___outfile_">$self-&gt;{OUTFILE}</a></li>
+		<li><a href="#_self___line_">$self-&gt;{LINE}</a></li>
+		<li><a href="#_self___paragraph_">$self-&gt;{PARAGRAPH}</a></li>
+		<li><a href="#_self___headings_">$self-&gt;{HEADINGS}</a></li>
+		<li><a href="#_self___selected_">$self-&gt;{SELECTED}</a></li>
+		<li><a href="#_self___cutting_">$self-&gt;{CUTTING}</a></li>
+		<li><a href="#_self___sequences_">$self-&gt;{SEQUENCES}</a></li>
+	</ul>
+
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Pod::Parser - base class for creating pod filters and translators</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+    use PDL::Pod::Parser;
+    package PDL::MyParser;
+    @ISA = qw(PDL::Pod::Parser);</pre>
+<pre>
+    sub new {
+        ## constructor code ...
+    }</pre>
+<pre>
+    ## implementation of appropriate subclass methods ...</pre>
+<pre>
+    package main;
+    $parser = new PDL::MyParser;
+    @ARGV = ('-')  unless (@ARGV &gt; 0);
+    for (@ARGV) {
+        $parser-&gt;parse_from_file($_);
+    }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p><strong>PDL::Pod::Parser</strong> is an abstract base class for implementing filters and/or
+translators to parse pod documentation into other formats. It handles
+most of the difficulty of parsing the pod sections in a file and leaves
+it to the subclasses to override various methods to provide the actual
+translation. The other thing that <strong>PDL::Pod::Parser</strong> provides is the ability
+to process only selected sections of pod documentation from the input.</p>
+<p>
+</p>
+<h2><a name="section_specifications">SECTION SPECIFICATIONS</a></h2>
+<p>Certain methods and functions provided by <strong>PDL::Pod::Parser</strong> may be given
+one or more &quot;section specifications&quot; to restrict the text processed to
+only the desired set of sections and their corresponding subsections.  A
+section specification is a string containing one or more Perl-style
+regular expressions separated by forward slashes (&quot;/&quot;).  If you need to
+use a forward slash literally within a section title you can escape it
+with a backslash (&quot;\/&quot;).</p>
+<p>The formal syntax of a section specification is:</p>
+<dl>
+<dt><strong><a name="head1_title_regexp_head2_title_regexp" class="item"><em>head1-title-regexp</em>/<em>head2-title-regexp</em>/...</a></strong></dt>
+
+</dl>
+<p>Any omitted or empty regular expressions will default to &quot;.*&quot;.
+Please note that each regular expression given is implicitly
+anchored by adding &quot;^&quot; and &quot;$&quot; to the beginning and end.  Also, if a
+given regular expression starts with a &quot;!&quot; character, then the
+expression is negated (so <code>!foo</code> would match anything <em>except</em>
+<code>foo</code>).</p>
+<p>Some example section specifications follow.</p>
+<dl>
+<dt><strong><a name="match_the_name_and_synopsis_sections_and_all_of_their_subsections" class="item">Match the <code>NAME</code> and <code>SYNOPSIS</code> sections and all of their subsections:</a></strong></dt>
+
+<dd>
+<p><code>NAME|SYNOPSIS</code></p>
+</dd>
+<dt><strong><a name="match_only_the_question_and_answer_subsections_of_the_description_section" class="item">Match only the <code>Question</code> and <code>Answer</code> subsections of the <code>DESCRIPTION</code>
+section:</a></strong></dt>
+
+<dd>
+<p><code>DESCRIPTION/Question|Answer</code></p>
+</dd>
+<dt><strong><a name="match_the_comments_subsection_of_all_sections" class="item">Match the <code>Comments</code> subsection of <em>all</em> sections:</a></strong></dt>
+
+<dd>
+<p><code>/Comments</code></p>
+</dd>
+<dt><strong><a name="match_all_subsections_of_description_except_for_comments" class="item">Match all subsections of <code>DESCRIPTION</code> <em>except</em> for <code>Comments</code>:</a></strong></dt>
+
+<dd>
+<p><code>DESCRIPTION/!Comments</code></p>
+</dd>
+<dt><strong><a name="match_the_description_section_but_do_not_match_any_of_its_subsections" class="item">Match the <code>DESCRIPTION</code> section but do <em>not</em> match any of its subsections:</a></strong></dt>
+
+<dd>
+<p><code>DESCRIPTION/!.+</code></p>
+</dd>
+<dt><strong><a name="match_all_top_level_sections_but_none_of_their_subsections" class="item">Match all top level sections but none of their subsections:</a></strong></dt>
+
+<dd>
+<p><code>/!.+</code></p>
+</dd>
+</dl>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p><strong>PDL::Pod::Parser</strong> provides the following functions (please note that these
+are functions and <em>not</em> methods, they do not take an object reference
+as an implicit first parameter):</p>
+<p>
+</p>
+<h2><a name="version__"><code>version()</code></a></h2>
+<p>Return the current version of this package.</p>
+<p>
+</p>
+<hr />
+<h1><a name="instance_methods">INSTANCE METHODS</a></h1>
+<p><strong>PDL::Pod::Parser</strong> provides several methods, some of which should be
+overridden by subclasses.  They are as follows:</p>
+<p>
+</p>
+<h2><a name="new__"><code>new()</code></a></h2>
+<p>This is the the constructor for the base class. You should only use it
+if you want to create an instance of a <strong>PDL::Pod::Parser</strong> instead of one of
+its subclasses. The constructor for this class and all of its subclasses
+should return a blessed reference to an associative array (hash).</p>
+<p>
+</p>
+<h2><a name="initialize__"><code>initialize()</code></a></h2>
+<p>This method performs any necessary base class initialization.
+It takes no arguments (other than the object instance of course).
+If subclasses override this method then they <em>must</em> be sure to
+invoke the superclass' <strong>initialize()</strong> method.</p>
+<p>
+</p>
+<h2><a name="select__section_spec1___section_spec2______">select($section_spec1, $section_spec2, ...)</a></h2>
+<p>This is the method that is used to select the particular sections and
+subsections of pod documentation that are to be printed and/or
+processed. If the <em>first</em> <em>argument</em> is the string &quot;+&quot;, then the
+remaining section specifications are <em>added</em> to the current list of
+selections; otherwise the given section specifications will <em>replace</em>
+the current list of selections.</p>
+<p>Each of the <code>$section_spec</code> arguments should be a section
+specification as described in <a href="#section_specifications">SECTION SPECIFICATIONS</a>.  The section
+specifications are parsed by this method and the resulting regular
+expressions are stored in the array referenced by
+<code>$self-&gt;{SELECTED}</code> (please see the description of this member
+variable in <a href="#instance_data">INSTANCE DATA</a>).</p>
+<p>This method should <em>not</em> normally be overridden by subclasses.</p>
+<p>
+</p>
+<h2><a name="want_section__head1_title___head2_title______">want_section($head1_title, $head2_title, ...)</a></h2>
+<p>Returns a value of true if the given section and subsection titles match
+any of the section specifications passed to the <strong>select()</strong> method (or
+if no section specifications were given). Returns a value of false
+otherwise. If <code>$headN_title</code> is ommitted then it defaults to the current
+<code>headN</code> section title in the input.</p>
+<p>This method should <em>not</em> normally be overridden by subclasses.</p>
+<p>
+</p>
+<h2><a name="begin_input__"><code>begin_input()</code></a></h2>
+<p>This method is invoked by <strong>parse_from_filehandle()</strong> immediately <em>before</em>
+processing input from a filehandle. The base class implementation does
+nothing but subclasses may override it to perform any per-file
+intializations.</p>
+<p>
+</p>
+<h2><a name="end_input__"><code>end_input()</code></a></h2>
+<p>This method is invoked by <strong>parse_from_filehandle()</strong> immediately <em>after</em>
+processing input from a filehandle. The base class implementation does
+nothing but subclasses may override it to perform any per-file
+cleanup actions.</p>
+<p>
+</p>
+<h2><a name="preprocess_line__text_"><code>preprocess_line($text)</code></a></h2>
+<p>This methods should be overridden by subclasses that wish to perform any
+kind of preprocessing for each <em>line</em> of input (<em>before</em> it has been
+determined whether or not it is part of a pod paragraph). The parameter
+<code>$text</code> is the input line and the value returned should correspond to
+the new text to use in its place. If the empty string or an undefined
+value is returned then no further process will be performed for this
+line. If desired, this method can call the <strong>parse_paragraph()</strong> method
+directly with any preprocessed text and return an empty string (to
+indicate that no further processing is needed).</p>
+<p>Please note that the <strong>preprocess_line()</strong> method is invoked <em>before</em>
+the <strong>preprocess_paragraph()</strong> method. After all (possibly preprocessed)
+lines in a paragraph have been assembled together and it has been
+determined that the paragraph is part of the pod documentation from one
+of the selected sections, then <strong>preprocess_paragraph()</strong> is invoked.</p>
+<p>The base class implementation of this method returns the given text.</p>
+<p>
+</p>
+<h2><a name="preprocess_paragraph__text_"><code>preprocess_paragraph($text)</code></a></h2>
+<p>This method should be overridden by subclasses that wish to perform any
+kind of preprocessing for each block (paragraph) of pod documentation
+that appears in the input stream.  The parameter <code>$text</code> is the pod
+paragraph from the input file and the value returned should correspond
+to the new text to use in its place.  If the empty string is returned or
+an undefined value is returned, then the given <code>$text</code> is ignored (not
+processed).</p>
+<p>This method is invoked by <strong>parse_paragraph()</strong>. After it returns,
+<strong>parse_paragraph()</strong> examines the current cutting state (which is
+stored in <code>$self-&gt;{CUTTING}</code>). If it evaluates to false then input text
+(including the given <code>$text</code>) is cut (not processed) until the next pod
+directive is encountered.</p>
+<p>Please note that the <strong>preprocess_line()</strong> method is invoked <em>before</em>
+the <strong>preprocess_paragraph()</strong> method. After all (possibly preprocessed)
+lines in a paragraph have been assembled together and it has been
+determined that the paragraph is part of the pod documentation from one
+of the selected sections, then <strong>preprocess_paragraph()</strong> is invoked.</p>
+<p>The base class implementation of this method returns the given text.</p>
+<p>
+</p>
+<h2><a name="parse_pragmas__cmd___text___sep_">parse_pragmas($cmd, $text, $sep)</a></h2>
+<p>This method is called when an <code>=pod</code> directive is encountered. When
+such a pod directive is seen in the input, this method is called and is
+passed the command name <code>$cmd</code> (which should be &quot;pod&quot;) and the
+remainder of the text paragraph <code>$text</code> which appeared immediately
+after the command name. If desired, the text which separated the <code>=pod</code>
+directive from its corresponding text may be found in <code>$sep</code>.  Each
+word in <code>$text</code> is examined to see if it is a pragma specification.
+Pragma specifications are of the form <code>pragma_name=pragma_value</code>.</p>
+<p>Unless the given object is an instance of the <strong>PDL::Pod::Parser</strong> class, the
+base class implementation of this method will invoke the <strong>pragma()</strong> method for
+each pragma specification in <code>$text</code>.  <em>If and only if</em> the given
+object <em>is</em> an instance of the <strong>PDL::Pod::Parser</strong> class, the base class
+version of this method will simply reproduce the <code>=pod</code> command exactly
+as it appeared in the input.</p>
+<p>Derived classes should <em>not</em> usually need to reimplement this method.</p>
+<p>
+</p>
+<h2><a name="pragma__pragma_name___pragma_value_">pragma($pragma_name, $pragma_value)</a></h2>
+<p>This method is invoked for each pragma encountered inside an <code>=pod</code>
+paragraph (see the description of the <strong>parse_pragmas()</strong> method). The
+pragma name is passed in <code>$pragma_name</code> (which should always be
+lowercase) and the corresponding value is <code>$pragma_value</code>.</p>
+<p>The base class implementation of this method does nothing.  Derived
+class implementations of this method should be able to recognize at
+least the following pragmas and take any necessary actions when they are
+encountered:</p>
+<dl>
+<dt><strong><a name="fill_value" class="item"><strong>fill=value</strong></a></strong></dt>
+
+<dd>
+<p>The argument <em>value</em> should be one of <code>on</code>, <code>off</code>, or <code>previous</code>.
+Specifies that &quot;filling-mode&quot; should set to 1, 0, or its previous value
+(respectively). If <em>value</em> is omitted then the default is <code>on</code>.
+Derived classes may use this to decide whether or not to perform any
+filling (wrapping) of subsequent text.</p>
+</dd>
+<dt><strong><a name="style_value" class="item"><strong>style=value</strong></a></strong></dt>
+
+<dd>
+<p>The argument <em>value</em> should be one of <code>bold</code>, <code>italic</code>, <code>code</code>,
+<code>plain</code>, or <code>previous</code>. Specifies that the current default paragraph
+font should be set to <code>bold</code>, <code>italic</code>, <code>code</code>, the empty string <code></code>,
+or its previous value (respectively).  If <em>value</em> is omitted then the
+default is <code>plain</code>.  Derived classes may use this to determine the
+default font style to use for subsequent text.</p>
+</dd>
+<dt><strong><a name="indent_value" class="item"><strong>indent=value</strong></a></strong></dt>
+
+<dd>
+<p>The argument <em>value</em> should be an integer value (with an optional
+sign).  Specifies that the current indentation level should be reset to
+the given value. If a plus (minus) sign precedes the number then the
+indentation level should be incremented (decremented) by the given
+number. If only a plus or minus sign is given (without a number) then
+the current indentation level is incremented or decremented by some
+default amount (to be determined by subclasses).</p>
+</dd>
+</dl>
+<p>The value returned will be 1 if the pragma name was recognized and 0 if
+it wasnt (in which case the pragma was ignored).</p>
+<p>Derived classes should override this method if they wish to implement
+any pragmas. The base class implementation of this method does nothing
+but it does contain some commented-out code which subclasses may want
+to make use of when implementing pragmas.</p>
+<p>
+</p>
+<h2><a name="command__cmd___text___sep_">command($cmd, $text, $sep)</a></h2>
+<p>This method should be overridden by subclasses to take the appropriate
+action when a pod command paragraph (denoted by a line beginning with
+&quot;=&quot;) is encountered.  When such a pod directive is seen in the input,
+this method is called and is passed the command name <code>$cmd</code> and the
+remainder of the text paragraph <code>$text</code> which appears immediately after
+the command name. If desired, the text which separated the command from
+its corresponding text may be found in <code>$sep</code>.  Note that this method
+is <em>not</em> called for <code>=pod</code> paragraphs.</p>
+<p>The base class implementation of this method simply prints the raw pod
+command to the output filehandle and then invokes the <strong>textblock()</strong>
+method, passing it the <code>$text</code> parameter.</p>
+<p>
+</p>
+<h2><a name="verbatim__text_"><code>verbatim($text)</code></a></h2>
+<p>This method may be overridden by subclasses to take the appropriate
+action when a block of verbatim text is encountered. It is passed the
+text block <code>$text</code> as a parameter.</p>
+<p>The base class implementation of this method simply prints the textblock
+(unmodified) to the output filehandle.</p>
+<p>
+</p>
+<h2><a name="textblock__text_"><code>textblock($text)</code></a></h2>
+<p>This method may be overridden by subclasses to take the appropriate
+action when a normal block of pod text is encountered (although the base
+class method will usually do what you want). It is passed the text block
+<code>$text</code> as a parameter.</p>
+<p>In order to process interior sequences, subclasses implementations of
+this method will probably want invoke the <strong>interpolate()</strong> method,
+passing it the text block <code>$text</code> as a parameter and then perform any
+desired processing upon the returned result.</p>
+<p>The base class implementation of this method simply prints the text block
+as it occurred in the input stream).</p>
+<p>
+</p>
+<h2><a name="interior_sequence__seq_cmd___seq_arg_">interior_sequence($seq_cmd, $seq_arg)</a></h2>
+<p>This method should be overridden by subclasses to take the appropriate
+action when an interior sequence is encountered. An interior sequence is
+an embedded command within a block of text which appears as a command
+name (usually a single uppercase character) followed immediately by
+a string of text which is enclosed in angle brackets. This method is
+passed the sequence command <code>$seq_cmd</code> and the corresponding text
+$seq_arg and is invoked by the <strong>interpolate()</strong> method for each
+interior sequence that occurs in the string that it is passed.
+It should return the desired text string to be used in place of
+the interior sequence.</p>
+<p>Subclass implementationss of this method may wish to examine the
+the array referenced by <code>$self-&gt;{SEQUENCES}</code> which is a
+stack of all the interior sequences that are currently being
+processed (they may be nested). The current interior sequence
+(the one given by <code>$seq_cmd&lt;$seq_arg&gt;</code>) should always
+be at the top of this stack.</p>
+<p>The base class implementation of the <strong>interior_sequence()</strong> method simply
+returns the raw text of the of the interior sequence (as it occurred in
+the input) to the output filehandle.</p>
+<p>
+</p>
+<h2><a name="interpolate__text___end_re_">interpolate($text, $end_re)</a></h2>
+<p>This method will translate all text (including any embedded interior
+sequences) in the given text string <code>$text</code> and return the
+interpolated result.  If a second argument is given, then it is taken to
+be a regular expression that indicates when to quit interpolating the
+string.  Upon return, the <code>$text</code> parameter will have been modified to
+contain only the un-processed portion of the given string (which will
+<em>not</em> contain any text matched by <code>$end_re</code>).</p>
+<p>This method should probably <em>not</em> be overridden by subclasses.
+It should be noted that this method invokes itself recursively
+to handle any nested interior sequences.</p>
+<p>
+</p>
+<h2><a name="parse_paragraph__text_"><code>parse_paragraph($text)</code></a></h2>
+<p>This method takes the text of a pod paragraph to be processed and
+invokes the appropriate method (one of <strong>command()</strong>, <strong>verbatim()</strong>,
+or <strong>textblock()</strong>).</p>
+<p>This method does <em>not</em> usually need to be overridden by subclasses.</p>
+<p>
+</p>
+<h2><a name="parse_from_filehandle__infilehandle___outfilehandle_">parse_from_filehandle($infilehandle, $outfilehandle)</a></h2>
+<p>This method takes a glob to a filehandle (which is assumed to already be
+opened for reading) and reads the entire input stream looking for blocks
+(paragraphs) of pod documentation to be processed. For each block of pod
+documentation encountered it will call the <strong>parse_paragraph()</strong> method.</p>
+<p>If a second argument is given then it should be a filehandle glob where
+output should be sent (otherwise the default output filehandle is
+<code>STDOUT</code>). If no first argument is given the default input filehandle
+<code>STDIN</code> is used.</p>
+<p>The input filehandle that is currently in use is stored in the member
+variable whose key is &quot;INPUT&quot; (e.g. <code>$self-&gt;{INPUT}</code>).</p>
+<p>The output filehandle that is currently in use is stored in the member
+variable whose key is &quot;OUTPUT&quot; (e.g. <code>$self-&gt;{OUTPUT}</code>).</p>
+<p>Input is read line-by-line and assembled into paragraphs (which are
+separated by lines containing nothing but whitespace). The current line
+number is stored in the member variable whose key is &quot;LINE&quot; (e.g.
+<code>$self-&gt;{LINE}</code>) and the current paragraph number is stored in the
+member variable whose key is &quot;PARAGRAPH&quot; (e.g.  <code>$self-&gt;{PARAGRAPH}</code>).</p>
+<p>This method does <em>not</em> usually need to be overridden by subclasses.</p>
+<p>
+</p>
+<h2><a name="parse_from_file__filename___outfile_">parse_from_file($filename, $outfile)</a></h2>
+<p>This method takes a filename and does the following:</p>
+<ul>
+<li>
+<p>opens the input and output files for reading
+(creating the appropriate filehandles)</p>
+</li>
+<li>
+<p>invokes the <strong>parse_from_filehandle()</strong> method passing it the
+corresponding input and output filehandles.</p>
+</li>
+<li>
+<p>closes the input and output files.</p>
+</li>
+</ul>
+<p>If the special input filename &quot;-&quot; or &quot;&lt;&amp;STDIN&quot; is given then the STDIN
+filehandle is used for input (and no open or close is performed).  If no
+input filename is specified then &quot;-&quot; is implied.  If a reference is
+passed instead of a filename then it is assumed to be a glob-style
+reference to a filehandle.</p>
+<p>If a second argument is given then it should be the name of the desired
+output file.  If the special output filename &quot;-&quot; or &quot;&gt;&amp;STDOUT&quot; is given
+then the STDOUT filehandle is used for output (and no open or close is
+performed). If the special output filename &quot;&gt;&amp;STDERR&quot; is given then the
+STDERR filehandle is used for output (and no open or close is
+performed).  If no output filename is specified then &quot;-&quot; is implied.
+If a reference is passed instead of a filename then it is assumed to
+be a glob-style reference to a filehandle.</p>
+<p>The name of the input file that is currently being read is stored in the
+member variable whose key is &quot;INFILE&quot; (e.g. <code>$self-&gt;{INFILE}</code>).</p>
+<p>The name of the output file that is currently being written is stored in
+the member variable whose key is &quot;OUTFILE&quot; (e.g.  <code>$self-&gt;{OUTFILE}</code>).</p>
+<p>This method does <em>not</em> usually need to be overridden by subclasses.</p>
+<p>
+</p>
+<hr />
+<h1><a name="instance_data">INSTANCE DATA</a></h1>
+<p><strong>PDL::Pod::Parser</strong> uses the following data members for each of its
+instances (where <code>$self</code> is a reference to such an instance):</p>
+<p>
+</p>
+<h2><a name="_self___input_">$self-&gt;{INPUT}</a></h2>
+<p>The current input filehandle.</p>
+<p>
+</p>
+<h2><a name="_self___output_">$self-&gt;{OUTPUT}</a></h2>
+<p>The current output filehandle.</p>
+<p>
+</p>
+<h2><a name="_self___infile_">$self-&gt;{INFILE}</a></h2>
+<p>The name of the current input file.</p>
+<p>
+</p>
+<h2><a name="_self___outfile_">$self-&gt;{OUTFILE}</a></h2>
+<p>The name of the current output file.</p>
+<p>
+</p>
+<h2><a name="_self___line_">$self-&gt;{LINE}</a></h2>
+<p>The current line number from the input stream.</p>
+<p>
+</p>
+<h2><a name="_self___paragraph_">$self-&gt;{PARAGRAPH}</a></h2>
+<p>The current paragraph number from the input stream (which includes input
+paragraphs that are <em>not</em> part of the pod documentation).</p>
+<p>
+</p>
+<h2><a name="_self___headings_">$self-&gt;{HEADINGS}</a></h2>
+<p>A reference to an array of the current section heading titles for each
+heading level (note that the first heading level title is at index 0).</p>
+<p>
+</p>
+<h2><a name="_self___selected_">$self-&gt;{SELECTED}</a></h2>
+<p>A reference to an array of references to arrays. Each subarray is a list
+of anchored regular expressions (preceded by a &quot;!&quot; if the regexp is to be
+negated). The index of the expression in the subarray should correspond
+to the index of the heading title in <strong>$self-&gt;{HEADINGS}</strong> that it is
+to be matched against.</p>
+<p>
+</p>
+<h2><a name="_self___cutting_">$self-&gt;{CUTTING}</a></h2>
+<p>A boolean-valued scalar which evaluates to true if text from the
+input file is currently being &quot;cut&quot;.</p>
+<p>
+</p>
+<h2><a name="_self___sequences_">$self-&gt;{SEQUENCES}</a></h2>
+<p>An array reference to the stack of interior sequence commands that are
+currently in the middle of being processed.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>To create a pod translator to translate pod documentation to some other
+format, you usually only need to create a subclass of <strong>PDL::Pod::Parser</strong>
+which overrides the base class implementation for the following methods:</p>
+<ul>
+<li>
+<p><strong>pragma()</strong></p>
+</li>
+<li>
+<p><strong>command()</strong></p>
+</li>
+<li>
+<p><strong>verbatim()</strong></p>
+</li>
+<li>
+<p><strong>textblock()</strong></p>
+</li>
+<li>
+<p><strong>interior_sequence()</strong></p>
+</li>
+</ul>
+<p>You may also want to implement the <strong>begin_input()</strong> and <strong>end_input()</strong>
+methods for your subclass (to perform any needed per-file intialization
+or cleanup).</p>
+<p>If you need to perform any preprocesssing of input before it is parsed
+you may want to implement one or both of the <strong>preprocess_line()</strong> and/or
+<strong>preprocess_paragraph()</strong> methods.</p>
+<p>Also, don't forget to make sure your subclass constructor invokes the
+base class' <strong>initialize()</strong> method.</p>
+<p>Sometimes it may be necessary to make more than one pass over the input
+files. This isn't a problem as long as none of the input files correspond
+to <code>STDIN</code>. You can override either the <strong>parse_from_filehandle()</strong>
+method or the <strong>parse_from_file()</strong> method to make the first pass yourself
+to collect all the information you need and then invoke the base class
+method to do the rest of the standard processing.</p>
+<p>Feel free to add any member data fields you need to keep track of things
+like current font, indentation, horizontal or vertical position, or
+whatever else you like.</p>
+<p>For the most part, the <strong>PDL::Pod::Parser</strong> base class should be able to
+do most of the input parsing for you and leave you free to worry about
+how to intepret the commands and translate the result.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Brad Appleton &lt;<a href="mailto:Brad_Appleton-GBDA001@email.mot.com">Brad_Appleton-GBDA001@email.mot.com</a>&gt;</p>
+<p>Based on code for <strong>Pod::Text</strong> written by
+Tom Christiansen &lt;<a href="mailto:tchrist@mox.perl.com">tchrist@mox.perl.com</a>&gt;</p>
+
+</body>
+
+</html>

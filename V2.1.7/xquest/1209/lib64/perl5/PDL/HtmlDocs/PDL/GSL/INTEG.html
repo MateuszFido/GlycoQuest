@@ -1,0 +1,581 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSL::INTEG - PDL interface to numerical integration routines in GSL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gslinteg_qng______non_adaptive_gauss_kronrod_integration"><code>gslinteg_qng()</code> - Non-adaptive Gauss-Kronrod integration</a></li>
+		<li><a href="#gslinteg_qag______adaptive_integration"><code>gslinteg_qag()</code> - Adaptive integration</a></li>
+		<li><a href="#gslinteg_qags______adaptive_integration_with_singularities"><code>gslinteg_qags()</code> - Adaptive integration with singularities</a></li>
+		<li><a href="#gslinteg_qagp______adaptive_integration_with_known_singular_points"><code>gslinteg_qagp()</code> - Adaptive integration with known singular points</a></li>
+		<li><a href="#gslinteg_qagi______adaptive_integration_on_infinite_interval"><code>gslinteg_qagi()</code> - Adaptive integration on infinite interval</a></li>
+		<li><a href="#gslinteg_qagiu______adaptive_integration_on_infinite_interval"><code>gslinteg_qagiu()</code> - Adaptive integration on infinite interval</a></li>
+		<li><a href="#gslinteg_qagil______adaptive_integration_on_infinite_interval"><code>gslinteg_qagil()</code> - Adaptive integration on infinite interval</a></li>
+		<li><a href="#gslinteg_qawc______adaptive_integration_for_cauchy_principal_values"><code>gslinteg_qawc()</code> - Adaptive integration for Cauchy principal values</a></li>
+		<li><a href="#gslinteg_qaws______adaptive_integration_for_singular_functions"><code>gslinteg_qaws()</code> - Adaptive integration for singular functions</a></li>
+		<li><a href="#gslinteg_qawo______adaptive_integration_for_oscillatory_functions"><code>gslinteg_qawo()</code> - Adaptive integration for oscillatory functions</a></li>
+		<li><a href="#gslinteg_qawf______adaptive_integration_for_fourier_integrals"><code>gslinteg_qawf()</code> - Adaptive integration for Fourier integrals</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#qng_meat">qng_meat</a></li>
+		<li><a href="#qag_meat">qag_meat</a></li>
+		<li><a href="#qags_meat">qags_meat</a></li>
+		<li><a href="#qagp_meat">qagp_meat</a></li>
+		<li><a href="#qagi_meat">qagi_meat</a></li>
+		<li><a href="#qagiu_meat">qagiu_meat</a></li>
+		<li><a href="#qagil_meat">qagil_meat</a></li>
+		<li><a href="#qawc_meat">qawc_meat</a></li>
+		<li><a href="#qaws_meat">qaws_meat</a></li>
+		<li><a href="#qawo_meat">qawo_meat</a></li>
+		<li><a href="#qawf_meat">qawf_meat</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSL::INTEG - PDL interface to numerical integration routines in GSL</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the numerical integration package present in the 
+GNU Scientific Library, which is an implementation of QUADPACK.</p>
+<p>Functions are named <strong>gslinteg_{algorithm}</strong> where {algorithm}  
+is the QUADPACK naming convention. The available functions are:</p>
+<dl>
+<dt><strong><a name="gslinteg_qng_non_adaptive_gauss_kronrod_integration" class="item">gslinteg_qng: Non-adaptive Gauss-Kronrod integration</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qag_adaptive_integration" class="item">gslinteg_qag: Adaptive integration</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qags_adaptive_integration_with_singularities" class="item">gslinteg_qags: Adaptive integration with singularities</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qagp_adaptive_integration_with_known_singular_points" class="item">gslinteg_qagp: Adaptive integration with known singular points</a></strong></dt>
+
+<dt><strong><a name="form" class="item">gslinteg_qagi: Adaptive integration on infinite interval of the form (-\infty,\infty)</a></strong></dt>
+
+<dt><strong>gslinteg_qagiu: Adaptive integration on infinite interval of the form (a,\infty)</strong></dt>
+
+<dt><strong>gslinteg_qagil: Adaptive integration on infinite interval of the form (-\infty,b)</strong></dt>
+
+<dt><strong><a name="gslinteg_qawc_adaptive_integration_for_cauchy_principal_values" class="item">gslinteg_qawc: Adaptive integration for Cauchy principal values</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qaws_adaptive_integration_for_singular_functions" class="item">gslinteg_qaws: Adaptive integration for singular functions</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qawo_adaptive_integration_for_oscillatory_functions" class="item">gslinteg_qawo: Adaptive integration for oscillatory functions</a></strong></dt>
+
+<dt><strong><a name="gslinteg_qawf_adaptive_integration_for_fourier_integrals" class="item">gslinteg_qawf: Adaptive integration for Fourier integrals</a></strong></dt>
+
+</dl>
+<p>Each algorithm computes an approximation to the integral, I, 
+of the function f(x)w(x), where w(x) is a weight function 
+(for general integrands w(x)=1). The user provides absolute
+and relative error bounds (epsabs,epsrel) which specify
+the following accuracy requirement:</p>
+<p>|RESULT - I|  &lt;= max(epsabs, epsrel |I|)</p>
+<p>The routines will fail to converge if the 
+error bounds are too stringent, but always return the best 
+approximation obtained up to that stage</p>
+<p>All functions return the result, and estimate of the absolute
+error and an error flag (which is zero if there were no problems). 
+You are responsible for checking for any errors, no warnings are issued
+unless the option {Warn =&gt; 'y'} is specified in which case
+the reason of failure will be printed.</p>
+<p>You can nest integrals up to 20 levels. If you find yourself in
+the unlikely situation that you need more, you can change the value
+of 'max_nested_integrals' in the first line of the file 'FUNC.c' 
+and recompile.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+   use PDL;
+   use PDL::GSL::INTEG;</pre>
+<pre>
+   my $a = 1.2;
+   my $b = 3.7;
+   my $epsrel = 0;
+   my $epsabs = 1e-6;</pre>
+<pre>
+   # Non adaptive integration
+   my ($res,$abserr,$ierr,$neval) = gslinteg_qng(\&amp;myf,$a,$b,$epsrel,$epsabs);
+   # Warnings on
+   my ($res,$abserr,$ierr,$neval) = gslinteg_qng(\&amp;myf,$a,$b,$epsrel,$epsabs,{Warn=&gt;'y'});</pre>
+<pre>
+   # Adaptive integration with warnings on
+   my $limit = 1000;
+   my $key = 5;
+   my ($res,$abserr,$ierr) = gslinteg_qag(\&amp;myf,$a,$b,$epsrel,
+                                     $epsabs,$limit,$key,{Warn=&gt;'y'});</pre>
+<pre>
+   sub myf{
+     my ($x) = @_;
+     return exp(-$x**2);
+   }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gslinteg_qng______non_adaptive_gauss_kronrod_integration"><code>gslinteg_qng()</code> -- Non-adaptive Gauss-Kronrod integration</a></h2>
+<p>This function applies the Gauss-Kronrod 10-point, 21-point, 43-point and 87-point 
+integration rules in succession until an estimate of the integral of f over ($a,$b) 
+is achieved within the desired absolute and relative error limits, $epsabs and $epsrel.
+It is meant for fast integration of smooth functions. It returns an array with the 
+result, an estimate of the absolute error, an error flag and the number of function
+evaluations performed.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr,$neval) = gslinteg_qng($function_ref,$a,$b,
+                                             $epsrel,$epsabs,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+   my ($res,$abserr,$ierr,$neval) = gslinteg_qng(\&amp;f,0,1,0,1e-9);
+   # with warnings on
+   my ($res,$abserr,$ierr,$neval) = gslinteg_qng(\&amp;f,0,1,0,1e-9,{Warn =&gt; 'y'});</pre>
+<pre>
+   sub f{
+     my ($x) = @_;
+     return ($x**2.6)*log(1.0/$x);
+   }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qag______adaptive_integration"><code>gslinteg_qag()</code> -- Adaptive integration</a></h2>
+<p>This function applies an integration rule adaptively until an estimate of 
+the integral of f over ($a,$b) is achieved within the desired absolute and 
+relative error limits, $epsabs and $epsrel. On each iteration the adaptive 
+integration strategy bisects the interval with the largest error estimate; 
+the maximum number of allowed subdivisions is given by the parameter $limit.
+The integration rule is determined by the 
+value of $key, which has to be one of (1,2,3,4,5,6) and correspond to 
+the 15, 21, 31, 41, 51 and 61  point Gauss-Kronrod rules respectively.
+It returns an array with the result, an estimate of the absolute error 
+and an error flag.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qag($function_ref,$a,$b,$epsrel,
+                                      $epsabs,$limit,$key,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+
+  my ($res,$abserr,$ierr) = gslinteg_qag(\&amp;f,0,1,0,1e-10,1000,1);
+  # with warnings on
+  my ($res,$abserr,$ierr) = gslinteg_qag(\&amp;f,0,1,0,1e-10,1000,1,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+     my ($x) = @_;
+     return ($x**2.6)*log(1.0/$x);
+   }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qags______adaptive_integration_with_singularities"><code>gslinteg_qags()</code> -- Adaptive integration with singularities</a></h2>
+<p>This function applies the Gauss-Kronrod 21-point integration rule 
+adaptively until an estimate of the integral of f over ($a,$b) is 
+achieved within the desired absolute and relative error limits, 
+$epsabs and $epsrel. The algorithm is such that it
+accelerates the convergence of the integral in the presence of 
+discontinuities and integrable singularities. 
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qags($function_ref,$a,$b,$epsrel,
+                                       $epsabs,$limit,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qags(\&amp;f,0,1,0,1e-10,1000);
+  # with warnings on 
+  ($res,$abserr,$ierr) = gslinteg_qags(\&amp;f,0,1,0,1e-10,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+     my ($x) = @_;
+     return ($x)*log(1.0/$x);
+   }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qagp______adaptive_integration_with_known_singular_points"><code>gslinteg_qagp()</code> -- Adaptive integration with known singular points</a></h2>
+<p>This function applies the adaptive integration algorithm used by 
+gslinteg_qags taking into account the location of singular points
+until an estimate of 
+the integral of f over ($a,$b) is achieved within the desired absolute and 
+relative error limits, $epsabs and $epsrel.
+Singular points are supplied in the piddle $points, whose endpoints 
+determine the integration range.
+So, for example, if the function has singular points at x_1 and x_2 and the 
+integral is desired from a to b (a &lt; x_1 &lt; x_2 &lt; b), $points = pdl(a,x_1,x_2,b).
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qagp($function_ref,$points,$epsabs,
+                                       $epsrel,$limit,[{Warn =&gt; $warn}])</pre>
+<p>Example:</p>
+<pre>
+  my $points = pdl(0,1,sqrt(2),3);
+  my ($res,$abserr,$ierr) = gslinteg_qagp(\&amp;f,$points,0,1e-3,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qagp(\&amp;f,$points,0,1e-3,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    my $x2 = $x**2;
+    my $x3 = $x**3;
+    return $x3 * log(abs(($x2-1.0)*($x2-2.0)));
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qagi______adaptive_integration_on_infinite_interval"><code>gslinteg_qagi()</code> -- Adaptive integration on infinite interval</a></h2>
+<p>This function estimates the integral of the function f over the
+infinite interval (-\infty,+\infty) within the desired absolute and 
+relative error limits, $epsabs and $epsrel.
+After a transformation, the algorithm
+of gslinteg_qags with a 15-point Gauss-Kronrod rule is used.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qagi($function_ref,$epsabs,
+                                       $epsrel,$limit,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qagi(\&amp;myfn,1e-7,0,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qagi(\&amp;myfn,1e-7,0,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub myfn{    
+    my ($x) = @_;
+    return exp(-$x - $x*$x) ;
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qagiu______adaptive_integration_on_infinite_interval"><code>gslinteg_qagiu()</code> -- Adaptive integration on infinite interval</a></h2>
+<p>This function estimates the integral of the function f over the
+infinite interval (a,+\infty) within the desired absolute and 
+relative error limits, $epsabs and $epsrel.
+After a transformation, the algorithm
+of gslinteg_qags with a 15-point Gauss-Kronrod rule is used.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qagiu($function_ref,$a,$epsabs,
+                                        $epsrel,$limit,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+  my $alfa = 1;
+  my ($res,$abserr,$ierr) = gslinteg_qagiu(\&amp;f,99.9,1e-7,0,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qagiu(\&amp;f,99.9,1e-7,0,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    if (($x==0) &amp;&amp; ($alfa == 1)) {return 1;}
+    if (($x==0) &amp;&amp; ($alfa &gt; 1)) {return 0;}
+    return ($x**($alfa-1))/((1+10*$x)**2);
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qagil______adaptive_integration_on_infinite_interval"><code>gslinteg_qagil()</code> -- Adaptive integration on infinite interval</a></h2>
+<p>This function estimates the integral of the function f over the
+infinite interval (-\infty,b) within the desired absolute and 
+relative error limits, $epsabs and $epsrel.
+After a transformation, the algorithm
+of gslinteg_qags with a 15-point Gauss-Kronrod rule is used.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qagl($function_ref,$b,$epsabs,
+                                       $epsrel,$limit,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qagil(\&amp;myfn,1.0,1e-7,0,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qagil(\&amp;myfn,1.0,1e-7,0,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub myfn{
+    my ($x) = @_;
+    return exp($x);
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qawc______adaptive_integration_for_cauchy_principal_values"><code>gslinteg_qawc()</code> -- Adaptive integration for Cauchy principal values</a></h2>
+<p>This function computes the Cauchy principal value of the integral of f over (a,b), 
+with a singularity at c, I = \int_a^b dx f(x)/(x - c). The integral is
+estimated within the desired absolute and relative error limits, $epsabs and $epsrel.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qawc($function_ref,$a,$b,$c,$epsabs,$epsrel,$limit)</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qawc(\&amp;f,-1,5,0,0,1e-3,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qawc(\&amp;f,-1,5,0,0,1e-3,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    return 1.0 / (5.0 * $x * $x * $x + 6.0) ;
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qaws______adaptive_integration_for_singular_functions"><code>gslinteg_qaws()</code> -- Adaptive integration for singular functions</a></h2>
+<p>The algorithm in gslinteg_qaws is designed for integrands with algebraic-logarithmic 
+singularities at the end-points of an integration region. 
+Specifically, this function computes the integral given by
+I = \int_a^b dx f(x) (x-a)^alpha (b-x)^beta log^mu (x-a) log^nu (b-x).
+The integral is
+estimated within the desired absolute and relative error limits, $epsabs and $epsrel.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = 
+      gslinteg_qawc($function_ref,$alpha,$beta,$mu,$nu,$a,$b,
+                    $epsabs,$epsrel,$limit,[{Warn =&gt; $warn}]);</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qaws(\&amp;f,0,0,1,0,0,1,0,1e-7,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qaws(\&amp;f,0,0,1,0,0,1,0,1e-7,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    if($x==0){return 0;}
+    else{
+      my $u = log($x);
+      my $v = 1 + $u*$u;
+      return 1.0/($v*$v);
+    }
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qawo______adaptive_integration_for_oscillatory_functions"><code>gslinteg_qawo()</code> -- Adaptive integration for oscillatory functions</a></h2>
+<p>This function uses an adaptive algorithm to compute the integral of f over 
+(a,b) with the weight function sin(omega*x) or cos(omega*x) -- which of 
+sine or cosine is used is determined by the parameter $opt ('cos' or 'sin').
+The integral is
+estimated within the desired absolute and relative error limits, $epsabs and $epsrel.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  ($res,$abserr,$ierr) = gslinteg_qawo($function_ref,$omega,$sin_or_cos,
+                                $a,$b,$epsabs,$epsrel,$limit,[opt])</pre>
+<p>Example:</p>
+<pre>
+  my $PI = 3.14159265358979323846264338328;
+  my ($res,$abserr,$ierr) = PDL::GSL::INTEG::gslinteg_qawo(\&amp;f,10*$PI,'sin',0,1,0,1e-7,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = PDL::GSL::INTEG::gslinteg_qawo(\&amp;f,10*$PI,'sin',0,1,0,1e-7,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    if($x==0){return 0;}
+    else{ return log($x);} 
+  }</pre>
+<p>
+</p>
+<h2><a name="gslinteg_qawf______adaptive_integration_for_fourier_integrals"><code>gslinteg_qawf()</code> -- Adaptive integration for Fourier integrals</a></h2>
+<p>This function attempts to compute a Fourier integral of the function 
+f over the semi-infinite interval [a,+\infty). Specifically, it attempts
+tp compute I = \int_a^{+\infty} dx f(x)w(x), where w(x) is sin(omega*x)
+or cos(omega*x) -- which of sine or cosine is used is determined by 
+the parameter $opt ('cos' or 'sin').
+The integral is
+estimated within the desired absolute error limit $epsabs.
+The maximum number of allowed subdivisions done by the adaptive
+algorithm must be supplied in the parameter $limit.</p>
+<p>Please check the GSL documentation for more information.</p>
+<p>Usage:</p>
+<pre>
+  gslinteg_qawf($function_ref,$omega,$sin_or_cos,$a,$epsabs,$limit,[opt])</pre>
+<p>Example:</p>
+<pre>
+  my ($res,$abserr,$ierr) = gslinteg_qawf(\&amp;f,$PI/2.0,'cos',0,1e-7,1000);
+  # with warnings on
+  ($res,$abserr,$ierr) = gslinteg_qawf(\&amp;f,$PI/2.0,'cos',0,1e-7,1000,{Warn =&gt; 'y'});</pre>
+<pre>
+  sub f{
+    my ($x) = @_;
+    if ($x == 0){return 0;}
+    return 1.0/sqrt($x)    
+  }</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>Feedback is welcome. Log bugs in the PDL bug database (the
+database is always linked from <a href="http://pdl.perl.org">http://pdl.perl.org</a>).</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../PDL.html">the PDL manpage</a></p>
+<p>The GSL documentation is online at</p>
+<pre>
+  <a href="http://sources.redhat.com/gsl/ref/gsl-ref_toc.html">http://sources.redhat.com/gsl/ref/gsl-ref_toc.html</a></pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 2003,2005 Andres Jordan &lt;<a href="mailto:ajordan@eso.org">ajordan@eso.org</a>&gt;
+All rights reserved. There is no warranty. You are allowed to redistribute 
+this software documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL integration routines were written by Brian Gough. QUADPACK
+was written by Piessens, Doncker-Kapenga, Uberhuber and Kahaner.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="qng_meat">qng_meat</a></h2>
+<pre>
+  Signature: (double a(); double b(); double epsabs();
+                   double epsrel(); double [o] result(); double [o] abserr(); 
+                   int [o] neval(); int [o] ierr(); int warn(); SV* funcion)</pre>
+<p>info not available</p>
+<p>qng_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qag_meat">qag_meat</a></h2>
+<pre>
+  Signature: (double a(); double b(); double epsabs();double epsrel(); int limit();
+                   int key(); double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qag_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qags_meat">qags_meat</a></h2>
+<pre>
+  Signature: (double a(); double b(); double epsabs();double epsrel(); int limit();
+                   double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qags_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qagp_meat">qagp_meat</a></h2>
+<pre>
+  Signature: (double pts(l); double epsabs();double epsrel();int limit();
+                   double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qagp_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qagi_meat">qagi_meat</a></h2>
+<pre>
+  Signature: (double epsabs();double epsrel(); int limit();
+                   double [o] result(); double [o] abserr(); int n(); int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qagi_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qagiu_meat">qagiu_meat</a></h2>
+<pre>
+  Signature: (double a(); double epsabs();double epsrel();int limit();
+                   double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qagiu_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qagil_meat">qagil_meat</a></h2>
+<pre>
+  Signature: (double b(); double epsabs();double epsrel();int limit();
+                   double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qagil_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qawc_meat">qawc_meat</a></h2>
+<pre>
+  Signature: (double a(); double b(); double c(); double epsabs();double epsrel();int limit();
+                   double [o] result(); double [o] abserr();int n();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qawc_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qaws_meat">qaws_meat</a></h2>
+<pre>
+  Signature: (double a(); double b();double epsabs();double epsrel();int limit();
+                 double [o] result(); double [o] abserr();int n();
+                 double alpha(); double beta(); int mu(); int nu();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qaws_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qawo_meat">qawo_meat</a></h2>
+<pre>
+  Signature: (double a(); double b();double epsabs();double epsrel();int limit();
+                 double [o] result(); double [o] abserr();int n();
+                 int sincosopt(); double omega(); double L(); int nlevels();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qawo_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="qawf_meat">qawf_meat</a></h2>
+<pre>
+  Signature: (double a(); double epsabs();int limit();
+                 double [o] result(); double [o] abserr();int n();
+                 int sincosopt(); double omega(); int nlevels();int [o] ierr();int warn();; SV* funcion)</pre>
+<p>info not available</p>
+<p>qawf_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+
+</body>
+
+</html>

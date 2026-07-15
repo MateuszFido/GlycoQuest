@@ -18,9 +18,8 @@ pub struct Ms2Scan {
 
 /// Parse all MS2 scans from an mzXML file.
 pub fn parse_scans(path: &Path) -> Result<Vec<Ms2Scan>, String> {
-    let content = std::fs::read_to_string(path).map_err(|err| {
-        format!("cannot read mzXML file {}: {err}", path.display())
-    })?;
+    let content = std::fs::read_to_string(path)
+        .map_err(|err| format!("cannot read mzXML file {}: {err}", path.display()))?;
 
     if !content.contains("<scan") {
         return Err(format!("no scans found in mzXML file: {}", path.display()));
@@ -51,6 +50,33 @@ pub fn parse_scans(path: &Path) -> Result<Vec<Ms2Scan>, String> {
     }
 
     Ok(scans)
+}
+
+/// Count MS2 scan blocks without decoding their peak lists.
+///
+/// This inexpensive first pass is only used by the interactive progress display
+/// so the filtering phase can report an exact denominator and ETA.
+pub(crate) fn count_ms2_scans(path: &Path) -> Result<usize, String> {
+    let content = std::fs::read_to_string(path)
+        .map_err(|err| format!("cannot read mzXML file {}: {err}", path.display()))?;
+    let mut count = 0usize;
+    let mut pos = 0usize;
+
+    while let Some(start) = content[pos..].find("<scan") {
+        let abs_start = pos + start;
+        let tag_end = content[abs_start..]
+            .find('>')
+            .ok_or_else(|| format!("malformed scan tag in {}", path.display()))?;
+        let scan_open_end = abs_start + tag_end + 1;
+        let scan_open_tag = &content[abs_start..scan_open_end];
+        let ms_level = extract_attribute(scan_open_tag, "msLevel").unwrap_or_else(|| "2".into());
+        if ms_level == "2" {
+            count += 1;
+        }
+        pos = scan_open_end;
+    }
+
+    Ok(count)
 }
 
 fn parse_scan_block(
@@ -140,7 +166,9 @@ fn parse_retention_time(scan_body: &str, scan_open_tag: &str) -> Result<f64, Str
 fn parse_retention_time_value(raw: &str) -> Result<f64, String> {
     let trimmed = raw.trim();
     if let Some(seconds) = trimmed.strip_prefix("PT").and_then(|s| s.strip_suffix('S')) {
-        let sec: f64 = seconds.parse().map_err(|_| format!("invalid retention time: {raw}"))?;
+        let sec: f64 = seconds
+            .parse()
+            .map_err(|_| format!("invalid retention time: {raw}"))?;
         return Ok(sec / 60.0);
     }
     trimmed
@@ -242,7 +270,11 @@ fn decode_binary_peak_values(
     }
 }
 
-fn values_to_peak_pairs(values: Vec<f64>, scan_number: u32, path: &Path) -> Result<Vec<(f64, f64)>, String> {
+fn values_to_peak_pairs(
+    values: Vec<f64>,
+    scan_number: u32,
+    path: &Path,
+) -> Result<Vec<(f64, f64)>, String> {
     if values.len() % 2 != 0 {
         return Err(format!(
             "odd number of peak values in scan {scan_number} in {}",
@@ -369,22 +401,49 @@ mod tests {
         assert_eq!(scans.len(), 1);
         assert_eq!(scans[0].scan_number, 1);
         assert!((scans[0].precursor_mz - 800.0).abs() < 0.01);
-        assert!(scans[0].peaks.iter().any(|(mz, _)| (*mz - 204.0867).abs() < 0.01));
+        assert!(
+            scans[0]
+                .peaks
+                .iter()
+                .any(|(mz, _)| (*mz - 204.0867).abs() < 0.01)
+        );
     }
 
     #[test]
     fn parses_dss_pair_fixture() {
         let scans = parse_scans(&fixture("dss_pair.mzXML")).unwrap();
         assert_eq!(scans.len(), 2);
+        assert_eq!(count_ms2_scans(&fixture("dss_pair.mzXML")).unwrap(), 2);
         assert_eq!(scans[0].precursor_charge, Some(2));
         assert_eq!(scans[1].precursor_charge, Some(2));
+    }
+
+    #[test]
+    fn progress_count_matches_parser_for_all_fixtures() {
+        for name in [
+            "hexnac_positive.mzXML",
+            "no_diagnostic.mzXML",
+            "dss_pair.mzXML",
+            "msconvert_style.mzXML",
+        ] {
+            let path = fixture(name);
+            assert_eq!(
+                count_ms2_scans(&path).unwrap(),
+                parse_scans(&path).unwrap().len()
+            );
+        }
     }
 
     #[test]
     fn parses_no_diagnostic_fixture() {
         let scans = parse_scans(&fixture("no_diagnostic.mzXML")).unwrap();
         assert_eq!(scans.len(), 1);
-        assert!(scans[0].peaks.iter().all(|(mz, _)| (*mz - 204.0).abs() > 1.0));
+        assert!(
+            scans[0]
+                .peaks
+                .iter()
+                .all(|(mz, _)| (*mz - 204.0).abs() > 1.0)
+        );
     }
 
     #[test]
@@ -394,8 +453,18 @@ mod tests {
         assert_eq!(scans[0].scan_number, 42);
         assert!((scans[0].retention_time_min - 20.0).abs() < 0.001);
         assert_eq!(scans[0].precursor_charge, Some(2));
-        assert!(scans[0].peaks.iter().any(|(mz, _)| (*mz - 204.0867).abs() < 0.01));
-        assert!(scans[0].peaks.iter().any(|(mz, _)| (*mz - 300.0).abs() < 0.01));
+        assert!(
+            scans[0]
+                .peaks
+                .iter()
+                .any(|(mz, _)| (*mz - 204.0867).abs() < 0.01)
+        );
+        assert!(
+            scans[0]
+                .peaks
+                .iter()
+                .any(|(mz, _)| (*mz - 300.0).abs() < 0.01)
+        );
     }
 
     #[test]

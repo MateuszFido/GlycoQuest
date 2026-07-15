@@ -33,8 +33,12 @@ pub fn load_glycan_library_file(path: &Path) -> Result<GlycanLibrary, String> {
         .next()
         .ok_or_else(|| format!("glycan library {} is empty", path.display()))?;
 
-    let delimiter = sniff_delimiter(header)
-        .ok_or_else(|| format!("unsupported delimiter in glycan library {} (use CSV or TSV)", path.display()))?;
+    let delimiter = sniff_delimiter(header).ok_or_else(|| {
+        format!(
+            "unsupported delimiter in glycan library {} (use CSV or TSV)",
+            path.display()
+        )
+    })?;
 
     let columns = column_indices(header, delimiter, path)?;
 
@@ -53,8 +57,8 @@ pub fn load_glycan_library_file(path: &Path) -> Result<GlycanLibrary, String> {
             ));
         }
 
-        let composition = field(&fields, columns.composition, "composition", line_no, path)?
-            .to_string();
+        let composition =
+            field(&fields, columns.composition, "composition", line_no, path)?.to_string();
 
         let mass_str = field(&fields, columns.mass, "monoisotopic_mass", line_no, path)?;
         let monoisotopic_mass: f64 = mass_str.parse().map_err(|_| {
@@ -70,7 +74,13 @@ pub fn load_glycan_library_file(path: &Path) -> Result<GlycanLibrary, String> {
             ));
         }
 
-        let diag_str = field(&fields, columns.diagnostic_ions, "diagnostic_ions", line_no, path)?;
+        let diag_str = field(
+            &fields,
+            columns.diagnostic_ions,
+            "diagnostic_ions",
+            line_no,
+            path,
+        )?;
         let diagnostic_ions = parse_diagnostic_ions(diag_str, line_no, path)?;
         if diagnostic_ions.is_empty() {
             return Err(format!(
@@ -79,7 +89,13 @@ pub fn load_glycan_library_file(path: &Path) -> Result<GlycanLibrary, String> {
             ));
         }
 
-        let targets_str = field(&fields, columns.residue_targets, "residue_targets", line_no, path)?;
+        let targets_str = field(
+            &fields,
+            columns.residue_targets,
+            "residue_targets",
+            line_no,
+            path,
+        )?;
         let residue_targets = parse_residue_targets(targets_str, line_no, path)?;
 
         entries.push(GlycanEntry {
@@ -92,7 +108,10 @@ pub fn load_glycan_library_file(path: &Path) -> Result<GlycanLibrary, String> {
     }
 
     if entries.is_empty() {
-        return Err(format!("glycan library {} has no glycan rows", path.display()));
+        return Err(format!(
+            "glycan library {} has no glycan rows",
+            path.display()
+        ));
     }
 
     let database_id = path
@@ -175,9 +194,12 @@ fn parse_diagnostic_ions(
 ) -> Result<Vec<DiagnosticIon>, String> {
     let mut ions = Vec::new();
     for token in raw.split(';').map(str::trim).filter(|t| !t.is_empty()) {
-        let (family_raw, rest) = token
-            .split_once('@')
-            .ok_or_else(|| format!("invalid diagnostic ion '{token}' on line {line_no} in {} (expected family@mz)", path.display()))?;
+        let (family_raw, rest) = token.split_once('@').ok_or_else(|| {
+            format!(
+                "invalid diagnostic ion '{token}' on line {line_no} in {} (expected family@mz)",
+                path.display()
+            )
+        })?;
 
         let (mz_str, loss_label) = match rest.split_once('[') {
             Some((mz, label)) => {
@@ -231,11 +253,8 @@ mod tests {
     use std::io::Write;
 
     fn temp_file(name: &str, content: &str) -> std::path::PathBuf {
-        let path = std::env::temp_dir().join(format!(
-            "glycoquest_lib_{}_{}",
-            std::process::id(),
-            name
-        ));
+        let path =
+            std::env::temp_dir().join(format!("glycoquest_lib_{}_{}", std::process::id(), name));
         let mut file = std::fs::File::create(&path).unwrap();
         file.write_all(content.as_bytes()).unwrap();
         path

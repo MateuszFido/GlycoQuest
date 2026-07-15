@@ -1,0 +1,90 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Lvalue - declare PDL lvalue subs</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#subs">subs</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Lvalue - declare PDL lvalue subs</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>Declares a subset of PDL functions so that they
+can be used as lvalue subs. In particular, this allows
+simpler constructs such as</p>
+<pre>
+  $a-&gt;slice(',(0)') .= 1;</pre>
+<p>instead of the clumsy</p>
+<pre>
+  (my $tmp = $a-&gt;slice(',(0)')) .= 1;</pre>
+<p>This will only work if your perl supports lvalue subroutines
+(i.e. versions  &gt;= v5.6.0). Note that lvalue subroutines
+are currently regarded experimental.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Lvalue; # automatically done with all PDL loaders</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="subs">subs</a></h2>
+<p>test if routine is a known PDL lvalue sub</p>
+<pre>
+  print &quot;slice is an lvalue sub&quot; if PDL::Lvalue-&gt;subs('slice');</pre>
+<p>returns the list of PDL lvalue subs if no routine name is given, e.g.</p>
+<pre>
+  @lvfuncs = PDL::Lvalue-&gt;subs;</pre>
+<p>It can be used in scalar context to find out if your
+PDL has lvalue subs:</p>
+<pre>
+  print 'has lvalue subs' if PDL::Lvalue-&gt;subs;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) 2001 Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>) All
+rights reserved. There is no warranty. You are allowed to redistribute
+this software / documentation under certain conditions. For details,
+see the file COPYING in the PDL distribution. If this file is
+separated from the PDL distribution, the copyright notice should be
+included in the file.</p>
+
+</body>
+
+</html>

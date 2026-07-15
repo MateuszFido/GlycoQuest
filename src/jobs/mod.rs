@@ -3,6 +3,6 @@
 mod plan;
 
 pub use plan::{
-    build_varmod_plan, filtered_for_key, GlycanVariant, JobManifest, JobManifestEntry, JobPlan,
-    PlannedJob, SpectrumKey, VarModPlan,
+    GlycanVariant, JobManifest, JobManifestEntry, JobPlan, PlannedJob, SpectrumKey, VarModPlan,
+    build_varmod_plan, filtered_for_key,
 };

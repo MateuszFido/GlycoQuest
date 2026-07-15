@@ -1,0 +1,178 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::IO::NDF - PDL Module for reading and writing Starlink
+N-dimensional data structures as PDLs.</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#rndf__"><code>rndf()</code></a></li>
+		<li><a href="#wndf__"><code>wndf()</code></a></li>
+		<li><a href="#propndfx__"><code>propndfx()</code></a></li>
+	</ul>
+
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#see_also">SEE ALSO</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::IO::NDF - PDL Module for reading and writing Starlink
+N-dimensional data structures as PDLs.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::IO::NDF;</pre>
+<pre>
+ $a = PDL-&gt;rndf($file);</pre>
+<pre>
+ $a = rndf('test_image');
+ $a = rndf('test_image', 1);</pre>
+<pre>
+ $a-&gt;wndf($file);
+ wndf($a, 'out_image');</pre>
+<pre>
+ propndfx($a, 'template', 'out_image');</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module adds the ability to read and write Starlink N-dimensional data
+files as N-dimensional PDLs.</p>
+<p>You must have the Starlink NDF library installed to use it.  The library
+is distributed under the GPL and is available from &quot;http://www.starlink.ac.uk&quot;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="rndf__"><code>rndf()</code></a></h2>
+<p>Reads a piddle from a NDF format data file.</p>
+<pre>
+ $pdl = rndf('file.sdf');
+ $pdl = rndf('file.sdf',1);</pre>
+<p>The '.sdf' suffix is optional. The optional second argument turns off
+automatic quality masking and returns a quality array as well.</p>
+<p>BUG? <code>rndf('bob.sdf',1)</code> calls ndf_sqmf(1,...), which means that
+the quality array is turned into bad pixels - ie the <em>opposite</em> of
+above. Or am I confused?</p>
+<p>Header information and NDF Extensions are stored in the piddle as a hash
+which can be retreived with the <code>$pdl-&gt;gethdr</code> command.
+Array extensions are stored in the header as follows:</p>
+<pre>
+ $a - the base DATA_ARRAY</pre>
+<p>If <code>$hdr = $a-&gt;gethdr</code>;</p>
+<p>then:</p>
+<pre>
+ %{$hdr}        contains all the FITS headers plus:
+ $$hdr{Error}   contains the Error/Variance PDL
+ $$hdr{Quality} The quality byte array (if reqeusted)
+ @{$$hdr{Axis}} Is an array of piddles containing the information
+                for axis 0, 1, etc.
+ $$hdr{NDF_EXT} Contains all the NDF extensions
+ $$hdr{Hist}    Contains the history information
+ $$hdr{NDF_EXT}{_TYPES}
+                Data types for non-PDL NDF extensions so that
+                wndf can reconstruct a NDF.</pre>
+<p>All extension information is stored in the header hash array.
+Extension structures are preserved in hashes, so that the PROJ_PARS
+component of the IRAS.ASTROMETRY extension is stored in
+<code>$$hdr{NDF_EXT}{IRAS}{ASTROMETRY}{'PROJ_PARS'}</code>. All array structures are
+stored as arrays in the Hdr: numeric arrays are stored as PDLs,
+logical and character arrays are stored as plain Perl arrays. FITS
+arrays are a special case and are expanded as scalars into the header.</p>
+<p>PDL does not have a signed byte datatype, so any '_BYTE' data
+is read into a <code>byte</code> (unsigned) piddle and a warning is printed
+to <code>STDOUT</code>.</p>
+<p>If the starlink bad flag is set, then the bad flag on the output
+piddle is also set.  Starlink bad values are converted to the
+current bad value used by the piddle type (if they are different).</p>
+<p>
+</p>
+<h2><a name="wndf__"><code>wndf()</code></a></h2>
+<p>Writes a piddle to a NDF format file:</p>
+<pre>
+   $pdl-&gt;wndf($file);
+   wndf($pdl,$file);</pre>
+<p>wndf can be used for writing PDLs to NDF files. 
+The '.sdf' suffix is optional. All the extensions
+created by rndf are supported by wndf.  This means that error, axis
+and quality arrays will be written if they exist. Extensions are also
+reconstructed by using their name (ie FIGARO.TEST would be expanded as
+a FIGARO extension and a TEST component). Hdr keywords Label, Title
+and Units are treated as special cases and are written to the label,
+title and units fields of the NDF.</p>
+<p>Header information is written to corresponding NDF extensions.
+NDF extensions can also be created in the {NDF} hash by using a key
+containing '.', ie {NDF}{'IRAS.DATA'} would write the information to
+an IRAS.DATA extension in the NDF. rndf stores this as
+<code>$$hdr{NDF}{IRAS}{DATA}</code> and the two systems are interchangeable.</p>
+<p>rndf stores type information in {NDF}{'_TYPES'} and below so that
+wndf can reconstruct the data type of non-PDL extensions. If no
+entry exists in _TYPES, wndf chooses between characters, integer and
+double on a best guess basis.  Any perl arrays are written as CHAR
+array extensions (on the assumption that numeric arrays will exist as
+PDLs).</p>
+<p>The bad flag is written to the file, if set.</p>
+<p>
+</p>
+<h2><a name="propndfx__"><code>propndfx()</code></a></h2>
+<p>Routine to write a PDL to an NDF by copying the extension information
+from an existing NDF and writing DATA,VARIANCE, QUALITY and AXIS info
+from a PDL (if they exist).</p>
+<p>Extensions, labels and history are propogated from the old NDF.
+No new extension information is written.</p>
+<p>This command has been superseded by <a href="#wndf__">wndf()</a>.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>The perl NDF module must be available. This is available from the 
+author or from Starlink (http://www.starlink.rl.ac.uk).</p>
+<p>If an NDF is read which contains AST World Coordinate information
+(a .WCS component) this information is currently ignored. Currently
+WCS information can only be written and stored using standard FITS headers.
+See <a href="http://rlspc5.bnsc.rl.ac.uk/star/docs/sun211.htx/sun211.html#xref_">http://rlspc5.bnsc.rl.ac.uk/star/docs/sun211.htx/sun211.html#xref_</a>
+for more information on AST.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This module was written by Tim Jenness &lt;<a href="mailto:t.jenness@jach.hawaii.edu">t.jenness@jach.hawaii.edu</a>&gt;.
+Copyright (C) Tim Jenness 1997-2000. All Rights Reserved.</p>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../FAQ.html">the PDL::FAQ manpage</a> for general information on the Perl Data language,
+<a href="./NDF.html">the NDF manpage</a> for information on the NDF module.</p>
+
+</body>
+
+</html>

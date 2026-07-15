@@ -24,9 +24,10 @@ export function renderSequencePanel(container: HTMLElement, store: SelectionStor
     const selected = store.selectedCrosslink;
 
     const xlinkPositions = new Set<number>();
+    const monolinkPositions = new Set<number>();
     const glycoPositions = new Map<number, string>();
     for (const xl of crosslinks) {
-      collectPositions(xl, proteinId!, xlinkPositions, glycoPositions);
+      collectPositions(xl, proteinId!, xlinkPositions, monolinkPositions, glycoPositions);
     }
 
     let selectedPositions = new Set<number>();
@@ -59,7 +60,8 @@ export function renderSequencePanel(container: HTMLElement, store: SelectionStor
         const res = document.createElement('span');
         res.className = 'gq-residue';
         res.textContent = seq[j];
-        if (xlinkPositions.has(pos)) res.classList.add('gq-residue--xlink');
+        if (monolinkPositions.has(pos)) res.classList.add('gq-residue--monolink');
+        else if (xlinkPositions.has(pos)) res.classList.add('gq-residue--xlink');
         else if (crosslinks.some((xl) => peptideCovers(xl, proteinId!, pos))) {
           res.classList.add('gq-residue--covered');
         }
@@ -96,12 +98,28 @@ function collectPositions(
   xl: ViewerCrosslink,
   proteinId: string,
   xlinks: Set<number>,
+  monolinks: Set<number>,
   glycos: Map<number, string>,
 ): void {
-  if (xl.protein1 === proteinId && xl.abs_pos1) xlinks.add(xl.abs_pos1);
-  if (xl.protein2 === proteinId && xl.abs_pos2) xlinks.add(xl.abs_pos2);
+  const target = isMonolink(xl) ? monolinks : xlinks;
+  if (xl.protein1 === proteinId && xl.abs_pos1) target.add(xl.abs_pos1);
+  if (xl.protein2 === proteinId && xl.abs_pos2) target.add(xl.abs_pos2);
 
-  if (xl.glyco_residue && xl.glyco_peptide) {
+  if (xl.glyco_sites.length > 0) {
+    for (const site of xl.glyco_sites) {
+      const onP1 = site.peptide === 1 && xl.protein1 === proteinId;
+      const onP2 = site.peptide === 2 && xl.protein2 === proteinId;
+      const pepPos = onP1 ? xl.pep_pos1 : onP2 ? xl.pep_pos2 : null;
+      if (pepPos && site.peptide_position > 0) {
+        const position = pepPos + site.peptide_position - 1;
+        const support = site.plausible ? 'plausible site' : 'no sequon support';
+        glycos.set(
+          position,
+          `Glycan: ${xl.glycan_composition ?? xl.glycan_name ?? '?'} · ${support}`,
+        );
+      }
+    }
+  } else if (xl.glyco_residue && xl.glyco_peptide) {
     const onP1 = xl.glyco_peptide === 1 && xl.protein1 === proteinId;
     const onP2 = xl.glyco_peptide === 2 && xl.protein2 === proteinId;
     if (onP1 || onP2) {
@@ -136,14 +154,36 @@ function isOnProtein(xl: ViewerCrosslink, proteinId: string, pos: number): boole
   return false;
 }
 
+function isMonolink(xl: ViewerCrosslink): boolean {
+  return xl.link_type === 'monolink' || !xl.protein2;
+}
+
 function formatCrosslinkDetail(xl: ViewerCrosslink, proteinId: string): string {
+  const glycoSiteLabel = xl.glyco_sites.length > 0
+    ? xl.glyco_sites
+        .map((site) => `pep${site.peptide}:${site.residue}${site.peptide_position}`)
+        .join(', ')
+    : xl.glyco_residue
+      ? `pep${xl.glyco_peptide}:${xl.glyco_residue}`
+      : null;
+  if (isMonolink(xl)) {
+    const parts = [
+      `Monolink · score ${xl.score.toFixed(2)} · scan ${xl.scan ?? '?'}`,
+      `P1 ${xl.protein1} ${xl.pep_seq1} @${xl.abs_pos1 ?? '?'}`,
+    ];
+    if (xl.xlinker_mass != null) parts.push(`Linker ${xl.xlinker_mass.toFixed(4)} Da`);
+    if (xl.glycan_composition) parts.push(`Glycan ${xl.glycan_composition}`);
+    if (glycoSiteLabel) parts.push(`Sites ${glycoSiteLabel}`);
+    parts.push(`Viewing ${proteinId}`);
+    return parts.join(' · ');
+  }
   const parts = [
     `Score ${xl.score.toFixed(2)} · scan ${xl.scan ?? '?'}`,
     `P1 ${xl.protein1} ${xl.pep_seq1} @${xl.abs_pos1 ?? '?'}`,
     `P2 ${xl.protein2} ${xl.pep_seq2} @${xl.abs_pos2 ?? '?'}`,
   ];
   if (xl.glycan_composition) parts.push(`Glycan ${xl.glycan_composition}`);
-  if (xl.glyco_residue) parts.push(`Site pep${xl.glyco_peptide}:${xl.glyco_residue}`);
+  if (glycoSiteLabel) parts.push(`Sites ${glycoSiteLabel}`);
   parts.push(`Viewing ${proteinId}`);
   return parts.join(' · ');
 }

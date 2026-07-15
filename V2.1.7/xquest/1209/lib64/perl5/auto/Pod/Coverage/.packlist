@@ -1,0 +1,9 @@
+/cluster/apps/perl_modules/1209/bin/pod_cover
+/cluster/apps/perl_modules/1209/share/man/man3/Pod::Coverage.3pm
+/cluster/apps/perl_modules/1209/share/man/man3/Pod::Coverage::CountParents.3pm
+/cluster/apps/perl_modules/1209/share/man/man3/Pod::Coverage::ExportOnly.3pm
+/cluster/apps/perl_modules/1209/share/man/man3/Pod::Coverage::Overloader.3pm
+/cluster/apps/perl_modules/1209/share/perl5/Pod/Coverage.pm
+/cluster/apps/perl_modules/1209/share/perl5/Pod/Coverage/CountParents.pm
+/cluster/apps/perl_modules/1209/share/perl5/Pod/Coverage/ExportOnly.pm
+/cluster/apps/perl_modules/1209/share/perl5/Pod/Coverage/Overloader.pm

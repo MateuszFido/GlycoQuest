@@ -1,0 +1,131 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Fit::Gaussian - routines for fitting gaussians</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#fitgauss1d">fitgauss1d</a></li>
+		<li><a href="#fitgauss1dr">fitgauss1dr</a></li>
+	</ul>
+
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Fit::Gaussian - routines for fitting gaussians</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module contains some custom gaussian fitting routines.
+These were developed in collaboration with Alison Offer,
+they do a reasonably robust job and are quite useful.</p>
+<p>Gaussian fitting is something I do a lot of, so I figured
+it was worth putting in my special code.</p>
+<p>Note it is not clear to me that this code is fully debugged. The reason
+I say that is because I tried using the internal linear eqn solving 
+C routines called elsewhere and they were giving erroneous results. 
+So steal from this code with caution! However it does give good fits to 
+reasonable looking gaussians and tests show correct parameters.</p>
+<pre>
+
+             KGB 29/Oct/2002</pre>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+        use PDL;
+        use PDL::Fit::Gaussian;
+        ($cen, $pk, $fwhm, $back, $err, $fit) = fitgauss1d($x, $data);
+        ($pk, $fwhm, $back, $err, $fit) = fitgauss1dr($r, $data);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="fitgauss1d">fitgauss1d</a></h2>
+<p>Fit 1D Gassian to data piddle</p>
+<pre>
+  ($cen, $pk, $fwhm, $back, $err, $fit) = fitgauss1d($x, $data);</pre>
+<pre>
+  ($cen, $pk, $fwhm, $back, $err, $fit) = fitgauss1d($x, $data);</pre>
+<pre>
+  xval(n); data(n); [o]xcentre();[o]peak_ht(); [o]fwhm(); 
+  [o]background();int [o]err(); [o]datafit(n); 
+  [t]sig(n);  [t]xtmp(n); [t]ytmp(n); [t]yytmp(n); [t]rtmp(n);</pre>
+<p>Fits a 1D Gaussian robustly free parameters are the centre, peak height,
+FWHM. The background is NOT fit, because I find this is generally
+unreliable, rather a median is determined in the 'outer' 10% of
+pixels (i.e. those at the start/end of the data piddle). The initial
+estimate of the FWHM is the length of the piddle/3, so it might fail
+if the piddle is too long. (This is non-robust anyway). Most data
+does just fine and this is a good default gaussian fitter.</p>
+<p>SEE ALSO: fitgauss1dr() for fitting radial gaussians</p>
+<p>
+</p>
+<h2><a name="fitgauss1dr">fitgauss1dr</a></h2>
+<p>Fit 1D Gassian to radial data piddle</p>
+<pre>
+  ($pk, $fwhm2, $back, $err, $fit) = fitgauss1dr($r, $data);</pre>
+<pre>
+  ($pk, $fwhm2, $back, $err, $fit) = fitgauss1dr($r, $data);</pre>
+<pre>
+  xval(n); data(n); [o]peak_ht(); [o]fwhm(); 
+  [o]background();int [o]err(); [o]datafit(n); 
+  [t]sig(n);  [t]xtmp(n); [t]ytmp(n); [t]yytmp(n); [t]rtmp(n);</pre>
+<p>Fits a 1D radial Gaussian robustly free parameters are the peak height,
+FWHM. Centre is assumed to be X=0 (i.e. start of piddle).
+The background is NOT fit, because I find this is generally
+unreliable, rather a median is determined in the 'outer' 10% of
+pixels (i.e. those at the end of the data piddle). The initial
+estimate of the FWHM is the length of the piddle/3, so it might fail
+if the piddle is too long. (This is non-robust anyway). Most data
+does just fine and this is a good default gaussian fitter.</p>
+<p>SEE ALSO: fitgauss1d() to fit centre as well.</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>May not converge for weird data, still pretty good!</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999, Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>),
+Gaussian fitting code by Alison Offer
+(<a href="mailto:aro@aaocbn.aao.gov.au">aro@aaocbn.aao.gov.au</a>)  All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

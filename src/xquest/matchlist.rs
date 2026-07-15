@@ -6,7 +6,7 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 
 use crate::crosslinker::CrosslinkerProfile;
-use crate::jobs::{filtered_for_key, PlannedJob, SpectrumKey};
+use crate::jobs::{PlannedJob, SpectrumKey, filtered_for_key};
 use crate::prefilter::PrefilterResult;
 
 #[derive(Debug, Clone, PartialEq)]
@@ -194,10 +194,8 @@ mod tests {
             mz_light: 500.0,
             mz_heavy: 506.0376605,
         }];
-        let path = std::env::temp_dir().join(format!(
-            "glycoquest_matchlist_{}",
-            std::process::id()
-        ));
+        let path =
+            std::env::temp_dir().join(format!("glycoquest_matchlist_{}", std::process::id()));
         write_matchlist(&path, &rows).unwrap();
         let content = std::fs::read_to_string(&path).unwrap();
         // Columns 4/5 must be distinct per pair so compare_peaks3.pl does not

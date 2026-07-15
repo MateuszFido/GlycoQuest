@@ -1,0 +1,137 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSLSF::AIRY - PDL interface to GSL Special Functions</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#gsl_sf_airy_ai">gsl_sf_airy_Ai</a></li>
+		<li><a href="#gsl_sf_airy_bi">gsl_sf_airy_Bi</a></li>
+		<li><a href="#gsl_sf_airy_ai_scaled">gsl_sf_airy_Ai_scaled</a></li>
+		<li><a href="#gsl_sf_airy_bi_scaled">gsl_sf_airy_Bi_scaled</a></li>
+		<li><a href="#gsl_sf_airy_ai_deriv">gsl_sf_airy_Ai_deriv</a></li>
+		<li><a href="#gsl_sf_airy_bi_deriv">gsl_sf_airy_Bi_deriv</a></li>
+		<li><a href="#gsl_sf_airy_ai_deriv_scaled">gsl_sf_airy_Ai_deriv_scaled</a></li>
+		<li><a href="#gsl_sf_airy_bi_deriv_scaled">gsl_sf_airy_Bi_deriv_scaled</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::GSLSF::AIRY - PDL interface to GSL Special Functions</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This is an interface to the Special Function package present in the GNU Scientific Library.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_ai">gsl_sf_airy_Ai</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Airy Function Ai(x).</p>
+<p>gsl_sf_airy_Ai does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_bi">gsl_sf_airy_Bi</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Airy Function Bi(x).</p>
+<p>gsl_sf_airy_Bi does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_ai_scaled">gsl_sf_airy_Ai_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Scaled Airy Function Ai(x). Ai(x) for x &lt; 0  and exp(+2/3 x^{3/2}) Ai(x) for  x &gt; 0.</p>
+<p>gsl_sf_airy_Ai_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_bi_scaled">gsl_sf_airy_Bi_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Scaled Airy Function Bi(x). Bi(x) for x &lt; 0  and exp(+2/3 x^{3/2}) Bi(x) for  x &gt; 0.</p>
+<p>gsl_sf_airy_Bi_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_ai_deriv">gsl_sf_airy_Ai_deriv</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Derivative Airy Function Ai`(x).</p>
+<p>gsl_sf_airy_Ai_deriv does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_bi_deriv">gsl_sf_airy_Bi_deriv</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Derivative Airy Function Bi`(x).</p>
+<p>gsl_sf_airy_Bi_deriv does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_ai_deriv_scaled">gsl_sf_airy_Ai_deriv_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Derivative Scaled Airy Function Ai(x). Ai`(x) for x &lt; 0  and exp(+2/3 x^{3/2}) Ai`(x) for  x &gt; 0.</p>
+<p>gsl_sf_airy_Ai_deriv_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="gsl_sf_airy_bi_deriv_scaled">gsl_sf_airy_Bi_deriv_scaled</a></h2>
+<pre>
+  Signature: (double x(); double [o]y(); double [o]e())</pre>
+<p>Derivative Scaled Airy Function Bi(x). Bi`(x) for x &lt; 0  and exp(+2/3 x^{3/2}) Bi`(x) for  x &gt; 0.</p>
+<p>gsl_sf_airy_Bi_deriv_scaled does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 1999 Christian Pellegrin &lt;<a href="mailto:chri@infis.univ.trieste.it">chri@infis.univ.trieste.it</a>&gt;
+All rights reserved. There
+is no warranty. You are allowed to redistribute this software /
+documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>The GSL SF modules were written by G. Jungman.</p>
+
+</body>
+
+</html>

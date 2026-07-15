@@ -1,0 +1,219 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Matrix -- a convenience matrix class for column-major access</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#version">VERSION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<ul>
+
+		<li><a href="#overview">Overview</a></li>
+		<li><a href="#implementation">Implementation</a></li>
+	</ul>
+
+	<li><a href="#notes">NOTES</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#mpdl__pdl__matrix__pdl">mpdl, PDL::Matrix::pdl</a></li>
+		<li><a href="#mzeroes__mones__msequence">mzeroes, mones, msequence</a></li>
+		<li><a href="#vpdl">vpdl</a></li>
+		<li><a href="#vzeroes__vones__vsequence">vzeroes, vones, vsequence</a></li>
+		<li><a href="#kroneckerproduct">kroneckerproduct</a></li>
+		<li><a href="#det_general">det_general</a></li>
+		<li><a href="#trace">trace</a></li>
+		<li><a href="#vcrossp__pdl__matrix__crossp">vcrossp, PDL::Matrix::crossp</a></li>
+	</ul>
+
+	<li><a href="#bugs_and_problems">BUGS AND PROBLEMS</a></li>
+	<li><a href="#todo">TODO</a></li>
+	<li><a href="#author_s_">AUTHOR(S)</a></li>
+	<li><a href="#copyright">COPYRIGHT</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Matrix -- a convenience matrix class for column-major access</p>
+<p>
+</p>
+<hr />
+<h1><a name="version">VERSION</a></h1>
+<p>This document refers to version PDL::Matrix 0.5 of PDL::Matrix</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+  use PDL::Matrix;</pre>
+<pre>
+  $m = mpdl [[1,2,3],[4,5,6]];
+  $m = PDL::Matrix-&gt;pdl([[1,2,3],[4,5,6]]);
+  $m = msequence(4,3);
+  @dimsa = $a-&gt;mdims; # 'dims' is not overloaded</pre>
+<pre>
+  $v = vpdl [0,1,2,3]
+  $v = vzeroes(4);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>
+</p>
+<h2><a name="overview">Overview</a></h2>
+<p>This package tries to help people who want to use PDL for 2D matrix
+computation with lots of indexing involved. It provides a PDL
+subclass so one- and two-dimensional piddles that are used as
+vectors resp and matrices can be typed in using traditional matrix
+convention.</p>
+<p>If you want to know more about matrix operation support in PDL, you 
+want to read <a href="./MatrixOps.html">the PDL::MatrixOps manpage</a> or <a href="./Slatec.html">the PDL::Slatec manpage</a>.</p>
+<p>The original pdl class refers to the first index as the first row,
+the second index as the first column of a matrix. Consider</p>
+<pre>
+  print $B = sequence(3,2)
+  [
+   [0 1 2]
+   [3 4 5]
+  ]</pre>
+<p>which gives a 2x3 matrix in terms of the matrix convention, but the
+constructor used (3,2). This might get more confusing when using
+slices like sequence(3,2)-&gt;slice(&quot;1:2,(0)&quot;) : with traditional
+matrix convention one would expect [2 4] instead of [1 2].</p>
+<p>This subclass PDL::Matrix overloads the constructors and indexing
+functions of pdls so that they are compatible with the usual matrix
+convention, where the first dimension refers to the row of a
+matrix. So now, the above example would be written as</p>
+<pre>
+  print $B = PDL::Matrix-&gt;sequence(3,2) # or $B = msequence(3,2)
+  [
+   [0 1]
+   [2 3]
+   [4 5]
+  ]</pre>
+<p>Routines like <a href="./MatrixOps.html#eigens">eigens</a> or
+<a href="./MatrixOps.html#inv">inv</a> can be used without any changes.</p>
+<p>Furthermore one can construct and use vectors as n x 1 matrices
+without mentioning the second index '1'.</p>
+<p>
+</p>
+<h2><a name="implementation">Implementation</a></h2>
+<p><code>PDL::Matrix</code> works by overloading a number of PDL constructors
+and methods such that first and second args (corresponding to
+first and second dims of corresponding matrices) are effectively swapped.
+It is not yet clear if PDL::Matrix achieves a consistent column-major 
+look-and-feel in this way.</p>
+<p>
+</p>
+<hr />
+<h1><a name="notes">NOTES</a></h1>
+<p>As of version 0.5 (rewrite by CED) the matrices are stored in the usual
+way, just constructed and stringified differently.  That way indexing 
+and everything else works the way you think it should.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="mpdl__pdl__matrix__pdl">mpdl, PDL::Matrix::pdl</a></h2>
+<p>constructs an object of class PDL::Matrix which is a piddle child class.</p>
+<pre>
+    $m = mpdl [[1,2,3],[4,5,6]];
+    $m = PDL::Matrix-&gt;pdl([[1,2,3],[4,5,6]]);</pre>
+<p>
+</p>
+<h2><a name="mzeroes__mones__msequence">mzeroes, mones, msequence</a></h2>
+<p>constructs a PDL::Matrix object similar to the piddle constructors
+zeroes, ones, sequence.</p>
+<p>
+</p>
+<h2><a name="vpdl">vpdl</a></h2>
+<p>constructs an object of class PDL::Matrix which is of matrix
+dimensions (n x 1)</p>
+<pre>
+    print $v = vpdl [0,1];
+    [
+     [0]
+     [1]
+    ]</pre>
+<p>
+</p>
+<h2><a name="vzeroes__vones__vsequence">vzeroes, vones, vsequence</a></h2>
+<p>constructs a PDL::Matrix object with matrix dimensions (n x 1),
+therefore only the first scalar argument is used.</p>
+<pre>
+    print $v = vsequence(2);
+    [
+     [0]
+     [1]
+    ]</pre>
+<p>
+</p>
+<h2><a name="kroneckerproduct">kroneckerproduct</a></h2>
+<p>returns kroneckerproduct of two matrices. This is not efficiently
+implemented.</p>
+<p>
+</p>
+<h2><a name="det_general">det_general</a></h2>
+<p>returns a generalized determinant of a matrix. If the matrix is not
+regular, one can specify the rank of the matrix and the corresponding
+subdeterminant is returned. This is implemented using the <code>eigens</code>
+function.</p>
+<p>
+</p>
+<h2><a name="trace">trace</a></h2>
+<p>returns the trace of a matrix (sum of diagonals)</p>
+<p>
+</p>
+<hr />
+<h1><a name="bugs_and_problems">BUGS AND PROBLEMS</a></h1>
+<p>Because we change the way piddles are constructed, not all pdl
+operators may be applied to piddle-matrices. The inner product is not
+redefined. We might have missed some functions/methods. Internal
+consistency of our approach needs yet to be established.</p>
+<p>Because PDL::Matrix changes the way slicing behaves, it breaks many
+operators, notably those in MatrixOps.</p>
+<p>
+</p>
+<hr />
+<h1><a name="todo">TODO</a></h1>
+<p>check all PDL functions, benchmarks, optimization, lots of other things ...</p>
+<p>
+</p>
+<hr />
+<h1><a name="author_s_">AUTHOR(S)</a></h1>
+<p>Stephan Heuel (<a href="mailto:stephan@heuel.org">stephan@heuel.org</a>), Christian Soeller
+(<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>)</p>
+<p>
+</p>
+<hr />
+<h1><a name="copyright">COPYRIGHT</a></h1>
+<p>All rights reserved. There is no warranty. You are allowed to
+redistribute this software / documentation under certain
+conditions. For details, see the file COPYING in the PDL
+distribution. If this file is separated from the PDL distribution, the
+copyright notice should be included in the file.</p>
+
+</body>
+
+</html>

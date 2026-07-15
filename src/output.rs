@@ -7,10 +7,10 @@ mod plan;
 use std::path::Path;
 
 pub use layout::{
-    cleanup_temp_artifacts, derive_project_slug, resolve_project_out_dir, ProjectLayout,
-    DEFAULT_OUT_BASE,
+    DEFAULT_OUT_BASE, ProjectLayout, cleanup_temp_artifacts, derive_project_slug,
+    resolve_project_out_dir,
 };
-pub use plan::{build_run_plan_document, write_plan_json, RunPlanDocument};
+pub use plan::{RunPlanDocument, build_run_plan_document, write_plan_json};
 
 /// Create the output directory if missing, or verify it is a writable directory.
 pub fn ensure_output_dir(path: &Path) -> Result<(), String> {
@@ -22,14 +22,16 @@ pub fn ensure_output_dir(path: &Path) -> Result<(), String> {
             ));
         }
     } else {
-        std::fs::create_dir_all(path).map_err(|err| {
-            format!("cannot create output directory {}: {err}", path.display())
-        })?;
+        std::fs::create_dir_all(path)
+            .map_err(|err| format!("cannot create output directory {}: {err}", path.display()))?;
     }
 
     let test_file = path.join(".glycoquest_write_test");
     std::fs::write(&test_file, b"").map_err(|err| {
-        format!("output directory is not writable: {} ({err})", path.display())
+        format!(
+            "output directory is not writable: {} ({err})",
+            path.display()
+        )
     })?;
     let _ = std::fs::remove_file(test_file);
 

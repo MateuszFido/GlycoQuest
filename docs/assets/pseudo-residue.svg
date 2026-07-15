@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 180" font-family="system-ui, sans-serif" font-size="12">
+  <defs>
+    <style>
+      .title { font-size: 14px; font-weight: 600; fill: #0f172a; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; rx: 6; }
+      .pseudo { fill: #fef3c7; stroke: #d97706; font-weight: 700; }
+      .arrow { stroke: #64748b; stroke-width: 1.5; }
+    </style>
+  </defs>
+  <text x="20" y="24" class="title">xQuest pseudo-residue decoding</text>
+  <rect class="box" x="20" y="44" width="200" height="50"/>
+  <text x="30" y="66" fill="#334155">variable_mod N,203.079373</text>
+  <text x="30" y="84" fill="#334155">’ Asn + glycan mass</text>
+  <line class="arrow" x1="230" y1="69" x2="270" y2="69" marker-end="url(#a)"/>
+  <defs><marker id="a" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker></defs>
+  <rect class="box pseudo" x="280" y="44" width="120" height="50"/>
+  <text x="300" y="76" fill="#92400e">seq: & X &</text>
+  <line class="arrow" x1="410" y1="69" x2="450" y2="69" marker-end="url(#a)"/>
+  <rect class="box" x="460" y="44" width="80" height="50"/>
+  <text x="475" y="76" fill="#334155">glyco N</text>
+  <text x="20" y="130" fill="#64748b">GlycoQuest maps X/U/B/J back to source residue + mass using the job manifest.</text>
+  <text x="20" y="150" fill="#64748b">FASTA must not contain literal X, U, B, or J.</text>
+</svg>

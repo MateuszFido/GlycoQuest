@@ -1,0 +1,82 @@
+site_name: GlycoQuest
+site_description: Documentation for GlycoQuest — glycopeptide crosslink search with xQuest
+# Set site_url when hosting the built site (e.g. GitHub Pages or internal static host).
+repo_url: https://git.proxiomics.com/matt/GlycoQuest
+repo_name: GlycoQuest
+edit_uri: -/tree/master/docs/
+
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: blue
+      accent: amber
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: blue
+      accent: amber
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - toc.follow
+
+plugins:
+  - search
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting started:
+      - Installation: getting-started/installation.md
+      - First run: getting-started/first-run.md
+      - Troubleshooting: getting-started/troubleshooting.md
+  - Configuration:
+      - CLI reference: configuration/cli-reference.md
+      - Settings reference: configuration/settings-reference.md
+      - Crosslinkers: configuration/crosslinkers.md
+      - Glycan libraries: configuration/glycan-libraries.md
+  - Workflow:
+      - Overview: workflow/overview.md
+      - Prefilter: workflow/prefilter.md
+      - xQuest jobs: workflow/xquest-jobs.md
+      - Post-filter: workflow/postfilter.md
+  - Results:
+      - Output files: results/output-files.md
+      - Interpreting hits: results/interpreting-hits.md
+      - HTML report: results/report.md
+      - Network CSV export: results/network-csv-export.md
+  - Viewer:
+      - Using the viewer: viewer/using-the-viewer.md
+      - Scientific interpretation: viewer/scientific-interpretation.md
+  - Science:
+      - Glycopeptide crosslinking: science/glycopeptide-crosslinking.md
+      - Diagnostic ions: science/diagnostic-ions.md
+
+extra:
+  social: []

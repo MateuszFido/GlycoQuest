@@ -1,0 +1,885 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Ufunc - primitive ufunc operations for pdl</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#prodover">prodover</a></li>
+		<li><a href="#dprodover">dprodover</a></li>
+		<li><a href="#cumuprodover">cumuprodover</a></li>
+		<li><a href="#dcumuprodover">dcumuprodover</a></li>
+		<li><a href="#sumover">sumover</a></li>
+		<li><a href="#dsumover">dsumover</a></li>
+		<li><a href="#cumusumover">cumusumover</a></li>
+		<li><a href="#dcumusumover">dcumusumover</a></li>
+		<li><a href="#orover">orover</a></li>
+		<li><a href="#bandover">bandover</a></li>
+		<li><a href="#borover">borover</a></li>
+		<li><a href="#zcover">zcover</a></li>
+		<li><a href="#andover">andover</a></li>
+		<li><a href="#intover">intover</a></li>
+		<li><a href="#average">average</a></li>
+		<li><a href="#daverage">daverage</a></li>
+		<li><a href="#medover">medover</a></li>
+		<li><a href="#oddmedover">oddmedover</a></li>
+		<li><a href="#pctover">pctover</a></li>
+		<li><a href="#oddpctover">oddpctover</a></li>
+		<li><a href="#pct">pct</a></li>
+		<li><a href="#oddpct">oddpct</a></li>
+		<li><a href="#avg">avg</a></li>
+		<li><a href="#sum">sum</a></li>
+		<li><a href="#prod">prod</a></li>
+		<li><a href="#davg">davg</a></li>
+		<li><a href="#dsum">dsum</a></li>
+		<li><a href="#dprod">dprod</a></li>
+		<li><a href="#zcheck">zcheck</a></li>
+		<li><a href="#and">and</a></li>
+		<li><a href="#band">band</a></li>
+		<li><a href="#or">or</a></li>
+		<li><a href="#bor">bor</a></li>
+		<li><a href="#min">min</a></li>
+		<li><a href="#max">max</a></li>
+		<li><a href="#median">median</a></li>
+		<li><a href="#oddmedian">oddmedian</a></li>
+		<li><a href="#any">any</a></li>
+		<li><a href="#all">all</a></li>
+		<li><a href="#minmax">minmax</a></li>
+		<li><a href="#qsort">qsort</a></li>
+		<li><a href="#qsorti">qsorti</a></li>
+		<li><a href="#qsortvec">qsortvec</a></li>
+		<li><a href="#qsortveci">qsortveci</a></li>
+		<li><a href="#minimum">minimum</a></li>
+		<li><a href="#minimum_ind">minimum_ind</a></li>
+		<li><a href="#minimum_n_ind">minimum_n_ind</a></li>
+		<li><a href="#maximum">maximum</a></li>
+		<li><a href="#maximum_ind">maximum_ind</a></li>
+		<li><a href="#maximum_n_ind">maximum_n_ind</a></li>
+		<li><a href="#minmaximum">minmaximum</a></li>
+	</ul>
+
+	<li><a href="#author">AUTHOR</a></li>
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Ufunc - primitive ufunc operations for pdl</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides some primitive and useful functions defined
+using PDL::PP based on functionality of what are sometimes called
+<em>ufuncs</em> (for example NumPY and Mathematica talk about these).
+It collects all the functions generally used to <code>reduce</code> or
+<code>accumulate</code> along a dimension. These all do their job across the
+first dimension but by using the slicing functions you can do it
+on any dimension.</p>
+<p>The <a href="./Reduce.html">PDL::Reduce</a> module provides an alternative interface
+to many of the functions in this module.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Ufunc;</pre>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="prodover">prodover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via product to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the product along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = prodover($b);</pre>
+<pre>
+ $spectrum = prodover $image-&gt;xchg(0,1)</pre>
+<p>prodover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="dprodover">dprodover</a></h2>
+<pre>
+  Signature: (a(n); double [o]b())</pre>
+<p>Project via product to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the product along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = dprodover($b);</pre>
+<pre>
+ $spectrum = dprodover $image-&gt;xchg(0,1)</pre>
+<p>Unlike <a href="#prodover">prodover</a>, the calculations are performed in double
+precision.</p>
+<p>dprodover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cumuprodover">cumuprodover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b(n))</pre>
+<p>Cumulative product</p>
+<p>This function calculates the cumulative product
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<p>The sum is started so that the first element in the cumulative product
+is the first element of the parameter.</p>
+<pre>
+ $a = cumuprodover($b);</pre>
+<pre>
+ $spectrum = cumuprodover $image-&gt;xchg(0,1)</pre>
+<p>cumuprodover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="dcumuprodover">dcumuprodover</a></h2>
+<pre>
+  Signature: (a(n); double [o]b(n))</pre>
+<p>Cumulative product</p>
+<p>This function calculates the cumulative product
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<p>The sum is started so that the first element in the cumulative product
+is the first element of the parameter.</p>
+<pre>
+ $a = cumuprodover($b);</pre>
+<pre>
+ $spectrum = cumuprodover $image-&gt;xchg(0,1)</pre>
+<p>Unlike <a href="#cumuprodover">cumuprodover</a>, the calculations are performed in double
+precision.</p>
+<p>dcumuprodover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="sumover">sumover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via sum to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the sum along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = sumover($b);</pre>
+<pre>
+ $spectrum = sumover $image-&gt;xchg(0,1)</pre>
+<p>sumover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="dsumover">dsumover</a></h2>
+<pre>
+  Signature: (a(n); double [o]b())</pre>
+<p>Project via sum to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the sum along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = dsumover($b);</pre>
+<pre>
+ $spectrum = dsumover $image-&gt;xchg(0,1)</pre>
+<p>Unlike <a href="#sumover">sumover</a>, the calculations are performed in double
+precision.</p>
+<p>dsumover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="cumusumover">cumusumover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b(n))</pre>
+<p>Cumulative sum</p>
+<p>This function calculates the cumulative sum
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<p>The sum is started so that the first element in the cumulative sum
+is the first element of the parameter.</p>
+<pre>
+ $a = cumusumover($b);</pre>
+<pre>
+ $spectrum = cumusumover $image-&gt;xchg(0,1)</pre>
+<p>cumusumover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="dcumusumover">dcumusumover</a></h2>
+<pre>
+  Signature: (a(n); double [o]b(n))</pre>
+<p>Cumulative sum</p>
+<p>This function calculates the cumulative sum
+along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<p>The sum is started so that the first element in the cumulative sum
+is the first element of the parameter.</p>
+<pre>
+ $a = cumusumover($b);</pre>
+<pre>
+ $spectrum = cumusumover $image-&gt;xchg(0,1)</pre>
+<p>Unlike <a href="#cumusumover">cumusumover</a>, the calculations are performed in double
+precision.</p>
+<p>dcumusumover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="orover">orover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via or to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the or along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = orover($b);</pre>
+<pre>
+ $spectrum = orover $image-&gt;xchg(0,1)</pre>
+<p>If <code>a()</code> contains only bad data (and its bad flag is set), 
+<code>b()</code> is set bad. Otherwise <code>b()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="bandover">bandover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via bitwise and to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the bitwise and along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = bandover($b);</pre>
+<pre>
+ $spectrum = bandover $image-&gt;xchg(0,1)</pre>
+<p>If <code>a()</code> contains only bad data (and its bad flag is set), 
+<code>b()</code> is set bad. Otherwise <code>b()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="borover">borover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via bitwise or to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the bitwise or along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = borover($b);</pre>
+<pre>
+ $spectrum = borover $image-&gt;xchg(0,1)</pre>
+<p>If <code>a()</code> contains only bad data (and its bad flag is set), 
+<code>b()</code> is set bad. Otherwise <code>b()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="zcover">zcover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via == 0 to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the == 0 along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = zcover($b);</pre>
+<pre>
+ $spectrum = zcover $image-&gt;xchg(0,1)</pre>
+<p>If <code>a()</code> contains only bad data (and its bad flag is set), 
+<code>b()</code> is set bad. Otherwise <code>b()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="andover">andover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via and to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the and along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = andover($b);</pre>
+<pre>
+ $spectrum = andover $image-&gt;xchg(0,1)</pre>
+<p>If <code>a()</code> contains only bad data (and its bad flag is set), 
+<code>b()</code> is set bad. Otherwise <code>b()</code> will have its bad flag cleared,
+as it will not contain any bad values.</p>
+<p>
+</p>
+<h2><a name="intover">intover</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via integral to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the integral along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = intover($b);</pre>
+<pre>
+ $spectrum = intover $image-&gt;xchg(0,1)</pre>
+<p>Notes:</p>
+<p><code>intover</code> uses a point spacing of one (i.e., delta-h==1).  You will
+need to scale the result to correct for the true point delta).</p>
+<p>For <code>n &gt; 3</code>, these are all <code>O(h^4)</code> (like Simpson's rule), but are
+integrals between the end points assuming the pdl gives values just at
+these centres: for such `functions', sumover is correct to <code>O(h)</code>, but
+is the natural (and correct) choice for binned data, of course.</p>
+<p>intover ignores the bad-value flag of the input piddles.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="average">average</a></h2>
+<pre>
+  Signature: (a(n); int+ [o]b())</pre>
+<p>Project via average to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the average along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = average($b);</pre>
+<pre>
+ $spectrum = average $image-&gt;xchg(0,1)</pre>
+<p>average does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="daverage">daverage</a></h2>
+<pre>
+  Signature: (a(n); double [o]b())</pre>
+<p>Project via average to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the average along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = daverage($b);</pre>
+<pre>
+ $spectrum = daverage $image-&gt;xchg(0,1)</pre>
+<p>Unlike <a href="#average">average</a>, the calculation is performed in double
+precision.</p>
+<p>daverage does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="medover">medover</a></h2>
+<pre>
+  Signature: (a(n); [o]b(); [t]tmp(n))</pre>
+<p>Project via median to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the median along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = medover($b);</pre>
+<pre>
+ $spectrum = medover $image-&gt;xchg(0,1)</pre>
+<p>medover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="oddmedover">oddmedover</a></h2>
+<pre>
+  Signature: (a(n); [o]b(); [t]tmp(n))</pre>
+<p>Project via oddmedian to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the oddmedian along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = oddmedover($b);</pre>
+<pre>
+ $spectrum = oddmedover $image-&gt;xchg(0,1)</pre>
+<p>The median is sometimes not a good choice as if the array has
+an even number of elements it lies half-way between the two
+middle values - thus it does not always correspond to a data
+value. The lower-odd median is just the lower of these two values
+and so it ALWAYS sits on an actual data value which is useful in
+some circumstances.</p>
+<p>oddmedover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="pctover">pctover</a></h2>
+<pre>
+  Signature: (a(n); p(); [o]b(); [t]tmp(n))</pre>
+<pre>
+  Project via percentile to N-1 dimensions</pre>
+<p>This function reduces the dimensionality of a piddle by one by finding
+the specified percentile (p) along the 1st dimension.  The specified
+percentile must be between 0.0 and 1.0.  When the specified percentile
+falls between data points, the result is interpolated.  Values outside
+the allowed range are clipped to 0.0 or 1.0 respectively.  The algorithm
+implemented here is based on the interpolation variant described at
+<a href="http://en.wikipedia.org/wiki/Percentile">http://en.wikipedia.org/wiki/Percentile</a> as used by Microsoft Excel
+and recommended by NIST.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<p>$a = pctover($b, $p);</p>
+<p>$spectrum = pctover $image-&gt;xchg(0,1) $p</p>
+<p>pctover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="oddpctover">oddpctover</a></h2>
+<pre>
+  Signature: (a(n); p(); [o]b(); [t]tmp(n))</pre>
+<p>Project via percentile to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle by one by finding
+the specified percentile along the 1st dimension.  The specified
+percentile must be between 0.0 and 1.0.  When the specified percentile
+falls between two values, the nearest data value is the result.
+The algorithm implemented is from the textbook version described
+first at <em> <a href="http://en.wikipedia.org/wiki/Percentile">http://en.wikipedia.org/wiki/Percentile</a></em>.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = oddpctover($b, $p);</pre>
+<pre>
+ $spectrum = oddpctover $image-&gt;xchg(0,1) $p</pre>
+<p>oddpctover does handle bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+<p>
+</p>
+<h2><a name="pct">pct</a></h2>
+<p>Return the specified percentile of all elements in a piddle. The
+specified percentile (p) must be between 0.0 and 1.0.  When the
+specified percentile falls between data points, the result is
+interpolated.</p>
+<pre>
+ $x = pct($data, $pct);</pre>
+<p>
+</p>
+<h2><a name="oddpct">oddpct</a></h2>
+<p>Return the specified percentile of all elements in a piddle. The
+specified percentile must be between 0.0 and 1.0.  When the specified
+percentile falls between two values, the nearest data value is the
+result.</p>
+<pre>
+ $x = oddpct($data, $pct);</pre>
+<p>
+</p>
+<h2><a name="avg">avg</a></h2>
+<p>Return the average of all elements in a piddle</p>
+<pre>
+ $x = avg($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#average">average</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="sum">sum</a></h2>
+<p>Return the sum of all elements in a piddle</p>
+<pre>
+ $x = sum($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#sumover">sumover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="prod">prod</a></h2>
+<p>Return the product of all elements in a piddle</p>
+<pre>
+ $x = prod($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#prodover">prodover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="davg">davg</a></h2>
+<p>Return the average (in double precision) of all elements in a piddle</p>
+<pre>
+ $x = davg($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#daverage">daverage</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="dsum">dsum</a></h2>
+<p>Return the sum (in double precision) of all elements in a piddle</p>
+<pre>
+ $x = dsum($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#dsumover">dsumover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="dprod">dprod</a></h2>
+<p>Return the product (in double precision) of all elements in a piddle</p>
+<pre>
+ $x = dprod($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#dprodover">dprodover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="zcheck">zcheck</a></h2>
+<p>Return the check for zero of all elements in a piddle</p>
+<pre>
+ $x = zcheck($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#zcover">zcover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="and">and</a></h2>
+<p>Return the logical and of all elements in a piddle</p>
+<pre>
+ $x = and($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#andover">andover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="band">band</a></h2>
+<p>Return the bitwise and of all elements in a piddle</p>
+<pre>
+ $x = band($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#bandover">bandover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="or">or</a></h2>
+<p>Return the logical or of all elements in a piddle</p>
+<pre>
+ $x = or($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#orover">orover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="bor">bor</a></h2>
+<p>Return the bitwise or of all elements in a piddle</p>
+<pre>
+ $x = bor($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#borover">borover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="min">min</a></h2>
+<p>Return the minimum of all elements in a piddle</p>
+<pre>
+ $x = min($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#minimum">minimum</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="max">max</a></h2>
+<p>Return the maximum of all elements in a piddle</p>
+<pre>
+ $x = max($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#maximum">maximum</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="median">median</a></h2>
+<p>Return the median of all elements in a piddle</p>
+<pre>
+ $x = median($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#medover">medover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="oddmedian">oddmedian</a></h2>
+<p>Return the oddmedian of all elements in a piddle</p>
+<pre>
+ $x = oddmedian($data);</pre>
+<p>This routine handles bad values (see the
+documentation for <a href="#oddmedover">oddmedover</a>).
+I still need to decide how to handle the case when 
+the return value is a bad value (eg to make sure it
+has the same type as the input piddle OR 
+perhaps we should die - makes sense for the conditional
+ops but not things like sum)</p>
+<p>
+</p>
+<h2><a name="any">any</a></h2>
+<p>Return true if any element in piddle set</p>
+<p>Useful in conditional expressions:</p>
+<pre>
+ if (any $a&gt;15) { print &quot;some values are greater than 15\n&quot; }</pre>
+<p>See <a href="#or">or</a> for comments on what happens when all elements
+in the check are bad.</p>
+<p>
+</p>
+<h2><a name="all">all</a></h2>
+<p>Return true if all elements in piddle set</p>
+<p>Useful in conditional expressions:</p>
+<pre>
+ if (all $a&gt;15) { print &quot;all values are greater than 15\n&quot; }</pre>
+<p>See <a href="#and">and</a> for comments on what happens when all elements
+in the check are bad.</p>
+<p>
+</p>
+<h2><a name="minmax">minmax</a></h2>
+<p>Returns an array with minimum and maximum values of a piddle.</p>
+<pre>
+ ($mn, $mx) = minmax($pdl);</pre>
+<p>This routine does <em>not</em> thread over the dimensions of <code>$pdl</code>; 
+it returns the minimum and maximum values of the whole array.
+See <a href="#minmaximum">minmaximum</a> if this is not what is required.
+The two values are returned as Perl scalars similar to min/max.</p>
+<pre>
+ pdl&gt; $x = pdl [1,-2,3,5,0]
+ pdl&gt; ($min, $max) = minmax($x);
+ pdl&gt; p &quot;$min $max\n&quot;;
+ -2 5</pre>
+<p>
+</p>
+<h2><a name="qsort">qsort</a></h2>
+<pre>
+  Signature: (a(n); [o]b(n))</pre>
+<p>Quicksort a vector into ascending order.</p>
+<pre>
+ print qsort random(10);</pre>
+<p>Bad values are moved to the end of the array:</p>
+<pre>
+ pdl&gt; p $b
+ [42 47 98 BAD 22 96 74 41 79 76 96 BAD 32 76 25 59 BAD 96 32 BAD]
+ pdl&gt; p qsort($b)
+ [22 25 32 32 41 42 47 59 74 76 76 79 96 96 96 98 BAD BAD BAD BAD]</pre>
+<p>
+</p>
+<h2><a name="qsorti">qsorti</a></h2>
+<pre>
+  Signature: (a(n); int [o]indx(n))</pre>
+<p>Quicksort a vector and return index of elements in ascending order.</p>
+<pre>
+ $ix = qsorti $a;
+ print $a-&gt;index($ix); # Sorted list</pre>
+<p>Bad elements are moved to the end of the array:</p>
+<pre>
+ pdl&gt; p $b
+ [42 47 98 BAD 22 96 74 41 79 76 96 BAD 32 76 25 59 BAD 96 32 BAD]
+ pdl&gt; p $b-&gt;index( qsorti($b) )
+ [22 25 32 32 41 42 47 59 74 76 76 79 96 96 96 98 BAD BAD BAD BAD]</pre>
+<p>
+</p>
+<h2><a name="qsortvec">qsortvec</a></h2>
+<pre>
+  Signature: (a(n,m); [o]b(n,m))</pre>
+<p>Sort a list of vectors lexicographically.</p>
+<p>The 0th dimension of the source piddle is dimension in the vector;
+the 1st dimension is list order.  Higher dimensions are threaded over.</p>
+<pre>
+ print qsortvec pdl([[1,2],[0,500],[2,3],[4,2],[3,4],[3,5]]);
+ [
+  [  0 500]
+  [  1   2]
+  [  2   3]
+  [  3   4]
+  [  3   5]
+  [  4   2]
+ ]</pre>
+<p>Vectors with bad components should be moved to the end of the array:</p>
+<p>
+</p>
+<h2><a name="qsortveci">qsortveci</a></h2>
+<pre>
+  Signature: (a(n,m); int [o]indx(m))</pre>
+<p>Sort a list of vectors lexicographically, returning the indices of the
+sorted vectors rather than the sorted list itself.</p>
+<p>As with <code>qsortvec</code>, the input PDL should be an NxM array containing M
+separate N-dimensional vectors.  The return value is an integer M-PDL 
+containing the M-indices of original array rows, in sorted order.</p>
+<p>As with <code>qsortvec</code>, the zeroth element of the vectors runs slowest in the
+sorted list.</p>
+<p>Additional dimensions are threaded over: each plane is sorted separately,
+so qsortveci may be thought of as a collapse operator of sorts (groan).</p>
+<p>Vectors with bad components should be moved to the end of the array:</p>
+<p>
+</p>
+<h2><a name="minimum">minimum</a></h2>
+<pre>
+  Signature: (a(n); [o]c())</pre>
+<p>Project via minimum to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the minimum along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = minimum($b);</pre>
+<pre>
+ $spectrum = minimum $image-&gt;xchg(0,1)</pre>
+<p>Output is set bad if all elements of the input are bad,
+otherwise the bad flag is cleared for the output piddle.</p>
+<p>Note that <code>NaNs</code> are considered to be valid values;
+see <a href="./Math.html#isfinite">isfinite</a> and <a href="./Math.html#badmask">badmask</a>
+for ways of masking NaNs.</p>
+<p>
+</p>
+<h2><a name="minimum_ind">minimum_ind</a></h2>
+<pre>
+  Signature: (a(n); int [o] c())</pre>
+<p>Like minimum but returns the index rather than the value</p>
+<p>Output is set bad if all elements of the input are bad,
+otherwise the bad flag is cleared for the output piddle.</p>
+<p>
+</p>
+<h2><a name="minimum_n_ind">minimum_n_ind</a></h2>
+<pre>
+  Signature: (a(n); int[o]c(m))</pre>
+<p>Returns the index of <code>m</code> minimum elements</p>
+<p>Not yet been converted to ignore bad values</p>
+<p>
+</p>
+<h2><a name="maximum">maximum</a></h2>
+<pre>
+  Signature: (a(n); [o]c())</pre>
+<p>Project via maximum to N-1 dimensions</p>
+<p>This function reduces the dimensionality of a piddle
+by one by taking the maximum along the 1st dimension.</p>
+<p>By using <a href="./Slices.html#xchg">xchg</a> etc. it is possible to use
+<em>any</em> dimension.</p>
+<pre>
+ $a = maximum($b);</pre>
+<pre>
+ $spectrum = maximum $image-&gt;xchg(0,1)</pre>
+<p>Output is set bad if all elements of the input are bad,
+otherwise the bad flag is cleared for the output piddle.</p>
+<p>Note that <code>NaNs</code> are considered to be valid values;
+see <a href="./Math.html#isfinite">isfinite</a> and <a href="./Math.html#badmask">badmask</a>
+for ways of masking NaNs.</p>
+<p>
+</p>
+<h2><a name="maximum_ind">maximum_ind</a></h2>
+<pre>
+  Signature: (a(n); int [o] c())</pre>
+<p>Like maximum but returns the index rather than the value</p>
+<p>Output is set bad if all elements of the input are bad,
+otherwise the bad flag is cleared for the output piddle.</p>
+<p>
+</p>
+<h2><a name="maximum_n_ind">maximum_n_ind</a></h2>
+<pre>
+  Signature: (a(n); int[o]c(m))</pre>
+<p>Returns the index of <code>m</code> maximum elements</p>
+<p>Not yet been converted to ignore bad values</p>
+<p>
+</p>
+<h2><a name="minmaximum">minmaximum</a></h2>
+<pre>
+  Signature: (a(n); [o]cmin(); [o] cmax(); int [o]cmin_ind(); int [o]cmax_ind())</pre>
+<p>Find minimum and maximum and their indices for a given piddle;</p>
+<pre>
+ pdl&gt; $a=pdl [[-2,3,4],[1,0,3]]
+ pdl&gt; ($min, $max, $min_ind, $max_ind)=minmaximum($a)
+ pdl&gt; p $min, $max, $min_ind, $max_ind
+ [-2 0] [4 3] [0 1] [2 2]</pre>
+<p>See also <a href="#minmax">minmax</a>, which clumps the piddle together.</p>
+<p>If <code>a()</code> contains only bad data, then the output piddles will
+be set bad, along with their bad flag.
+Otherwise they will have their bad flags cleared,
+since they will not contain any bad values.</p>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>Copyright (C) Tuomas J. Lukka 1997 (<a href="mailto:lukka@husc.harvard.edu">lukka@husc.harvard.edu</a>)
+Contributions by Christian Soeller (<a href="mailto:c.soeller@auckland.ac.nz">c.soeller@auckland.ac.nz</a>)
+and Karl Glazebrook (<a href="mailto:kgb@aaoepp.aao.gov.au">kgb@aaoepp.aao.gov.au</a>)  All rights
+reserved. There is no warranty. You are allowed to redistribute this
+software / documentation under certain conditions. For details, see
+the file COPYING in the PDL distribution. If this file is separated
+from the PDL distribution, the copyright notice should be included in
+the file.</p>
+
+</body>
+
+</html>

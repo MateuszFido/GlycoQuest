@@ -1,0 +1,142 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::GSL::MROOT - PDL interface to multidimensional root-finding routines in GSL</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<ul>
+
+		<li><a href="#gslmroot_fsolver____multidimensional_root_finder_without_using_derivatives">gslmroot_fsolver - Multidimensional root finder without using derivatives</a></li>
+	</ul>
+
+	<li><a href="#see_also">SEE ALSO</a></li>
+	<li><a href="#author">AUTHOR</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#fsolver_meat">fsolver_meat</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<pre>
+
+PDL::GSL::MROOT - PDL interface to multidimensional root-finding routines in GSL</pre>
+<pre>
+
+=head1 DESCRIPTION</pre>
+<pre>
+
+This is an interface to the multidimensional root-finding package present in the 
+GNU Scientific Library.</pre>
+<p>At the moment there is a single function <strong>gslmroot_fsolver</strong> which provides an interface
+to the algorithms in the GSL library that do not use derivatives.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+
+   use PDL;
+   use PDL::GSL::MROOT;</pre>
+<pre>
+   my $init = pdl (-10.00, -5.0);
+   my $epsabs = 1e-7;</pre>
+<pre>
+  $res = gslmroot_fsolver($init, \&amp;rosenbrock,
+                          {Method =&gt; 0, EpsAbs =&gt; $epsabs});</pre>
+<pre>
+ 
+  sub rosenbrock{
+     my ($x) = @_;
+     my $a = 1;
+     my $b = 10;
+     my $y = zeroes($x);</pre>
+<pre>
+     my $y0 = $y-&gt;slice(0);
+     $y0 .=  $a * (1 - $x-&gt;slice(0));</pre>
+<pre>
+     my $y1 = $y-&gt;slice(1);
+     $y1 .=  $b * ($x-&gt;slice(1) - $x-&gt;slice(0)**2);</pre>
+<pre>
+     return $y;
+  }</pre>
+<pre>
+ 
+=head1 FUNCTIONS</pre>
+<p>
+</p>
+<h2><a name="gslmroot_fsolver____multidimensional_root_finder_without_using_derivatives">gslmroot_fsolver -- Multidimensional root finder without using derivatives</a></h2>
+<p>This function provides an interface to the multidimensional root finding algorithms
+in the GSL library. It takes a minimum of two argumennts: a piddle $init with an 
+initial guess for the roots of the system and a reference to a function. The latter
+function must return a piddle whose i-th element is the i-th equation evaluated at
+the vector x (a piddle which is the sole input to this function). See the example in
+the Synopsis above for an illustration. The function returns a piddle with the roots
+for the system of equations.</p>
+<p>Two optional arguments can be specified as shown below. One is <strong>Method</strong>, which can
+take the values 0,1,2,3. They correspond to the 'hybrids', 'hybrid', 'dnewton' and
+'broyden' algorithms respectively (see GSL documentation for details). The other
+optional argument is <strong>Epsabs</strong>, which sets the absolute accuracy to which the roots
+of the system of equations are required. The default value for Method is 0 ('hybrids'
+algorithm) and the default for Epsabs is 1e-3.</p>
+<p>Usage:</p>
+<pre>
+
+   $res = gslmroot_fsolver($init, $function_ref,
+                           [{Method =&gt; $method, Epsabs =&gt; $epsabs}]);</pre>
+<p>
+</p>
+<hr />
+<h1><a name="see_also">SEE ALSO</a></h1>
+<p><a href="../PDL.html">the PDL manpage</a></p>
+<p>The GSL documentation is online at</p>
+<pre>
+  <a href="http://sources.redhat.com/gsl/ref/gsl-ref_toc.html">http://sources.redhat.com/gsl/ref/gsl-ref_toc.html</a></pre>
+<p>
+</p>
+<hr />
+<h1><a name="author">AUTHOR</a></h1>
+<p>This file copyright (C) 2006 Andres Jordan &lt;<a href="mailto:ajordan@eso.org">ajordan@eso.org</a>&gt; 
+and Simon Casassus &lt;<a href="mailto:simon@das.uchile.cl">simon@das.uchile.cl</a>&gt;
+All rights reserved. There is no warranty. You are allowed to redistribute this 
+software/documentation under certain conditions. For details, see the file
+COPYING in the PDL distribution. If this file is separated from the
+PDL distribution, the copyright notice should be included in the file.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="fsolver_meat">fsolver_meat</a></h2>
+<pre>
+  Signature: (double  xfree(n);   double epsabs(); int method(); SV* funcion1)</pre>
+<p>info not available</p>
+<p>fsolver_meat does not process bad values.
+It will set the bad-value flag of all output piddles if the flag is set for any of the input piddles.</p>
+
+</body>
+
+</html>

@@ -1,0 +1,167 @@
+<?xml version="1.0" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<title>PDL::Doc::Perldl - commands for accessing PDL doc database from 'perldl' shell</title>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<link rev="made" href="mailto:root@localhost" />
+</head>
+
+<body style="background-color: white">
+
+
+<!-- INDEX BEGIN -->
+<div name="index">
+<p><a name="__index__"></a></p>
+
+<ul>
+
+	<li><a href="#name">NAME</a></li>
+	<li><a href="#description">DESCRIPTION</a></li>
+	<li><a href="#synopsis">SYNOPSIS</a></li>
+	<li><a href="#bugs">BUGS</a></li>
+	<li><a href="#functions">FUNCTIONS</a></li>
+	<ul>
+
+		<li><a href="#apropos">apropos</a></li>
+		<li><a href="#pdl__doc__perldl__search_docs">PDL::Doc::Perldl::search_docs</a></li>
+		<li><a href="#pdl__doc__perldl__finddoc">PDL::Doc::Perldl::finddoc</a></li>
+		<li><a href="#find_autodoc">find_autodoc</a></li>
+		<li><a href="#usage">usage</a></li>
+		<li><a href="#sig">sig</a></li>
+		<li><a href="#whatis">whatis</a></li>
+		<li><a href="#help">help</a></li>
+		<li><a href="#badinfo">badinfo</a></li>
+	</ul>
+
+</ul>
+
+<hr name="index" />
+</div>
+<!-- INDEX END -->
+
+<p>
+</p>
+<h1><a name="name">NAME</a></h1>
+<p>PDL::Doc::Perldl - commands for accessing PDL doc database from 'perldl' shell</p>
+<p>
+</p>
+<hr />
+<h1><a name="description">DESCRIPTION</a></h1>
+<p>This module provides a simple set of functions to
+access the PDL documentation of database, for use
+from the <em>perldl</em> or <em>pdl2</em> shells as well as the
+<em>pdldoc</em> command-line program.</p>
+<p>Autoload files are also matched, via a search of the PDLLIB autoloader
+tree.  That behavior can be switched off with the variable 
+<code>$PERLDL::STRICT_DOCS</code> (true: don't search autoload tree; false: search
+the autoload tree.)</p>
+<p>Currently, multiple matches are not handled very well.</p>
+<p>
+</p>
+<hr />
+<h1><a name="synopsis">SYNOPSIS</a></h1>
+<pre>
+ use PDL::Doc::Perldl; # Load all documenation functions</pre>
+<p>
+</p>
+<hr />
+<h1><a name="bugs">BUGS</a></h1>
+<p>The description contains the misleading word &quot;simple&quot;.</p>
+<p>
+</p>
+<hr />
+<h1><a name="functions">FUNCTIONS</a></h1>
+<p>
+</p>
+<h2><a name="apropos">apropos</a></h2>
+<p>Regex search PDL documentation database</p>
+<pre>
+ apropos 'text'</pre>
+<pre>
+ pdl&gt; apropos 'pic'
+ rpic            Read images in many formats with automatic format detection.
+ rpiccan         Test which image formats can be read/written
+ wmpeg           Write an image sequence ((x,y,n) piddle) as an MPEG animation.
+ wpic            Write images in many formats with automatic format selection.
+ wpiccan         Test which image formats can be read/written</pre>
+<p>To find all the manuals that come with PDL, try</p>
+<pre>
+  apropos 'manual:'</pre>
+<p>and to get quick info about PDL modules say</p>
+<pre>
+  apropos 'module:'</pre>
+<p>You get more detailed info about a PDL function/module/manual
+with the <code>help</code> function</p>
+<p>
+</p>
+<h2><a name="pdl__doc__perldl__search_docs">PDL::Doc::Perldl::search_docs</a></h2>
+<p>Internal routine to search docs database and autoload files</p>
+<p>
+</p>
+<h2><a name="pdl__doc__perldl__finddoc">PDL::Doc::Perldl::finddoc</a></h2>
+<p>Internal interface to the PDL documentation searcher</p>
+<p>
+</p>
+<h2><a name="find_autodoc">find_autodoc</a></h2>
+<p>Internal helper routine that finds and returns documentation in the autoloader
+path, if it exists.  You feed in a topic and it searches for the file
+&quot;${topic}.pdl&quot;.  If that exists, then the filename gets returned in a 
+match structure appropriate for the rest of finddoc.</p>
+<p>
+</p>
+<h2><a name="usage">usage</a></h2>
+<p>Prints usage information for a PDL function</p>
+<pre>
+ Usage: usage 'func'</pre>
+<pre>
+   pdl&gt; usage 'inner'</pre>
+<pre>
+   inner           inner prodcuct over one dimension
+                   (Module PDL::Primitive)</pre>
+<pre>
+   Signature: inner(a(n); b(n); [o]c(); )</pre>
+<p>
+</p>
+<h2><a name="sig">sig</a></h2>
+<p>prints signature of PDL function</p>
+<pre>
+ sig 'func'</pre>
+<p>The signature is the normal dimensionality of the
+function's arguments.  Calling with different dimensions
+doesn't break -- it causes threading.  See <a href="../PP.html">PDL::PP</a> for details.</p>
+<pre>
+  pdl&gt; sig 'outer'
+    Signature: outer(a(n); b(m); [o]c(n,m); )</pre>
+<p>
+</p>
+<h2><a name="whatis">whatis</a></h2>
+<p>Describe a perl and/or PDL variable or expression.  Useful for
+determining the type of an expression, identifying the keys in a hash
+or a data structure, or examining WTF an unknown object is.</p>
+<pre>
+ Usage: whatis $var
+        whatis &lt;expression&gt;</pre>
+<p>
+</p>
+<h2><a name="help">help</a></h2>
+<p>print documentation about a PDL function or module or show a PDL manual</p>
+<p>In the case of multiple matches, the first command found is printed out,
+and the remaining commands listed, along with the names of their modules.</p>
+<pre>
+ Usage: help 'func'</pre>
+<pre>
+ pdl&gt; help 'PDL::Tutorials' # show the guide to PDL tutorials
+ pdl&gt; help 'PDL::Slices'    # show the docs in the PDL::Slices module
+ pdl&gt; help 'slice'          # show docs on the 'slice' function</pre>
+<p>
+</p>
+<h2><a name="badinfo">badinfo</a></h2>
+<p>provides information on the bad-value support of a function</p>
+<p>And has a horrible name.</p>
+<pre>
+ badinfo 'func'</pre>
+
+</body>
+
+</html>

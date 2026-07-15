@@ -15,14 +15,7 @@ export function renderQcPanel(container: HTMLElement, store: SelectionStore): ()
     const grid = document.createElement('div');
     grid.className = 'gq-chart-grid';
 
-    if (store.bundle.meta.resume && qc.funnel[0]?.count === 0) {
-      const note = document.createElement('p');
-      note.className = 'gq-empty';
-      note.textContent = 'Prefilter funnel unavailable in resume mode.';
-      grid.appendChild(note);
-    } else {
-      grid.appendChild(barChart('Prefilter funnel', qc.funnel));
-    }
+    grid.appendChild(barChart('Prefilter funnel', qc.funnel));
     grid.appendChild(barChart('Post-filter outcome', qc.outcomes));
     grid.appendChild(barChart('Glycans (top 15)', qc.glycan_top));
     grid.appendChild(barChart('Glycosylation sites', qc.site_dist));

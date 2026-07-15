@@ -5,10 +5,21 @@ pub mod settings;
 use std::path::PathBuf;
 
 use clap::error::ErrorKind;
-use clap::Parser;
+use clap::{Parser, ValueEnum};
 
 /// Default bundled glycan database id ([`parse_cli`]).
 pub const DEFAULT_GLYCANS: &str = "nglyc309";
+
+/// When the live terminal progress display should be enabled.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub enum ProgressMode {
+    /// Show progress only when stderr is an interactive terminal.
+    Auto,
+    /// Always render progress, even when stderr is redirected.
+    Always,
+    /// Never render live progress.
+    Never,
+}
 
 /// Parsed GlycoQuest CLI parameters
 #[derive(Debug, Clone, PartialEq)]
@@ -23,10 +34,9 @@ pub struct CliParams {
     pub jobs: Option<u32>,
     pub out: PathBuf,
     pub config: Option<PathBuf>,
+    pub progress: ProgressMode,
     /// When true, validate configuration only
     pub dry_run: bool,
-    /// Resume xQuest jobs in an existing project output directory, skipping jobs with results.
-    pub resume: bool,
 }
 
 impl Default for CliParams {
@@ -41,8 +51,8 @@ impl Default for CliParams {
             jobs: None,
             out: PathBuf::from(crate::output::DEFAULT_OUT_BASE),
             config: None,
+            progress: ProgressMode::Auto,
             dry_run: false,
-            resume: false,
         }
     }
 }
@@ -94,13 +104,13 @@ struct Args {
     #[arg(long, value_name = "FILE", default_value = "settings.ini")]
     config: PathBuf,
 
-    /// Validate inputs and print a summary without running xQuest.
-    #[arg(long, conflicts_with = "resume")]
-    dry_run: bool,
+    /// Live progress display: auto (interactive terminals), always, or never.
+    #[arg(long, value_enum, default_value_t = ProgressMode::Auto)]
+    progress: ProgressMode,
 
-    /// Resume pending xQuest jobs in an existing --out project directory.
-    #[arg(long, conflicts_with = "dry_run")]
-    resume: bool,
+    /// Validate inputs and print a summary without running xQuest.
+    #[arg(long)]
+    dry_run: bool,
 }
 
 /// Parse `std::env::args()` (skipping the program name) into [`CliParams`].
@@ -129,8 +139,8 @@ where
         jobs: args.jobs,
         out: args.out,
         config: Some(args.config),
+        progress: args.progress,
         dry_run: args.dry_run,
-        resume: args.resume,
     })
 }
 
@@ -211,6 +221,20 @@ mod tests {
     }
 
     #[test]
+    fn rejects_resume_flag() {
+        let err = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--database",
+            "proteins.fasta",
+            "--resume",
+        ])
+        .unwrap_err();
+        assert!(matches!(err.kind(), ErrorKind::UnknownArgument));
+        assert!(err.to_string().contains("--resume"));
+    }
+
+    #[test]
     fn parses_glycan_database_flag() {
         let params = parse_cli([
             "glycoquest",
@@ -228,13 +252,8 @@ mod tests {
 
     #[test]
     fn applies_defaults_for_glycans_out_and_xquest_root() {
-        let params = parse_cli([
-            "glycoquest",
-            "input.mzXML",
-            "--database",
-            "proteins.fasta",
-        ])
-        .unwrap();
+        let params =
+            parse_cli(["glycoquest", "input.mzXML", "--database", "proteins.fasta"]).unwrap();
         assert_eq!(params.input, PathBuf::from("input.mzXML"));
         assert_eq!(params.database, PathBuf::from("proteins.fasta"));
         assert_eq!(params.glycans, DEFAULT_GLYCANS);
@@ -269,9 +288,27 @@ mod tests {
 
     #[test]
     fn jobs_flag_defaults_to_none() {
-        let params = parse_cli(["glycoquest", "input.mzXML", "--database", "proteins.fasta"])
-            .unwrap();
+        let params =
+            parse_cli(["glycoquest", "input.mzXML", "--database", "proteins.fasta"]).unwrap();
         assert_eq!(params.jobs, None);
+    }
+
+    #[test]
+    fn parses_progress_mode() {
+        let params = parse_cli([
+            "glycoquest",
+            "input.mzXML",
+            "--database",
+            "proteins.fasta",
+            "--progress",
+            "never",
+        ])
+        .unwrap();
+        assert_eq!(params.progress, ProgressMode::Never);
+
+        let defaults =
+            parse_cli(["glycoquest", "input.mzXML", "--database", "proteins.fasta"]).unwrap();
+        assert_eq!(defaults.progress, ProgressMode::Auto);
     }
 
     #[test]
