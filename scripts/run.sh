@@ -25,17 +25,25 @@
 #   -h, --help        Show this help
 #
 # Environment:
-#   GLYCOQUEST             Path to the glycoquest binary (optional)
-#   GLYCOQUEST_STACK       Euler module stack (default: stack/2024-04)
-#   GLYCOQUEST_COMPILER    Compiler module required by Perl (default: gcc/8.5.0)
-#   GLYCOQUEST_PERL        Perl module (default: perl/5.38.0)
+#   GLYCOQUEST              Path to the glycoquest binary (optional)
+#   GLYCOQUEST_STACK        Euler module stack (default: stack/2024-04)
+#   GLYCOQUEST_COMPILER     Compiler module for Perl (default: gcc/8.5.0)
+#   GLYCOQUEST_PERL         Perl module (default: perl/5.38.0)
+#   GLYCOQUEST_BERKELEY_DB  Berkeley DB module (default: berkeley-db/18.1.40)
+#   GLYCOQUEST_PERL5        local::lib / cpanm prefix with DB_File
+#                           (default: $HOME/perl5 if it exists)
 #
 # Under Slurm, --jobs defaults to $SLURM_CPUS_PER_TASK and --progress to never
 # when those flags are omitted. --xquest-root defaults to <repo>/V2.1.7/xquest
 # when omitted and that directory exists.
 #
-# Euler note: perl/5.38.0 is under stack/2024-04 + gcc/8.5.0 (see `module spider
-# perl/5.38.0`). Override the GLYCOQUEST_* module vars if your site differs.
+# Euler notes:
+#   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
+#   - Spack Perl has no DB_File; install once against module perl + berkeley-db:
+#       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 berkeley-db/18.1.40 eth_proxy
+#       cpanm --local-lib=$HOME/perl5 DB_File
+#   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
+#     install via PERL5OPT=-I... (not PERL5LIB alone).
 
 set -euo pipefail
 
@@ -55,7 +63,7 @@ PRINT_ONLY=0
 LOG_DIR=jobs
 
 usage() {
-  sed -n '2,38p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
+  sed -n '2,48p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
 }
 
 args_contain() {
@@ -246,31 +254,67 @@ fi
 
 if [[ -n "${SLURM_JOB_ID:-}" ]]; then
   # perl/5.38.0 on Euler requires stack/2024-04 + gcc/8.5.0 (module spider).
+  # berkeley-db must be loaded in that same hierarchy before/with Perl XS modules.
   STACK="${GLYCOQUEST_STACK:-stack/2024-04}"
-  # Single-dash default: empty GLYCOQUEST_COMPILER= skips the compiler module.
+  # Single-dash defaults: empty GLYCOQUEST_COMPILER= / GLYCOQUEST_BERKELEY_DB= skips.
   COMPILER="${GLYCOQUEST_COMPILER-gcc/8.5.0}"
   PERL_MOD="${GLYCOQUEST_PERL:-perl/5.38.0}"
+  BERKELEY_DB="${GLYCOQUEST_BERKELEY_DB-berkeley-db/18.1.40}"
 
   if command -v module >/dev/null 2>&1; then
     module load "$STACK"
     if [[ -n "$COMPILER" ]]; then
       module load "$COMPILER"
     fi
+    if [[ -n "$BERKELEY_DB" ]]; then
+      # Prefer the version visible in the current hierarchy; fall back to spider hint.
+      if ! module load "$BERKELEY_DB" 2>/dev/null; then
+        echo "error: could not load ${BERKELEY_DB} after ${STACK} ${COMPILER}." >&2
+        echo "  Run: module spider berkeley-db" >&2
+        echo "  Then set GLYCOQUEST_BERKELEY_DB to a full name for this toolchain," >&2
+        echo "  e.g. berkeley-db/18.1.40-c3kwxwi" >&2
+        exit 1
+      fi
+    fi
     module load "$PERL_MOD"
   else
     echo "warning: module command not found; using whatever perl is on PATH" >&2
   fi
 
+  # Spack Perl has no DB_File; a cpanm install under $HOME/perl5 is the usual fix.
+  # xQuest run.sh overwrites PERL5LIB, so expose the local tree via PERL5OPT.
+  PERL5_ROOT="${GLYCOQUEST_PERL5-}"
+  if [[ -z "$PERL5_ROOT" && -d "${HOME}/perl5/lib/perl5" ]]; then
+    PERL5_ROOT="${HOME}/perl5"
+  fi
+  if [[ -n "$PERL5_ROOT" && -d "${PERL5_ROOT}/lib/perl5" ]]; then
+    perl5_lib="${PERL5_ROOT}/lib/perl5"
+    case ":${PERL5LIB:-}:" in
+      *":${perl5_lib}:"*) ;;
+      *) export PERL5LIB="${perl5_lib}${PERL5LIB:+:$PERL5LIB}" ;;
+    esac
+    case " ${PERL5OPT:-} " in
+      *" -I${perl5_lib} "*|*" -I${perl5_lib}"*) ;;
+      *) export PERL5OPT="-I${perl5_lib}${PERL5OPT:+ ${PERL5OPT}}" ;;
+    esac
+  fi
+
   if ! perl -MDB_File -e 1 2>/dev/null; then
     echo "error: Perl DB_File is not available (required by xQuest indexing)." >&2
-    echo "  Tried: module load ${STACK}; module load ${COMPILER}; module load ${PERL_MOD}" >&2
-    echo "  Verify with: module spider ${PERL_MOD}" >&2
+    echo "  Loaded: ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD}" >&2
+    echo "  Euler's module Perl does not ship DB_File. Install once on a login node:" >&2
+    echo "    module load ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD} eth_proxy" >&2
+    echo "    cpanm --local-lib=\$HOME/perl5 DB_File" >&2
+    echo "    perl -I\$HOME/perl5/lib/perl5 -MDB_File -e 'print \"OK\\n\"'" >&2
     exit 1
   fi
 
   export OMP_NUM_THREADS=1
   echo "GlycoQuest Slurm job ${SLURM_JOB_ID} on $(hostname)"
-  echo "  modules: ${STACK} ${COMPILER} ${PERL_MOD}"
+  echo "  modules: ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD}"
+  if [[ -n "${PERL5_ROOT:-}" ]]; then
+    echo "  perl5 local: ${PERL5_ROOT} (PERL5OPT=${PERL5OPT:-})"
+  fi
   echo "  cpus=${SLURM_CPUS_PER_TASK:-?}  tmpdir=${TMPDIR:-n/a}"
 fi
 
