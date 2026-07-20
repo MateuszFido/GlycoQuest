@@ -25,13 +25,17 @@
 #   -h, --help        Show this help
 #
 # Environment:
-#   GLYCOQUEST        Path to the glycoquest binary (optional)
-#   GLYCOQUEST_STACK  Euler module stack (default: stack/2024-06)
-#   GLYCOQUEST_PERL   Perl module (default: perl/5.38.0)
+#   GLYCOQUEST             Path to the glycoquest binary (optional)
+#   GLYCOQUEST_STACK       Euler module stack (default: stack/2024-04)
+#   GLYCOQUEST_COMPILER    Compiler module required by Perl (default: gcc/8.5.0)
+#   GLYCOQUEST_PERL        Perl module (default: perl/5.38.0)
 #
 # Under Slurm, --jobs defaults to $SLURM_CPUS_PER_TASK and --progress to never
 # when those flags are omitted. --xquest-root defaults to <repo>/V2.1.7/xquest
 # when omitted and that directory exists.
+#
+# Euler note: perl/5.38.0 is under stack/2024-04 + gcc/8.5.0 (see `module spider
+# perl/5.38.0`). Override the GLYCOQUEST_* module vars if your site differs.
 
 set -euo pipefail
 
@@ -51,7 +55,7 @@ PRINT_ONLY=0
 LOG_DIR=jobs
 
 usage() {
-  sed -n '2,36p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
+  sed -n '2,38p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
 }
 
 args_contain() {
@@ -241,24 +245,32 @@ if ! args_contain --xquest-root "$@" && [[ -d "$default_xquest" ]]; then
 fi
 
 if [[ -n "${SLURM_JOB_ID:-}" ]]; then
-  STACK="${GLYCOQUEST_STACK:-stack/2024-06}"
+  # perl/5.38.0 on Euler requires stack/2024-04 + gcc/8.5.0 (module spider).
+  STACK="${GLYCOQUEST_STACK:-stack/2024-04}"
+  # Single-dash default: empty GLYCOQUEST_COMPILER= skips the compiler module.
+  COMPILER="${GLYCOQUEST_COMPILER-gcc/8.5.0}"
   PERL_MOD="${GLYCOQUEST_PERL:-perl/5.38.0}"
 
   if command -v module >/dev/null 2>&1; then
-    # shellcheck disable=SC1091
-    module load "$STACK" 2>/dev/null || true
+    module load "$STACK"
+    if [[ -n "$COMPILER" ]]; then
+      module load "$COMPILER"
+    fi
     module load "$PERL_MOD"
+  else
+    echo "warning: module command not found; using whatever perl is on PATH" >&2
   fi
 
   if ! perl -MDB_File -e 1 2>/dev/null; then
     echo "error: Perl DB_File is not available (required by xQuest indexing)." >&2
-    echo "  Tried module: ${PERL_MOD} (stack: ${STACK})" >&2
-    echo "  Verify with: module load ${STACK}; module load ${PERL_MOD}; perl -MDB_File -e 1" >&2
+    echo "  Tried: module load ${STACK}; module load ${COMPILER}; module load ${PERL_MOD}" >&2
+    echo "  Verify with: module spider ${PERL_MOD}" >&2
     exit 1
   fi
 
   export OMP_NUM_THREADS=1
   echo "GlycoQuest Slurm job ${SLURM_JOB_ID} on $(hostname)"
+  echo "  modules: ${STACK} ${COMPILER} ${PERL_MOD}"
   echo "  cpus=${SLURM_CPUS_PER_TASK:-?}  tmpdir=${TMPDIR:-n/a}"
 fi
 
