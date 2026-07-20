@@ -29,7 +29,8 @@
 #   GLYCOQUEST_STACK        Euler module stack (default: stack/2024-04)
 #   GLYCOQUEST_COMPILER     Compiler module for Perl (default: gcc/8.5.0)
 #   GLYCOQUEST_PERL         Perl module (default: perl/5.38.0)
-#   GLYCOQUEST_BERKELEY_DB  Berkeley DB module (default: berkeley-db/18.1.40)
+#   GLYCOQUEST_BERKELEY_DB  Berkeley DB module: auto (default), a full module
+#                           name, or empty to skip
 #   GLYCOQUEST_PERL5        local::lib / cpanm prefix with DB_File
 #                           (default: $HOME/perl5 if it exists)
 #
@@ -39,8 +40,11 @@
 #
 # Euler notes:
 #   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
+#   - berkeley-db is hierarchy-specific (hashed names). Default "auto" picks the
+#     first module visible after stack+compiler via `module avail berkeley-db`.
 #   - Spack Perl has no DB_File; install once against module perl + berkeley-db:
-#       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 berkeley-db/18.1.40 eth_proxy
+#       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 eth_proxy
+#       module load $(module -t avail berkeley-db 2>&1 | grep '^berkeley-db/' | head -1)
 #       cpanm --local-lib=$HOME/perl5 DB_File
 #   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
 #     install via PERL5OPT=-I... (not PERL5LIB alone).
@@ -63,7 +67,79 @@ PRINT_ONLY=0
 LOG_DIR=jobs
 
 usage() {
-  sed -n '2,48p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
+  sed -n '2,52p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
+}
+
+# Print berkeley-db modules visible in the *current* Lmod hierarchy (stdout).
+# Prefer Spack-hashed names; the bare berkeley-db/X.Y.Z often fails to load.
+available_berkeley_db_modules() {
+  local all hashed bare
+  all=$(
+    module -t avail berkeley-db 2>&1 \
+      | grep -E '^berkeley-db/' \
+      | grep -v '/$' \
+      | sort -u
+  )
+  [[ -n "$all" ]] || return 0
+  hashed=$(echo "$all" | grep -E 'berkeley-db/[0-9.]+-[A-Za-z0-9]+$' || true)
+  bare=$(echo "$all" | grep -vE 'berkeley-db/[0-9.]+-[A-Za-z0-9]+$' || true)
+  [[ -n "$hashed" ]] && echo "$hashed"
+  [[ -n "$bare" ]] && echo "$bare"
+}
+
+# Load a berkeley-db module. Arg: auto | empty(skip) | explicit module name.
+# Sets BERKELEY_DB to the module that was loaded (or empty if skipped).
+load_berkeley_db() {
+  local requested=$1
+  BERKELEY_DB=""
+
+  if [[ -z "$requested" ]]; then
+    return 0
+  fi
+
+  local candidates=()
+  if [[ "$requested" != "auto" ]]; then
+    candidates+=("$requested")
+  fi
+
+  local mod
+  while IFS= read -r mod; do
+    [[ -n "$mod" ]] || continue
+    local seen=0
+    local c
+    for c in "${candidates[@]+"${candidates[@]}"}"; do
+      if [[ "$c" == "$mod" ]]; then
+        seen=1
+        break
+      fi
+    done
+    if [[ "$seen" -eq 0 ]]; then
+      candidates+=("$mod")
+    fi
+  done < <(available_berkeley_db_modules)
+
+  if [[ ${#candidates[@]} -eq 0 ]]; then
+    echo "error: no berkeley-db module visible after ${STACK} ${COMPILER}." >&2
+    echo "  Run: module spider berkeley-db" >&2
+    echo "  Or set GLYCOQUEST_BERKELEY_DB= to skip (DB_File may still need libdb)." >&2
+    return 1
+  fi
+
+  local err
+  for mod in "${candidates[@]}"; do
+    if err=$(module load "$mod" 2>&1); then
+      BERKELEY_DB=$mod
+      return 0
+    fi
+  done
+
+  echo "error: could not load any berkeley-db module after ${STACK} ${COMPILER}." >&2
+  echo "  Tried: ${candidates[*]}" >&2
+  echo "  Last module error:" >&2
+  echo "$err" >&2
+  echo "  Set GLYCOQUEST_BERKELEY_DB to a full name from:" >&2
+  echo "    module spider berkeley-db" >&2
+  return 1
 }
 
 args_contain() {
@@ -254,28 +330,20 @@ fi
 
 if [[ -n "${SLURM_JOB_ID:-}" ]]; then
   # perl/5.38.0 on Euler requires stack/2024-04 + gcc/8.5.0 (module spider).
-  # berkeley-db must be loaded in that same hierarchy before/with Perl XS modules.
+  # berkeley-db hashes differ per toolchain; default "auto" picks from module avail.
   STACK="${GLYCOQUEST_STACK:-stack/2024-04}"
   # Single-dash defaults: empty GLYCOQUEST_COMPILER= / GLYCOQUEST_BERKELEY_DB= skips.
   COMPILER="${GLYCOQUEST_COMPILER-gcc/8.5.0}"
   PERL_MOD="${GLYCOQUEST_PERL:-perl/5.38.0}"
-  BERKELEY_DB="${GLYCOQUEST_BERKELEY_DB-berkeley-db/18.1.40}"
+  BERKELEY_DB_REQUEST="${GLYCOQUEST_BERKELEY_DB-auto}"
+  BERKELEY_DB=""
 
   if command -v module >/dev/null 2>&1; then
     module load "$STACK"
     if [[ -n "$COMPILER" ]]; then
       module load "$COMPILER"
     fi
-    if [[ -n "$BERKELEY_DB" ]]; then
-      # Prefer the version visible in the current hierarchy; fall back to spider hint.
-      if ! module load "$BERKELEY_DB" 2>/dev/null; then
-        echo "error: could not load ${BERKELEY_DB} after ${STACK} ${COMPILER}." >&2
-        echo "  Run: module spider berkeley-db" >&2
-        echo "  Then set GLYCOQUEST_BERKELEY_DB to a full name for this toolchain," >&2
-        echo "  e.g. berkeley-db/18.1.40-c3kwxwi" >&2
-        exit 1
-      fi
-    fi
+    load_berkeley_db "$BERKELEY_DB_REQUEST"
     module load "$PERL_MOD"
   else
     echo "warning: module command not found; using whatever perl is on PATH" >&2
