@@ -186,12 +186,7 @@ fn write_job(
         isotopepairs = isotopepairs.display(),
         specxml = specxml,
     );
-    let perl5lib = format!(
-        "{}/1209/lib/perl5:{}/1209/share/perl5:{}/modules",
-        xquest_root.display(),
-        xquest_root.display(),
-        xquest_root.display()
-    );
+    let perl5lib = crate::xquest::perl_deps::xquest_perl5lib(&xquest_root);
     let script = format!(
         "#!/bin/bash\nset -euo pipefail\nexport XQUEST_DIR=\"{xquest_root}\"\nexport PERL5LIB=\"{perl5lib}\"\n\
          \"{compare_peaks}\" -match glycoquest_matched.txt -def xquest.def -dir . -resultdir results -genxml \"{mzxml}\" -cpforce\n\

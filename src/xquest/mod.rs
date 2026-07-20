@@ -12,7 +12,7 @@ mod runtime;
 pub use defs::{JobDefs, write_job_defs};
 pub use generate::{GeneratedJob, generate_jobs};
 pub use matchlist::{MatchlistRow, write_matchlist};
-pub use perl_deps::check_perl_search_deps;
+pub use perl_deps::{check_perl_search_deps, xquest_perl5lib};
 pub(crate) use run::execute_jobs_with_progress;
 pub use run::{JobRunRecord, log_job_summary};
 pub use runtime::{XQuestRuntime, resolve_runtime};

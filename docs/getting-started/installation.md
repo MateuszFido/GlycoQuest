@@ -54,7 +54,8 @@ Point `--xquest-root` at the directory that contains `bin/xquest.pl` and bundled
 ```text
 xQuest/V2.1.7/xquest/
 ├── bin/xquest.pl
-├── 1209/lib/perl5/   # bundled Perl modules (PERL5LIB set in run.sh)
+├── 1209/lib/perl5/     # bundled Perl modules
+├── 1209/lib64/perl5/   # legacy XS builds (e.g. GD; on PERL5LIB)
 └── ...
 ```
 

@@ -2,7 +2,7 @@
 
 //! Fail-fast checks for Perl modules required by the xQuest search path.
 
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 
 /// Modules that must load for GlycoQuest's compare_peaks3 → xquest.pl path.
@@ -18,7 +18,33 @@ const CRITICAL_MODULES: &[&str] = &[
     "HTML::Entities",
     "MIME::Base64",
     "Storable",
+    "GD",
+    "GD::Graph::linespoints",
+    "Statistics::Descriptive",
 ];
+
+/// `PERL5LIB` used by generated job `run.sh` and readiness checks.
+///
+/// Includes `1209/lib64/perl5` (legacy CentOS-style layout where GD lives).
+pub fn xquest_perl5lib(xquest_root: &Path) -> String {
+    xquest_perl5lib_dirs(xquest_root)
+        .into_iter()
+        .map(|p| p.display().to_string())
+        .collect::<Vec<_>>()
+        .join(":")
+}
+
+fn xquest_perl5lib_dirs(xquest_root: &Path) -> Vec<PathBuf> {
+    [
+        xquest_root.join("1209/lib64/perl5"),
+        xquest_root.join("1209/lib/perl5"),
+        xquest_root.join("1209/share/perl5"),
+        xquest_root.join("modules"),
+    ]
+    .into_iter()
+    .filter(|p| p.is_dir())
+    .collect()
+}
 
 /// When the vendored xQuest tree is present, verify Perl can compile the search
 /// scripts. Stub roots used in unit tests (no `bin/compare_peaks3.pl`) skip.
@@ -29,7 +55,7 @@ pub fn check_perl_search_deps(xquest_root: &Path) -> Result<(), String> {
         return Ok(());
     }
 
-    let perl5lib = build_perl5lib(xquest_root);
+    let perl5lib = build_perl5lib_for_check(xquest_root);
     let require_stmt = CRITICAL_MODULES
         .iter()
         .map(|m| format!("require {m};"))
@@ -79,25 +105,19 @@ pub fn check_perl_search_deps(xquest_root: &Path) -> Result<(), String> {
     Ok(())
 }
 
-fn build_perl5lib(xquest_root: &Path) -> String {
-    let mut dirs = vec![
-        xquest_root.join("modules"),
-        xquest_root.join("1209/lib/perl5"),
-        xquest_root.join("1209/share/perl5"),
-    ];
+fn build_perl5lib_for_check(xquest_root: &Path) -> String {
+    let mut parts = Vec::new();
     if let Ok(home) = std::env::var("HOME") {
         let local = Path::new(&home).join("perl5/lib/perl5");
         if local.is_dir() {
-            dirs.insert(0, local);
+            parts.push(local.display().to_string());
         }
     }
-    // Prefer existing PERL5LIB entries after our dirs (job scripts overwrite;
-    // readiness still benefits from a user local::lib already on PERL5LIB).
-    let mut parts: Vec<String> = dirs
-        .into_iter()
-        .filter(|p| p.is_dir())
-        .map(|p| p.display().to_string())
-        .collect();
+    parts.extend(
+        xquest_perl5lib_dirs(xquest_root)
+            .into_iter()
+            .map(|p| p.display().to_string()),
+    );
     if let Ok(existing) = std::env::var("PERL5LIB") {
         if !existing.is_empty() {
             parts.push(existing);
@@ -117,8 +137,8 @@ fn format_perl_deps_error(
          xquest-root: {}\n\
          PERL5LIB={perl5lib}\n\
          {detail}\n\
-         Fix: install DB_File and XML::Parser (Euler: scripts/bootstrap-euler-perl.sh),\n\
-         then verify with: scripts/check-xquest-perl.pl --xquest-root {}",
+         Fix on ETH Euler: scripts/bootstrap-euler-perl.sh\n\
+         then: scripts/check-xquest-perl.pl --xquest-root {}",
         xquest_root.display(),
         xquest_root.display()
     )
@@ -151,13 +171,23 @@ mod tests {
     }
 
     #[test]
+    fn perl5lib_includes_lib64_when_present() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("V2.1.7/xquest");
+        let lib = xquest_perl5lib(&root);
+        assert!(
+            lib.contains("1209/lib64/perl5"),
+            "expected lib64 in PERL5LIB, got {lib}"
+        );
+        assert!(lib.contains("1209/lib/perl5"));
+        assert!(lib.contains("modules"));
+    }
+
+    #[test]
     fn accepts_vendored_xquest_when_perl_deps_present() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("V2.1.7/xquest");
         if !root.join("bin/compare_peaks3.pl").is_file() {
             return;
         }
-        // May fail on hosts without DB_File/XML::Parser; that is a real readiness failure.
-        // Only assert Ok when the modules are available.
         match check_perl_search_deps(&root) {
             Ok(()) => {}
             Err(err) => {
@@ -165,6 +195,7 @@ mod tests {
                 assert!(
                     lower.contains("db_file")
                         || lower.contains("xml::parser")
+                        || lower.contains("can't locate gd")
                         || lower.contains("cannot run perl"),
                     "unexpected error: {err}"
                 );

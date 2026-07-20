@@ -48,19 +48,26 @@ for my $path ( $compare, $xquest ) {
     -f $path or die "error: missing xQuest script: $path\n";
 }
 
-# Match job run.sh PERL5LIB, plus arch-specific site dirs when present.
+# Match job run.sh PERL5LIB (see src/xquest/perl_deps.rs::xquest_perl5lib).
+# lib64 holds legacy XS builds (GD); lib/perl5 + share hold pure-Perl modules.
 my @lib_dirs = (
-    File::Spec->catdir( $xquest_root, 'modules' ),
-    File::Spec->catdir( $xquest_root, '1209', 'lib', 'perl5' ),
+    File::Spec->catdir( $xquest_root, '1209', 'lib64', 'perl5' ),
+    File::Spec->catdir( $xquest_root, '1209', 'lib',   'perl5' ),
     File::Spec->catdir( $xquest_root, '1209', 'share', 'perl5' ),
+    File::Spec->catdir( $xquest_root, 'modules' ),
 );
 {
     require Config;
     my $arch = $Config::Config{archname} // '';
     if ($arch) {
-        my $arch_lib =
-          File::Spec->catdir( $xquest_root, '1209', 'lib', 'perl5', $arch );
-        unshift @lib_dirs, $arch_lib if -d $arch_lib;
+        for my $base (
+            File::Spec->catdir( $xquest_root, '1209', 'lib64', 'perl5' ),
+            File::Spec->catdir( $xquest_root, '1209', 'lib',   'perl5' ),
+          )
+        {
+            my $arch_lib = File::Spec->catdir( $base, $arch );
+            unshift @lib_dirs, $arch_lib if -d $arch_lib;
+        }
     }
 }
 if ( defined $ENV{HOME} && -d "$ENV{HOME}/perl5/lib/perl5" ) {
@@ -87,6 +94,9 @@ my @critical = qw(
   HTML::Entities
   MIME::Base64
   Storable
+  GD
+  GD::Graph::linespoints
+  Statistics::Descriptive
 );
 
 my @missing;
@@ -140,18 +150,19 @@ if (@compile_errors) {
 
 print STDERR <<"EOF";
 
-Install once (login node), then re-run this check:
+Install / refresh once (login node), then re-run this check:
 
-  module load stack/2024-04 gcc/8.5.0 perl/5.38.0 eth_proxy
-  # optional but recommended if modules are visible:
-  #   module load berkeley-db   # or: module spider berkeley-db
-  #   module spider libexpat    # XML::Parser needs libexpat
-  cpanm --local-lib=\$HOME/perl5 DB_File XML::Parser
-  # if .so load fails, ensure Spack libs are on LD_LIBRARY_PATH (scripts/run.sh does this)
-  perl scripts/check-xquest-perl.pl --xquest-root $xquest_root
+  scripts/bootstrap-euler-perl.sh
+  scripts/check-xquest-perl.pl --xquest-root $xquest_root
 
-Fedora/RHEL packages (non-Euler): perl-DB_File perl-XML-Parser
-Debian/Ubuntu: libdb-file-perl libxml-parser-perl
+Notes:
+  - GD ships under xquest/1209/lib64/perl5 (must be on PERL5LIB).
+  - If the bundled GD.so is ABI-incompatible with module perl, bootstrap
+    rebuilds GD + GD::Graph into \$HOME/perl5 (needs libgd).
+  - XS runtime libs: libdb (DB_File), libexpat (XML::Parser), libgd (GD).
+
+Fedora/RHEL: perl-DB_File perl-XML-Parser perl-GD perl-GD-Graph
+Debian/Ubuntu: libdb-file-perl libxml-parser-perl libgd-gd2-perl libgd-graph-perl
 EOF
 
 exit 1;

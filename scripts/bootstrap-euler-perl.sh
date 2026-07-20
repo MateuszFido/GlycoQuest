@@ -4,6 +4,10 @@
 #
 #   scripts/bootstrap-euler-perl.sh
 #   scripts/bootstrap-euler-perl.sh && scripts/check-xquest-perl.pl
+#
+# Installs into $HOME/perl5 (override with GLYCOQUEST_PERL5):
+#   DB_File, XML::Parser, and GD/GD::Graph when the bundled 1209/lib64 GD.so
+#   cannot load against the loaded module perl.
 
 set -euo pipefail
 
@@ -12,6 +16,7 @@ STACK="${GLYCOQUEST_STACK:-stack/2024-04}"
 COMPILER="${GLYCOQUEST_COMPILER:-gcc/8.5.0}"
 PERL_MOD="${GLYCOQUEST_PERL:-perl/5.38.0}"
 PERL5_ROOT="${GLYCOQUEST_PERL5:-$HOME/perl5}"
+XQUEST_ROOT="${GLYCOQUEST_XQUEST_ROOT:-$REPO_ROOT/V2.1.7/xquest}"
 
 if ! command -v module >/dev/null 2>&1; then
   echo "error: Lmod 'module' command not found (are you on Euler?)" >&2
@@ -20,13 +25,15 @@ fi
 
 module load "$STACK"
 [[ -n "$COMPILER" ]] && module load "$COMPILER"
-# Soft-load runtime libs when visible; cpanm may still succeed via Spack RPATH.
 module load eth_proxy 2>/dev/null || true
 if module spider berkeley-db >/dev/null 2>&1; then
-  # Prefer an explicit hash if the user set one; otherwise try a bare name.
   module load "${GLYCOQUEST_BERKELEY_DB:-berkeley-db}" 2>/dev/null \
     || echo "note: could not module-load berkeley-db; continuing" >&2
 fi
+# Soft-load gd/libgd when visible (needed to build/run GD.pm).
+for gdmod in gd libgd; do
+  module load "$gdmod" 2>/dev/null && break || true
+done
 module load "$PERL_MOD"
 
 if ! command -v cpanm >/dev/null 2>&1; then
@@ -35,17 +42,18 @@ if ! command -v cpanm >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Installing into ${PERL5_ROOT}: DB_File XML::Parser"
-cpanm --local-lib="$PERL5_ROOT" DB_File XML::Parser
-
 export PERL5OPT="-I${PERL5_ROOT}/lib/perl5${PERL5OPT:+ ${PERL5OPT}}"
-# Best-effort: same Spack libdb probe as scripts/run.sh
+# Prefer bundled 1209 paths (including lib64 where legacy GD lives).
+export PERL5LIB="${XQUEST_ROOT}/1209/lib64/perl5:${XQUEST_ROOT}/1209/lib/perl5:${XQUEST_ROOT}/1209/share/perl5:${XQUEST_ROOT}/modules${PERL5LIB:+:$PERL5LIB}"
+
 stack_name=${STACK#stack/}
 gcc_ver=${COMPILER#gcc/}
 shopt -s nullglob
 for so in \
   "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb-18.1.so \
-  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so*
+  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so* \
+  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so* \
+  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/gd-"*/lib/libgd.so*
 do
   [[ -f "$so" ]] || continue
   libdir=$(dirname "$so")
@@ -56,7 +64,17 @@ do
 done
 shopt -u nullglob
 
+pkgs=(DB_File XML::Parser)
+# Rebuild GD when bundled lib64 GD.so is missing or ABI-incompatible with this perl.
+if ! perl -MGD -e 1 2>/dev/null; then
+  echo "note: bundled/system GD not loadable; will cpanm GD GD::Graph"
+  pkgs+=(GD GD::Graph)
+fi
+
+echo "Installing into ${PERL5_ROOT}: ${pkgs[*]}"
+cpanm --local-lib="$PERL5_ROOT" "${pkgs[@]}"
+
 echo "Verifying..."
-perl -MDB_File -MXML::Parser -e 'print "DB_File + XML::Parser OK\n"'
-"$REPO_ROOT/scripts/check-xquest-perl.pl" --xquest-root "$REPO_ROOT/V2.1.7/xquest"
+perl -MDB_File -MXML::Parser -MGD -e 'print "DB_File + XML::Parser + GD OK\n"'
+"$REPO_ROOT/scripts/check-xquest-perl.pl" --xquest-root "$XQUEST_ROOT"
 echo "Done. Slurm jobs pick up \$HOME/perl5 via scripts/run.sh (PERL5OPT)."

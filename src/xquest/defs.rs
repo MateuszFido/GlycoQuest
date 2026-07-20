@@ -412,12 +412,7 @@ mod tests {
             "glycoquest_dbfile_page_test_{}.db",
             std::process::id()
         ));
-        let perl5lib = format!(
-            "{}:{}:{}",
-            xquest_root.join("1209/lib/perl5").display(),
-            xquest_root.join("1209/share/perl5").display(),
-            xquest_root.join("modules").display()
-        );
+        let perl5lib = crate::xquest::perl_deps::xquest_perl5lib(&xquest_root);
         let status = std::process::Command::new("perl")
             .args([
                 "-MMLDBM=DB_File,Storable",

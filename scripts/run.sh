@@ -42,12 +42,12 @@
 #   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
 #   - Spack Perl is incomplete for xQuest. Install XS deps once on a login node:
 #       scripts/bootstrap-euler-perl.sh
-#     (installs DB_File + XML::Parser into $HOME/perl5; needs eth_proxy).
+#     (DB_File, XML::Parser, and GD if the bundled 1209/lib64 GD.so won't load).
 #   - Verify before submitting (same check this wrapper runs under Slurm):
 #       scripts/check-xquest-perl.pl
-#   - berkeley-db / libexpat modules are often hierarchy-hidden. This script
-#     globs the stack Spack tree for libdb-*.so and libexpat.so* and prepends
-#     those dirs to LD_LIBRARY_PATH when needed.
+#   - Job PERL5LIB includes 1209/lib64/perl5 (legacy GD) plus lib/ + share/.
+#   - berkeley-db / libexpat / libgd are often hierarchy-hidden. This script
+#     globs the stack Spack tree and prepends matching lib dirs to LD_LIBRARY_PATH.
 #   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
 #     install via PERL5OPT=-I... (not PERL5LIB alone).
 
@@ -100,6 +100,26 @@ run_perl_preflight() {
     return 0
   fi
   perl "$REPO_ROOT/scripts/check-xquest-perl.pl" --xquest-root "$xquest_root"
+}
+
+# Prepend -Idir to PERL5OPT once. Job scripts overwrite PERL5LIB, so -I is how
+# bundled 1209/lib64 (GD) and $HOME/perl5 stay visible to xquest.pl.
+prepend_perl5opt_include() {
+  local dir=$1
+  [[ -d "$dir" ]] || return 0
+  case " ${PERL5OPT:-} " in
+    *" -I${dir} "*|*" -I${dir}"*) ;;
+    *) export PERL5OPT="-I${dir}${PERL5OPT:+ ${PERL5OPT}}" ;;
+  esac
+}
+
+# Expose the full xQuest 1209 tree via PERL5OPT (survives job PERL5LIB overwrite).
+expose_xquest_perl_paths() {
+  local xquest_root=$1
+  prepend_perl5opt_include "${xquest_root}/1209/lib64/perl5"
+  prepend_perl5opt_include "${xquest_root}/1209/lib/perl5"
+  prepend_perl5opt_include "${xquest_root}/1209/share/perl5"
+  prepend_perl5opt_include "${xquest_root}/modules"
 }
 
 # Print berkeley-db modules visible in the *current* Lmod hierarchy (stdout).
@@ -237,7 +257,7 @@ first_matching_libdir() {
   return 1
 }
 
-# If XS modules were built against Spack, ensure libdb / libexpat are findable.
+# If XS modules were built against Spack, ensure libdb / libexpat / libgd are findable.
 ensure_xs_runtime_libs() {
   local stack_name=${STACK#stack/}
   local stack_root="/cluster/software/stacks/${stack_name}"
@@ -263,6 +283,16 @@ ensure_xs_runtime_libs() {
     ); then
       prepend_ld_library_path "$libdir" "libexpat"
     fi
+  fi
+
+  # Always try to expose libgd: bundled 1209/lib64 GD.so often needs it at runtime.
+  if libdir=$(first_matching_libdir \
+    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so \
+    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so.* \
+    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/gd-"*/lib/libgd.so \
+    "${stack_root}/spack/opt/spack/"*"/libgd-"*/lib/libgd.so
+  ); then
+    prepend_ld_library_path "$libdir" "libgd"
   fi
 }
 
@@ -438,7 +468,7 @@ if [[ -z "${SLURM_JOB_ID:-}" && "$LOCAL" -eq 0 ]]; then
     module load "$PERL_MOD" 2>/dev/null || true
   fi
   if [[ -d "${HOME}/perl5/lib/perl5" ]]; then
-    export PERL5OPT="-I${HOME}/perl5/lib/perl5${PERL5OPT:+ ${PERL5OPT}}"
+    prepend_perl5opt_include "${HOME}/perl5/lib/perl5"
   fi
   ensure_xs_runtime_libs || true
 
@@ -448,6 +478,7 @@ if [[ -z "${SLURM_JOB_ID:-}" && "$LOCAL" -eq 0 ]]; then
     xquest_root_for_check=$root_arg
   fi
   if [[ -d "$xquest_root_for_check" ]]; then
+    expose_xquest_perl_paths "$xquest_root_for_check"
     if ! run_perl_preflight "$xquest_root_for_check"; then
       echo "error: Perl preflight failed on the submit host. Fix before sbatch:" >&2
       echo "  scripts/bootstrap-euler-perl.sh" >&2
@@ -516,19 +547,16 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
       *":${perl5_lib}:"*) ;;
       *) export PERL5LIB="${perl5_lib}${PERL5LIB:+:$PERL5LIB}" ;;
     esac
-    case " ${PERL5OPT:-} " in
-      *" -I${perl5_lib} "*|*" -I${perl5_lib}"*) ;;
-      *) export PERL5OPT="-I${perl5_lib}${PERL5OPT:+ ${PERL5OPT}}" ;;
-    esac
+    prepend_perl5opt_include "$perl5_lib"
   fi
 
-  # Module may be invisible in this hierarchy; still need libdb / libexpat for XS.
+  # Module may be invisible in this hierarchy; still need libdb / libexpat / libgd.
   ensure_xs_runtime_libs || true
 
   echo "GlycoQuest Slurm job ${SLURM_JOB_ID} on $(hostname)"
   echo "  modules: ${STACK} ${COMPILER} ${BERKELEY_DB:-none} ${PERL_MOD}"
   if [[ -n "${PERL5_ROOT:-}" ]]; then
-    echo "  perl5 local: ${PERL5_ROOT} (PERL5OPT=${PERL5OPT:-})"
+    echo "  perl5 local: ${PERL5_ROOT}"
   fi
   if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
     echo "  LD_LIBRARY_PATH len=${#LD_LIBRARY_PATH}"
@@ -540,6 +568,12 @@ fi
 xquest_root_for_check="$default_xquest"
 if root_arg=$(extract_xquest_root_arg "$@"); then
   xquest_root_for_check=$root_arg
+fi
+
+# Keep 1209/lib64 (GD) visible even when job run.sh overwrites PERL5LIB.
+expose_xquest_perl_paths "$xquest_root_for_check"
+if [[ -n "${PERL5OPT:-}" ]]; then
+  echo "  PERL5OPT=${PERL5OPT}"
 fi
 
 # Fail before launching GlycoQuest / N xQuest jobs if Perl deps are incomplete.
