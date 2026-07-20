@@ -26,8 +26,9 @@ default:
 # Templates
 # ---------------------------------------------------------------------------
 
+# bullseye (glibc 2.31) keeps Linux artifacts runnable on Euler (Ubuntu 22.04 / 2.35).
 .rust_linux:
-  image: rust:${RUST_VERSION}-bookworm
+  image: rust:${RUST_VERSION}-bullseye
   cache:
     key:
       files:

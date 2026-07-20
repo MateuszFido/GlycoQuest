@@ -12,6 +12,8 @@ Pre-built `glycoquest` binaries are published as release artifacts for **Windows
 
 ### Linux
 
+Release binaries are built on **Ubuntu 22.04** (glibc 2.35) so they run on ETH Euler and other 22.04-based systems. Binaries from newer distros (e.g. Ubuntu 24.04 / glibc 2.39) will fail with `GLIBC_2.39 not found`.
+
 ```bash
 tar xzf glycoquest-*-x86_64-unknown-linux-gnu.tar.gz
 ./glycoquest --help

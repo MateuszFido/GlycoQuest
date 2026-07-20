@@ -6,6 +6,10 @@
 #
 # Linux x86_64 tarball is what ETH Euler needs:
 #   glycoquest-<tag>-x86_64-unknown-linux-gnu.tar.gz
+#
+# Build Linux on ubuntu-22.04 (glibc 2.35) so the binary runs on Euler
+# (Ubuntu 22.04). ubuntu-latest is 24.04 / glibc 2.39 and will fail there with
+# "version GLIBC_2.39 not found".
 
 name: Release
 
@@ -53,7 +57,8 @@ jobs:
   build-linux:
     name: Build Linux x86_64
     needs: test
-    runs-on: ubuntu-latest
+    # Pin to 22.04 for glibc 2.35 compatibility with ETH Euler.
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
@@ -64,15 +69,25 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
         with:
-          key: linux-x86_64
+          key: linux-x86_64-jammy
 
       - name: Build
         run: cargo build --release --locked
 
+      - name: Verify glibc ceiling
+        run: |
+          file target/release/glycoquest
+          # Fail the job if we accidentally linked a newer glibc symbol.
+          if objdump -T target/release/glycoquest | grep -E 'GLIBC_2\.(3[6-9]|[4-9][0-9])'; then
+            echo "error: binary requires glibc newer than 2.35 (Ubuntu 22.04 / Euler)" >&2
+            objdump -T target/release/glycoquest | grep GLIBC_ | sort -u
+            exit 1
+          fi
+          echo "glibc symbols OK for Ubuntu 22.04"
+
       - name: Package
         run: |
           chmod +x scripts/ci/package.sh
-          file target/release/glycoquest
           ./scripts/ci/package.sh x86_64-unknown-linux-gnu target/release/glycoquest
           ls -la dist/
 
