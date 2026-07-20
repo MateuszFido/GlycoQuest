@@ -20,10 +20,11 @@ tar xzf glycoquest-*-x86_64-unknown-linux-gnu.tar.gz
 ### macOS
 
 ```bash
-tar xzf glycoquest-*-aarch64-apple-darwin.tar.gz   # Apple Silicon
-# or glycoquest-*-x86_64-apple-darwin.tar.gz       # Intel
+tar xzf glycoquest-*-aarch64-apple-darwin.tar.gz   # Apple Silicon (CI builds)
 ./glycoquest --help
 ```
+
+Intel Macs: run the aarch64 binary under Rosetta, or build locally with `cargo build --release` (GitHub Actions no longer provides macOS x86_64 runners).
 
 ### Windows
 
