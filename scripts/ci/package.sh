@@ -13,15 +13,19 @@ if [[ ! -f "$BIN_PATH" ]]; then
   exit 1
 fi
 
-# Prefer the git tag as-is (e.g. v0.1.0) so GitLab Release asset URLs match.
+# Prefer the git tag as-is (e.g. v0.1.0) so Release asset names match the tag.
 if [[ -n "${CI_COMMIT_TAG:-}" ]]; then
   VERSION="$CI_COMMIT_TAG"
+elif [[ "${GITHUB_REF_TYPE:-}" == "tag" && -n "${GITHUB_REF_NAME:-}" ]]; then
+  VERSION="$GITHUB_REF_NAME"
 elif [[ -n "${GLYCOQUEST_VERSION:-}" ]]; then
   VERSION="$GLYCOQUEST_VERSION"
 else
   VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
-  if [[ -n "${CI_COMMIT_SHORT_SHA:-}" ]]; then
-    VERSION="${VERSION}-${CI_COMMIT_SHORT_SHA}"
+  SHORT_SHA="${CI_COMMIT_SHORT_SHA:-${GITHUB_SHA:-}}"
+  SHORT_SHA="${SHORT_SHA:0:7}"
+  if [[ -n "$SHORT_SHA" ]]; then
+    VERSION="${VERSION}-${SHORT_SHA}"
   fi
 fi
 

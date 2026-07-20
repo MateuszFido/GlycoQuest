@@ -40,8 +40,8 @@
 #
 # Euler notes:
 #   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
-#   - berkeley-db is hierarchy-specific (hashed names). Default "auto" picks the
-#     first module visible after stack+compiler via `module avail berkeley-db`.
+#   - berkeley-db is hierarchy-specific (hashed names). Default "auto" tries to
+#     load one if visible; if not, continues (OK when DB_File already has RPATH).
 #   - Spack Perl has no DB_File; install once against module perl + berkeley-db:
 #       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 eth_proxy
 #       module load $(module -t avail berkeley-db 2>&1 | grep '^berkeley-db/' | head -1)
@@ -75,7 +75,11 @@ usage() {
 available_berkeley_db_modules() {
   local all hashed bare
   all=$(
-    module -t avail berkeley-db 2>&1 \
+    {
+      module -t avail berkeley-db 2>&1 || true
+      module --show_hidden -t avail berkeley-db 2>&1 || true
+      module -t avail 2>&1 || true
+    } | sed -E 's/\([^)]*\)//g; s/^[[:space:]]+//; s/[[:space:]]+$//' \
       | grep -E '^berkeley-db/' \
       | grep -v '/$' \
       | sort -u
@@ -89,6 +93,7 @@ available_berkeley_db_modules() {
 
 # Load a berkeley-db module. Arg: auto | empty(skip) | explicit module name.
 # Sets BERKELEY_DB to the module that was loaded (or empty if skipped).
+# In "auto" mode, failure is soft: DB_File may already be linked with an RPATH.
 load_berkeley_db() {
   local requested=$1
   BERKELEY_DB=""
@@ -98,7 +103,10 @@ load_berkeley_db() {
   fi
 
   local candidates=()
-  if [[ "$requested" != "auto" ]]; then
+  local soft=0
+  if [[ "$requested" == "auto" ]]; then
+    soft=1
+  else
     candidates+=("$requested")
   fi
 
@@ -118,14 +126,36 @@ load_berkeley_db() {
     fi
   done < <(available_berkeley_db_modules)
 
+  # Last-resort names seen on Euler for common toolchains (may 404 — that's OK).
+  if [[ "$soft" -eq 1 ]]; then
+    for mod in \
+      berkeley-db/18.1.40-c3kwxwi \
+      berkeley-db/18.1.40-v4v4ea3 \
+      berkeley-db/18.1.40-cbtnnjh \
+      berkeley-db/18.1.40
+    do
+      local seen=0
+      local c
+      for c in "${candidates[@]+"${candidates[@]}"}"; do
+        [[ "$c" == "$mod" ]] && seen=1 && break
+      done
+      [[ "$seen" -eq 0 ]] && candidates+=("$mod")
+    done
+  fi
+
   if [[ ${#candidates[@]} -eq 0 ]]; then
+    if [[ "$soft" -eq 1 ]]; then
+      echo "warning: no berkeley-db module visible after ${STACK} ${COMPILER}; continuing." >&2
+      echo "  If DB_File later fails to load libdb, set GLYCOQUEST_BERKELEY_DB from:" >&2
+      echo "    module spider berkeley-db" >&2
+      return 0
+    fi
     echo "error: no berkeley-db module visible after ${STACK} ${COMPILER}." >&2
     echo "  Run: module spider berkeley-db" >&2
-    echo "  Or set GLYCOQUEST_BERKELEY_DB= to skip (DB_File may still need libdb)." >&2
     return 1
   fi
 
-  local err
+  local err=""
   for mod in "${candidates[@]}"; do
     if err=$(module load "$mod" 2>&1); then
       BERKELEY_DB=$mod
@@ -133,12 +163,17 @@ load_berkeley_db() {
     fi
   done
 
-  echo "error: could not load any berkeley-db module after ${STACK} ${COMPILER}." >&2
-  echo "  Tried: ${candidates[*]}" >&2
+  if [[ "$soft" -eq 1 ]]; then
+    echo "warning: could not load berkeley-db after ${STACK} ${COMPILER}; continuing." >&2
+    echo "  Tried: ${candidates[*]}" >&2
+    echo "  If perl -MDB_File fails on libdb, set GLYCOQUEST_BERKELEY_DB explicitly." >&2
+    return 0
+  fi
+
+  echo "error: could not load berkeley-db module '${requested}' after ${STACK} ${COMPILER}." >&2
   echo "  Last module error:" >&2
   echo "$err" >&2
-  echo "  Set GLYCOQUEST_BERKELEY_DB to a full name from:" >&2
-  echo "    module spider berkeley-db" >&2
+  echo "  Run: module spider berkeley-db" >&2
   return 1
 }
 
@@ -343,8 +378,9 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
     if [[ -n "$COMPILER" ]]; then
       module load "$COMPILER"
     fi
-    load_berkeley_db "$BERKELEY_DB_REQUEST"
     module load "$PERL_MOD"
+    # Optional for runtime libdb; soft-fail in auto mode if not in this hierarchy.
+    load_berkeley_db "$BERKELEY_DB_REQUEST"
   else
     echo "warning: module command not found; using whatever perl is on PATH" >&2
   fi
@@ -369,11 +405,13 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
 
   if ! perl -MDB_File -e 1 2>/dev/null; then
     echo "error: Perl DB_File is not available (required by xQuest indexing)." >&2
-    echo "  Loaded: ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD}" >&2
-    echo "  Euler's module Perl does not ship DB_File. Install once on a login node:" >&2
-    echo "    module load ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD} eth_proxy" >&2
+    echo "  Loaded: ${STACK} ${COMPILER} ${PERL_MOD} berkeley-db=${BERKELEY_DB:-none}" >&2
+    echo "  PERL5OPT=${PERL5OPT:-<unset>}  PERL5_ROOT=${PERL5_ROOT:-<none>}" >&2
+    echo "  Install once on a login node (same modules), then resubmit:" >&2
+    echo "    module load ${STACK} ${COMPILER} ${PERL_MOD} eth_proxy" >&2
     echo "    cpanm --local-lib=\$HOME/perl5 DB_File" >&2
-    echo "    perl -I\$HOME/perl5/lib/perl5 -MDB_File -e 'print \"OK\\n\"'" >&2
+    echo "    PERL5OPT=-I\$HOME/perl5/lib/perl5 perl -MDB_File -e 'print \"OK\\n\"'" >&2
+    echo "  If the error mentions libdb, also load berkeley-db (module spider berkeley-db)." >&2
     exit 1
   fi
 

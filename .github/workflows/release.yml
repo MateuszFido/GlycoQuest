@@ -1,0 +1,223 @@
+# Build GlycoQuest release binaries and attach them to a GitHub Release.
+#
+# Triggers:
+#   - Push of a version tag (v0.1.0, …) → build + publish Release
+#   - workflow_dispatch → build artifacts (Release only if run on a tag)
+#
+# Linux x86_64 tarball is what ETH Euler needs:
+#   glycoquest-<tag>-x86_64-unknown-linux-gnu.tar.gz
+
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_VERSION: "1.85.0"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: fmt
+        run: cargo fmt --all -- --check
+
+      - name: clippy
+        run: cargo clippy --all-targets --locked
+
+      - name: test
+        run: cargo test --locked
+
+  build-linux:
+    name: Build Linux x86_64
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: linux-x86_64
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        run: |
+          chmod +x scripts/ci/package.sh
+          file target/release/glycoquest
+          ./scripts/ci/package.sh x86_64-unknown-linux-gnu target/release/glycoquest
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-linux
+          path: dist/*
+          if-no-files-found: error
+
+  build-windows:
+    name: Build Windows x86_64
+    needs: test
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-msvc
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        shell: bash
+        run: |
+          chmod +x scripts/ci/package.sh
+          ./scripts/ci/package.sh x86_64-pc-windows-msvc target/release/glycoquest.exe
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-windows
+          path: dist/*
+          if-no-files-found: error
+
+  build-macos-aarch64:
+    name: Build macOS aarch64
+    needs: test
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-aarch64
+
+      - name: Build
+        run: cargo build --release --locked
+
+      - name: Package
+        run: |
+          chmod +x scripts/ci/package.sh
+          file target/release/glycoquest
+          ./scripts/ci/package.sh aarch64-apple-darwin target/release/glycoquest
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos-aarch64
+          path: dist/*
+          if-no-files-found: error
+
+  build-macos-x86_64:
+    name: Build macOS x86_64
+    needs: test
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          targets: x86_64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: macos-x86_64
+
+      # macos-13 is Intel; build native x86_64
+      - name: Build
+        run: cargo build --release --locked --target x86_64-apple-darwin
+
+      - name: Package
+        run: |
+          chmod +x scripts/ci/package.sh
+          file target/x86_64-apple-darwin/release/glycoquest
+          ./scripts/ci/package.sh x86_64-apple-darwin target/x86_64-apple-darwin/release/glycoquest
+          ls -la dist/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-macos-x86_64
+          path: dist/*
+          if-no-files-found: error
+
+  publish:
+    name: Publish GitHub Release
+    needs:
+      - build-linux
+      - build-windows
+      - build-macos-aarch64
+      - build-macos-x86_64
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download all dist artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: dist-*
+          path: dist-all
+          merge-multiple: true
+
+      - name: List assets
+        run: find dist-all -type f | sort
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: GlycoQuest ${{ github.ref_name }}
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}
+          generate_release_notes: true
+          body: |
+            Pre-built GlycoQuest binaries for `${{ github.ref_name }}`.
+
+            ### Linux x86_64 (Euler)
+            ```bash
+            tar xzf glycoquest-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz
+            ./glycoquest --help
+            ```
+
+            See [installation docs](https://mateuszfido.github.io/GlycoQuest/getting-started/installation/).
+          files: |
+            dist-all/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
