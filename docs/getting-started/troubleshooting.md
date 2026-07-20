@@ -26,8 +26,21 @@ GlycoQuest prints a **readiness** report before running. Any `✗ FAILED` line s
 ### xQuest runtime failed
 
 - `--xquest-root` must point to a directory containing the executable from `settings.ini` (`bin/xquest.pl` by default).
-- Install `perl-DB_File` (package name varies by OS).
-- Run `perl -MDB_File -e 1` to verify the module loads.
+
+### xQuest Perl modules failed
+
+GlycoQuest readiness and `scripts/run.sh` compile-check the search path (`compare_peaks3.pl`, `xquest.pl`) before launching jobs. Typical gaps on HPC (Euler): **`DB_File`** (needs `libdb`) and **`XML::Parser`** (needs `libexpat`). Most other libs ship under `V2.1.7/xquest/1209/`.
+
+```bash
+# ETH Euler (once, login node):
+scripts/bootstrap-euler-perl.sh
+scripts/check-xquest-perl.pl
+
+# Fedora/RHEL:  sudo dnf install perl-DB_File perl-XML-Parser
+# Debian/Ubuntu: sudo apt install libdb-file-perl libxml-parser-perl
+```
+
+If a module is installed but `.so` load fails (`libdb-18.1.so` / `libexpat.so`), the Slurm wrapper adds matching Spack lib dirs to `LD_LIBRARY_PATH`.
 
 ### Output directory failed
 

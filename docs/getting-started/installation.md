@@ -44,7 +44,7 @@ After installation, run `glycoquest --help` from any directory (if on `PATH`) or
 |-----------|---------|-------|
 | **Rust toolchain** (edition 2024) | Build `glycoquest` | [rustup.rs](https://rustup.rs) |
 | **xQuest V2.1.7+** | Crosslink search engine | Path passed as `--xquest-root`, available on [Gitlab](https://gitlab.ethz.ch/leitner_lab/xquest_xprophet) |
-| **Perl + DB_File** | xQuest peptide indexing | Available via package managers, CPAN (Unix/Linux/MacOS), or conda |
+| **Perl + DB_File + XML::Parser** | xQuest indexing and mzXML/XML parsing | Package managers, CPAN, or conda. On ETH Euler: `scripts/bootstrap-euler-perl.sh` then `scripts/check-xquest-perl.pl` |
 | **ProteoWizard msconvert** | Raw → mzXML (optional) | GlycoQuest does **not** convert vendor formats |
 
 ### xQuest layout

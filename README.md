@@ -10,7 +10,7 @@ Full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, r
 
 - Rust toolchain (edition 2024)
 - xQuest V2.1.7 at `xQuest/V2.1.7/xquest` (or `--xquest-root`)
-- Perl modules for xQuest: `DB_File` (Fedora: `dnf install perl-DB_File`), plus bundled libs under `xQuest/.../1209/` (set automatically in `run.sh` via `PERL5LIB`)
+- Perl for xQuest: `DB_File` and `XML::Parser` (XS; not in Euler’s Spack Perl), plus bundled libs under `V2.1.7/xquest/1209/` (set via `PERL5LIB` / `PERL5OPT` in `scripts/run.sh`). Verify with `scripts/check-xquest-perl.pl`; on ETH Euler run `scripts/bootstrap-euler-perl.sh` once.
 - mzXML MS/MS input (convert raw vendor files with msconvert first)
 
 Default xQuest binary in [`settings.ini`](settings.ini): `xquest_bin = bin/xquest.pl` (resolved relative to `--xquest-root`).

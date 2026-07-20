@@ -31,7 +31,7 @@
 #   GLYCOQUEST_PERL         Perl module (default: perl/5.38.0)
 #   GLYCOQUEST_BERKELEY_DB  Berkeley DB module: auto (default), a full module
 #                           name, or empty to skip
-#   GLYCOQUEST_PERL5        local::lib / cpanm prefix with DB_File
+#   GLYCOQUEST_PERL5        local::lib / cpanm prefix (DB_File, XML::Parser)
 #                           (default: $HOME/perl5 if it exists)
 #
 # Under Slurm, --jobs defaults to $SLURM_CPUS_PER_TASK and --progress to never
@@ -40,14 +40,14 @@
 #
 # Euler notes:
 #   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
-#   - berkeley-db is hierarchy-specific (hashed names). Default "auto" tries to
-#     load one if visible; if not, continues (OK when DB_File already has RPATH).
-#   - Spack Perl has no DB_File; install once against module perl + berkeley-db:
-#       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 eth_proxy
-#       cpanm --local-lib=$HOME/perl5 DB_File
-#   - DB_File.so needs libdb-18.1.so at runtime. If the berkeley-db module is not
-#     visible, this script globs the stack's Spack tree and prepends the lib dir
-#     to LD_LIBRARY_PATH.
+#   - Spack Perl is incomplete for xQuest. Install XS deps once on a login node:
+#       scripts/bootstrap-euler-perl.sh
+#     (installs DB_File + XML::Parser into $HOME/perl5; needs eth_proxy).
+#   - Verify before submitting (same check this wrapper runs under Slurm):
+#       scripts/check-xquest-perl.pl
+#   - berkeley-db / libexpat modules are often hierarchy-hidden. This script
+#     globs the stack Spack tree for libdb-*.so and libexpat.so* and prepends
+#     those dirs to LD_LIBRARY_PATH when needed.
 #   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
 #     install via PERL5OPT=-I... (not PERL5LIB alone).
 
@@ -69,7 +69,37 @@ PRINT_ONLY=0
 LOG_DIR=jobs
 
 usage() {
-  sed -n '2,52p' "$SCRIPT_PATH" | sed -E 's/^# ?//'
+  sed -n '2,/^set -euo pipefail$/p' "$SCRIPT_PATH" | sed '$d' | sed -E 's/^# ?//'
+}
+
+# Extract --xquest-root from glycoquest argv (supports --xquest-root PATH and =PATH).
+extract_xquest_root_arg() {
+  local prev=""
+  local arg
+  for arg in "$@"; do
+    if [[ "$arg" == --xquest-root=* ]]; then
+      printf '%s\n' "${arg#--xquest-root=}"
+      return 0
+    fi
+    if [[ "$prev" == "--xquest-root" ]]; then
+      printf '%s\n' "$arg"
+      return 0
+    fi
+    prev=$arg
+  done
+  return 1
+}
+
+run_perl_preflight() {
+  local xquest_root=$1
+  if [[ ! -f "$REPO_ROOT/scripts/check-xquest-perl.pl" ]]; then
+    return 0
+  fi
+  if [[ ! -d "$xquest_root" ]]; then
+    echo "warning: skipping Perl preflight; xQuest root missing: $xquest_root" >&2
+    return 0
+  fi
+  perl "$REPO_ROOT/scripts/check-xquest-perl.pl" --xquest-root "$xquest_root"
 }
 
 # Print berkeley-db modules visible in the *current* Lmod hierarchy (stdout).
@@ -179,49 +209,61 @@ load_berkeley_db() {
   return 1
 }
 
-# If DB_File.so was built against Spack berkeley-db, ensure libdb-*.so is findable.
-# Sets LD_LIBRARY_PATH when a matching lib is found under the active stack.
-ensure_libdb_runtime_path() {
-  # Already resolvable?
-  if perl -MDB_File -e 1 2>/dev/null; then
-    return 0
-  fi
+# Prepend a directory to LD_LIBRARY_PATH once.
+prepend_ld_library_path() {
+  local libdir=$1
+  local label=${2:-libs}
+  [[ -d "$libdir" ]] || return 1
+  case ":${LD_LIBRARY_PATH:-}:" in
+    *":${libdir}:"*) return 0 ;;
+  esac
+  export LD_LIBRARY_PATH="${libdir}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  echo "note: added ${label} to LD_LIBRARY_PATH: ${libdir}" >&2
+  return 0
+}
 
-  local stack_name=${STACK#stack/}
-  local stack_root="/cluster/software/stacks/${stack_name}"
-  local lib=""
+# Find the first existing file among glob patterns; print its directory.
+first_matching_libdir() {
   local candidate
-
-  # Prefer the compiler directory that matches the loaded gcc module.
-  local gcc_ver=${COMPILER#gcc/}
   shopt -s nullglob
-  local globs=(
-    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb-18.1.so
-    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb.so
-    "${stack_root}/spack/opt/spack/"*"/berkeley-db-"*/lib/libdb-18.1.so
-  )
-  for candidate in "${globs[@]}"; do
+  for candidate in "$@"; do
     if [[ -f "$candidate" ]]; then
-      lib=$candidate
-      break
+      dirname "$candidate"
+      shopt -u nullglob
+      return 0
     fi
   done
   shopt -u nullglob
+  return 1
+}
 
-  if [[ -z "$lib" ]]; then
-    return 1
+# If XS modules were built against Spack, ensure libdb / libexpat are findable.
+ensure_xs_runtime_libs() {
+  local stack_name=${STACK#stack/}
+  local stack_root="/cluster/software/stacks/${stack_name}"
+  local gcc_ver=${COMPILER#gcc/}
+  local libdir
+
+  if ! perl -MDB_File -e 1 2>/dev/null; then
+    if libdir=$(first_matching_libdir \
+      "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb-18.1.so \
+      "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb.so \
+      "${stack_root}/spack/opt/spack/"*"/berkeley-db-"*/lib/libdb-18.1.so
+    ); then
+      prepend_ld_library_path "$libdir" "berkeley-db"
+    fi
   fi
 
-  local libdir
-  libdir=$(dirname "$lib")
-  case ":${LD_LIBRARY_PATH:-}:" in
-    *":${libdir}:"*) ;;
-    *)
-      export LD_LIBRARY_PATH="${libdir}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
-      echo "note: added berkeley-db libs to LD_LIBRARY_PATH: ${libdir}" >&2
-      ;;
-  esac
-  return 0
+  if ! perl -MXML::Parser -e 1 2>/dev/null; then
+    if libdir=$(first_matching_libdir \
+      "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so \
+      "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so.* \
+      "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/expat-"*/lib/libexpat.so \
+      "${stack_root}/spack/opt/spack/"*"/libexpat-"*/lib/libexpat.so
+    ); then
+      prepend_ld_library_path "$libdir" "libexpat"
+    fi
+  fi
 }
 
 args_contain() {
@@ -383,6 +425,36 @@ if [[ -z "${SLURM_JOB_ID:-}" && "$LOCAL" -eq 0 ]]; then
   GLYCOQUEST_BIN="$(resolve_glycoquest)"
   mkdir -p "$LOG_DIR"
 
+  # Fail on the login node before spending queue time on a broken Perl env.
+  STACK="${GLYCOQUEST_STACK:-stack/2024-04}"
+  COMPILER="${GLYCOQUEST_COMPILER-gcc/8.5.0}"
+  PERL_MOD="${GLYCOQUEST_PERL:-perl/5.38.0}"
+  BERKELEY_DB_REQUEST="${GLYCOQUEST_BERKELEY_DB-auto}"
+  BERKELEY_DB=""
+  if command -v module >/dev/null 2>&1; then
+    module load "$STACK" 2>/dev/null || true
+    [[ -n "$COMPILER" ]] && module load "$COMPILER" 2>/dev/null || true
+    load_berkeley_db "$BERKELEY_DB_REQUEST" 2>/dev/null || true
+    module load "$PERL_MOD" 2>/dev/null || true
+  fi
+  if [[ -d "${HOME}/perl5/lib/perl5" ]]; then
+    export PERL5OPT="-I${HOME}/perl5/lib/perl5${PERL5OPT:+ ${PERL5OPT}}"
+  fi
+  ensure_xs_runtime_libs || true
+
+  default_xquest="$REPO_ROOT/V2.1.7/xquest"
+  xquest_root_for_check="$default_xquest"
+  if root_arg=$(extract_xquest_root_arg "$@"); then
+    xquest_root_for_check=$root_arg
+  fi
+  if [[ -d "$xquest_root_for_check" ]]; then
+    if ! run_perl_preflight "$xquest_root_for_check"; then
+      echo "error: Perl preflight failed on the submit host. Fix before sbatch:" >&2
+      echo "  scripts/bootstrap-euler-perl.sh" >&2
+      exit 1
+    fi
+  fi
+
   echo "Submitting GlycoQuest job (${CPUS} CPUs, time=${TIME}, mem-per-cpu=${MEM_PER_CPU})"
   echo "  binary: $GLYCOQUEST_BIN"
   sbatch "${sbatch_args[@]}" "$SCRIPT_PATH" "$@"
@@ -450,34 +522,32 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
     esac
   fi
 
-  # Module may be invisible in this hierarchy; still need libdb for the XS .so.
-  ensure_libdb_runtime_path || true
+  # Module may be invisible in this hierarchy; still need libdb / libexpat for XS.
+  ensure_xs_runtime_libs || true
 
-  if ! perl -MDB_File -e 1 2>/dev/null; then
-    db_err=$(perl -MDB_File -e 1 2>&1 || true)
-    echo "error: Perl DB_File is not available (required by xQuest indexing)." >&2
-    echo "  Loaded: ${STACK} ${COMPILER} ${PERL_MOD} berkeley-db=${BERKELEY_DB:-none}" >&2
-    echo "  PERL5OPT=${PERL5OPT:-<unset>}  LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-<unset>}" >&2
-    echo "  perl said: ${db_err}" >&2
-    echo "  If the module is installed but libdb is missing:" >&2
-    echo "    ls /cluster/software/stacks/${STACK#stack/}/spack/opt/spack/*/gcc-*/berkeley-db-*/lib/libdb-18.1.so" >&2
-    echo "    export LD_LIBRARY_PATH=<that-lib-dir>:\$LD_LIBRARY_PATH" >&2
-    echo "  Or install once (with berkeley-db / libdb available), then resubmit:" >&2
-    echo "    module load ${STACK} ${COMPILER} ${PERL_MOD} eth_proxy" >&2
-    echo "    cpanm --local-lib=\$HOME/perl5 DB_File" >&2
-    exit 1
-  fi
-
-  export OMP_NUM_THREADS=1
   echo "GlycoQuest Slurm job ${SLURM_JOB_ID} on $(hostname)"
   echo "  modules: ${STACK} ${COMPILER} ${BERKELEY_DB:-none} ${PERL_MOD}"
   if [[ -n "${PERL5_ROOT:-}" ]]; then
     echo "  perl5 local: ${PERL5_ROOT} (PERL5OPT=${PERL5OPT:-})"
   fi
   if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
-    echo "  LD_LIBRARY_PATH includes berkeley-db (len=${#LD_LIBRARY_PATH})"
+    echo "  LD_LIBRARY_PATH len=${#LD_LIBRARY_PATH}"
   fi
   echo "  cpus=${SLURM_CPUS_PER_TASK:-?}  tmpdir=${TMPDIR:-n/a}"
+  export OMP_NUM_THREADS=1
+fi
+
+xquest_root_for_check="$default_xquest"
+if root_arg=$(extract_xquest_root_arg "$@"); then
+  xquest_root_for_check=$root_arg
+fi
+
+# Fail before launching GlycoQuest / N xQuest jobs if Perl deps are incomplete.
+if ! run_perl_preflight "$xquest_root_for_check"; then
+  echo "error: Perl preflight failed. Fix the environment, then retry:" >&2
+  echo "  scripts/bootstrap-euler-perl.sh          # ETH Euler one-shot" >&2
+  echo "  scripts/check-xquest-perl.pl --xquest-root $xquest_root_for_check" >&2
+  exit 1
 fi
 
 echo "+ $(printf '%q ' "$GLYCOQUEST_BIN" "${extra[@]}" "$@")"

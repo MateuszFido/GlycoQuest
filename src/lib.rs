@@ -26,7 +26,7 @@ pub use glyco::{
 };
 pub use mzxml::{Ms2Scan, parse_scans, write_prefiltered_mzxml};
 pub use prefilter::{PrefilterResult, PrunedGlycan, run_prefilter, write_outputs};
-pub use xquest::{XQuestRuntime, resolve_runtime};
+pub use xquest::{XQuestRuntime, check_perl_search_deps, resolve_runtime};
 
 /// Whether to validate only or execute a full search.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -569,6 +569,18 @@ fn assess_config(config: &RunConfig) -> ConfigAssessment {
                 ok: true,
                 error: None,
             });
+            match check_perl_search_deps(&runtime.root) {
+                Ok(()) => checks.push(ReadinessCheck {
+                    label: "xQuest Perl modules",
+                    ok: true,
+                    error: None,
+                }),
+                Err(err) => checks.push(ReadinessCheck {
+                    label: "xQuest Perl modules",
+                    ok: false,
+                    error: Some(err),
+                }),
+            }
             Some(runtime)
         }
         Err(err) => {
