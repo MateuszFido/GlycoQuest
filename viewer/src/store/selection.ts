@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import { proteinPairKey } from '../data/normalize';
 import type { ViewerBundle, ViewerCrosslink, ViewerFilters, ViewerListener } from '../types';
 

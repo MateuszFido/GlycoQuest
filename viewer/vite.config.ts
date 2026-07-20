@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
 

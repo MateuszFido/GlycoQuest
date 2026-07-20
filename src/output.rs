@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Output directory preparation and run plan artifacts.
 
 pub mod layout;

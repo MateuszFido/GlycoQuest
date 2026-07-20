@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Load an explicit user-provided glycan library file (CSV/TSV).
 //!
 //! Schema (DESIGN.md section 4):

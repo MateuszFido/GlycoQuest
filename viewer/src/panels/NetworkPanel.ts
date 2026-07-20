@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import { renderGlycanSvg } from '../glycan/snfg';
 import type { SelectionStore } from '../store/selection';
 import type { ViewerCrosslink, ViewerProtein } from '../types';

@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 export interface SpectrumSummaryInput {
   scan: number;
   precursorMz: number | null | undefined;

@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Load advanced options from `settings.ini`.
 
 use std::path::{Path, PathBuf};

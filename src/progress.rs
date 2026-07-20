@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Terminal-aware progress rendering shared by the Rust and xQuest phases.
 
 use std::io::{self, IsTerminal};

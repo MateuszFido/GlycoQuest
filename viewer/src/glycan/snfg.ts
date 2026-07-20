@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 export interface GlycanComponent {
   name: string;
   count: number;

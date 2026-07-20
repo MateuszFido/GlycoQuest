@@ -61,7 +61,7 @@ Resource guards and result post-filters. `0` = no limit.
 |-----|---------|-------------|
 | `max_jobs` | `0` | Abort before xQuest if job count exceeds limit |
 | `max_pruned_spectra` | `0` | Cap spectra after glycan pruning |
-| `max_total_job_spectrum_comparisons` | `0` | Cap estimated xQuest comparisons (dry-run / plan) |
+| `max_total_job_spectrum_comparisons` | `0` | Cap spectrum–job assignments (dry-run / plan) |
 | `min_score` | `0` | Minimum xQuest score for `postfilter_status=pass` |
 | `max_precursor_error_ppm` | `20` | Maximum \|precursor error\| (ppm) for passing hits |
 

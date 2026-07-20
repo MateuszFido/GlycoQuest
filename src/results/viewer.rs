@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Interactive viewer bundle (`results/viewer/viewer.json`) for the GlycoQuest CLMS viewer.
 
 use std::collections::{BTreeMap, HashMap, HashSet};

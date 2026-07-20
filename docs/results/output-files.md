@@ -74,7 +74,7 @@ Useful for debugging failed jobs before cleanup.
 | Field | Meaning |
 |-------|---------|
 | `job_count` | Number of xQuest jobs |
-| `total_comparisons` | Estimated spectrum comparisons |
+| `total_comparisons` | Exact spectrum–job assignments (the xQuest progress unit) |
 | `isotope_prefilter_enabled` | Whether DSS pairing was required |
 | `scans_total`, `filtered_scans` | Prefilter funnel |
 | `jobs` | Per-job metadata (id, glycan, spectrum keys) |

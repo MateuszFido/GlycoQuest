@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! CLMS-CSV-compatible export and a self-contained HTML QC/glycan report.
 //!
 //! Two artifacts are written next to `glycoquest_xquest.csv`:

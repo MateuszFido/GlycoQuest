@@ -90,7 +90,8 @@ xQuest supports up to four variable-modification pseudo-residues (`X`, `U`, `B`,
 - Optional oxidation occupies another pseudo slot
 - Results map cleanly back to a single glycan candidate
 
-This can produce many jobs on large datasets; `plan.json` reports job count and estimated comparisons before execution.
+This can produce many jobs on large datasets; `plan.json` reports job count and
+exact spectrum–job assignments before execution.
 
 ## Parallelism
 
@@ -107,6 +108,7 @@ Jobs are independent (separate directories, separate peptide indexes). GlycoQues
 
 ## Reference data and run planning
 
-Published GPx datasets exist in MassIVE, including `MSV000093174` (Chen et al., 2025) and the publicly downloadable `MSV000087442` (Xie et al., 2021). GlycoQuest includes `nhs-cyclooctyne`, `ssbxl`, and `pcbxl` models for their azido-sialic-acid/NHS chemistry. See [Published reference datasets](../science/glycopeptide-crosslinking.md#published-reference-datasets) for citations, exact masses, access status, and the executed MSV000087442 proof of concept.
+Published GPx datasets exist in MassIVE, including `MSV000093174` (Chen et al., 2025) and the publicly downloadable `MSV000087442` (Xie et al., 2021). GlycoQuest includes `nhs-cyclooctyne`, `ssbxl`, and `pcbxl` models for their azido-sialic-acid/NHS chemistry. See [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets) for citations, exact masses, access status, and the executed MSV000087442 proof of concept.
 
-Run a dry-run on your own experiment and inspect `plan.json` for the scan funnel, job count, and estimated comparisons before launching xQuest.
+Run a dry-run on your own experiment and inspect `plan.json` for the scan funnel,
+job count, and spectrum–job assignments before launching xQuest.

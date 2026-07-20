@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! xQuest executable discovery and validation.
 
 use std::path::{Path, PathBuf};

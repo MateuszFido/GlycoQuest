@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 export interface ViewerBundle {
   viewer_schema_version: number;
   meta: ViewerMeta;

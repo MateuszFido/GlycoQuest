@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 use glycoquest::{parse_cli, run};
 use std::process;
 

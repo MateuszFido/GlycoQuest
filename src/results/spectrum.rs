@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! mzXML peak extraction for the viewer.
 
 use std::collections::{HashMap, HashSet};

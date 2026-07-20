@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Parse Byonic-style glycan composition strings such as `HexNAc(2)Hex(5)Fuc(1)`.
 
 use std::collections::BTreeMap;

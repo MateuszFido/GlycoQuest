@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Command-line parsing for the `glycoquest` binary.
 
 pub mod input;
@@ -74,8 +76,9 @@ struct Args {
     #[arg(long, required = true, value_name = "FASTA")]
     database: PathBuf,
 
-    /// Glycan library: a bundled database id (e.g. nglyc309, oglyc78) or a path to a
-    /// CSV/TSV file (columns: name,composition,monoisotopic_mass,diagnostic_ions,residue_targets).
+    /// Glycan library: a bundled database id (nglyc309, oglyc78,
+    /// msv000087442-sianaz) or a path to a CSV/TSV file (columns:
+    /// name,composition,monoisotopic_mass,diagnostic_ions,residue_targets).
     #[arg(long, value_name = "DATABASE|FILE", default_value = DEFAULT_GLYCANS)]
     glycans: String,
 

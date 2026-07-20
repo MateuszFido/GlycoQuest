@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Load diagnostic ion catalog and expand search targets (m/z × neutral loss delta).
 
 use std::path::Path;

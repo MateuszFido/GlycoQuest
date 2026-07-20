@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! xQuest compare_peaks matchlist generation.
 
 use std::collections::{HashMap, HashSet};

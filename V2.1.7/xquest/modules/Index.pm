@@ -26,6 +26,20 @@ use DB_File;
 use Fcntl;
 use Xquest_Digest;
 use Data::Dumper;
+
+# Berkeley DB 1.x can exhaust its finite pool of overflow pages when dense ion
+# bins are stored with the default 4 KiB hash pages.  xQuest ion indexes contain
+# large Storable arrays, so use the largest hash page size accepted by the
+# bundled Berkeley DB 1.x runtime (64 KiB is rejected by this build).
+# Each tie receives a fresh HASHINFO object because target and decoy indexes may
+# be open at the same time.
+sub ion_hash_options {
+	my $hashinfo = DB_File::HASHINFO->new();
+	$hashinfo->{'bsize'} = 32768;
+	$hashinfo->{'cachesize'} = 64 * 1024 * 1024;
+	return $hashinfo;
+}
+
 sub new {
 	my $class = shift();
 	my $self  = {};
@@ -127,7 +141,7 @@ my $checkcode = join "::", $PARAMS->{'database'}, $PARAMS->{'enzyme_num'},
 
 		if ($iontagmode) {
 			print $statusfilehandle "open ionindex $ionindexname...\n";
-			tie( %IONINDEX, 'MLDBM', $ionindexname ) or die "can't open tie to $ionindexname: $!";
+			tie( %IONINDEX, 'MLDBM', $ionindexname, O_RDWR, 0666, ion_hash_options() ) or die "can't open tie to $ionindexname: $!";
 		}
 
 		elsif ($enumeration) {
@@ -182,7 +196,7 @@ my $checkcode = join "::", $PARAMS->{'database'}, $PARAMS->{'enzyme_num'},
 			if ( -e $ionindexname ) {
 				unlink($ionindexname);
 			}
-			tie( %IONINDEX, 'MLDBM', $ionindexname, O_CREAT | O_RDWR, 0666 )
+			tie( %IONINDEX, 'MLDBM', $ionindexname, O_CREAT | O_RDWR, 0666, ion_hash_options() )
 			  or die "can't open tie to $ionindexname: $!";
 			for $i ( $PARAMS->{'minionsize'} ... $PARAMS->{'maxionsize'} ) {
 				$IONINDEX{ int($i) } = [];
@@ -519,7 +533,7 @@ my $checkcode = join "::", $PARAMS->{'database_db'}, $PARAMS->{'enzyme_num'},
 
 		if ($iontagmode) {
 			print $statusfilehandle "open ionindex $ionindexname...\n";
-			tie( %IONINDEX_DC, 'MLDBM', $ionindexname ) or die "can't open tie to $ionindexname: $!";
+			tie( %IONINDEX_DC, 'MLDBM', $ionindexname, O_RDWR, 0666, ion_hash_options() ) or die "can't open tie to $ionindexname: $!";
 		}
 
 		elsif ($enumeration) {
@@ -577,7 +591,7 @@ my $checkcode = join "::", $PARAMS->{'database_db'}, $PARAMS->{'enzyme_num'},
 			if ( -e $ionindexname ) {
 				unlink($ionindexname);
 			}
-			tie( %IONINDEX_DC, 'MLDBM', $ionindexname, O_CREAT | O_RDWR, 0666 )
+			tie( %IONINDEX_DC, 'MLDBM', $ionindexname, O_CREAT | O_RDWR, 0666, ion_hash_options() )
 			  or die "can't open tie to $ionindexname: $!";
 			for $i ( $PARAMS->{'minionsize'} ... $PARAMS->{'maxionsize'} ) {
 				$IONINDEX_DC{ int($i) } = [];

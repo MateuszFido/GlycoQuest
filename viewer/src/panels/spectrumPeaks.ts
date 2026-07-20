@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import type { ViewerCrosslink, ViewerFiltering, ViewerSpectrum } from '../types';
 
 const EXACT_MZ_TOLERANCE_DA = 0.0002;

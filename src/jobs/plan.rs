@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! xQuest job planning from prefilter outputs.
 
 use std::collections::HashMap;
@@ -140,7 +142,7 @@ pub struct PlannedJob {
     pub variant: GlycanVariant,
     /// Shared by the intact, -H2O, and -2H2O variants of one glycan.
     pub spectrum_keys: Arc<[SpectrumKey]>,
-    /// Charge-weighted estimate used for limits and aggregate progress.
+    /// Number of spectra assigned to this xQuest job.
     pub estimated_comparisons: u64,
 }
 
@@ -274,7 +276,7 @@ impl JobPlan {
             && total_comparisons > settings.max_total_job_spectrum_comparisons
         {
             return Err(format!(
-                "estimated spectrum comparisons ({total_comparisons}) exceed max_total_job_spectrum_comparisons ({})",
+                "spectrum-job assignments ({total_comparisons}) exceed max_total_job_spectrum_comparisons ({})",
                 settings.max_total_job_spectrum_comparisons
             ));
         }
@@ -393,11 +395,10 @@ fn build_jobs_for_glycan(
         })
         .collect::<Vec<_>>()
         .into();
-    let comparisons = spectrum_indexes
-        .iter()
-        .map(|&index| filtered[index].precursor_charge.unwrap_or(2).max(1) as u64)
-        .sum::<u64>()
-        .max(1);
+    // xQuest's native progress is one unit per searched spectrum. Counting
+    // precursor charges here inflated the progress total even though xQuest
+    // does not emit a separate progress event for each charge hypothesis.
+    let comparisons = spectrum_indexes.len() as u64;
     let jobs = glycan_variants(entry)?
         .into_iter()
         .map(|variant| PlannedJob {
@@ -553,7 +554,7 @@ mod tests {
                 .iter()
                 .all(|job| job.spectrum_keys.len() == SPECTRA)
         );
-        assert_eq!(plan.total_comparisons, (GLYCANS * 3 * SPECTRA * 2) as u64);
+        assert_eq!(plan.total_comparisons, (GLYCANS * 3 * SPECTRA) as u64);
         assert!(
             elapsed < Duration::from_secs(3),
             "planning {SPECTRA} spectra × {GLYCANS} glycans took {elapsed:?}"

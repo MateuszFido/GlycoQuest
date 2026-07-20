@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Flatten xQuest XML search results to CSV rows.
 
 use std::fs;

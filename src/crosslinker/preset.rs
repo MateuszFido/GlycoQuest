@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Bundled crosslinker presets.
 
 use super::CrosslinkerProfile;

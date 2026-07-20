@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Bundled glycan database catalog and data directory resolution.
 
 use std::path::PathBuf;
@@ -16,6 +18,10 @@ pub struct DatabaseEntry {
     pub filename: &'static str,
     pub glycan_type: GlycanType,
     pub aliases: &'static [&'static str],
+    /// Dataset-specific diagnostic ions not present in the general catalog.
+    pub additional_diagnostic_ions: &'static [(&'static str, f64)],
+    /// Crosslinker required when the database represents a particular experiment.
+    pub required_crosslinker: Option<&'static str>,
 }
 
 const DATABASES: &[DatabaseEntry] = &[
@@ -24,12 +30,26 @@ const DATABASES: &[DatabaseEntry] = &[
         filename: "Nglyc309_Byonic.glyc",
         glycan_type: GlycanType::N,
         aliases: &["n-glycan", "nglyc"],
+        additional_diagnostic_ions: &[],
+        required_crosslinker: None,
     },
     DatabaseEntry {
         id: "oglyc78",
         filename: "Oglyc78_Byonic.glyc",
         glycan_type: GlycanType::O,
         aliases: &["o-glycan", "oglyc"],
+        additional_diagnostic_ions: &[],
+        required_crosslinker: None,
+    },
+    DatabaseEntry {
+        id: "msv000087442-sianaz",
+        filename: "MSV000087442_SiaNAz.glyc",
+        glycan_type: GlycanType::N,
+        aliases: &["pnt2-sianaz", "xie2021"],
+        // Xie et al. searched SiaNAz-bearing glycans. Their reported glycan
+        // compositions use Sia/NeuAc, while the azido oxonium ion is 333.1040.
+        additional_diagnostic_ions: &[("SiaNAz", 333.1040)],
+        required_crosslinker: Some("nhs-cyclooctyne"),
     },
 ];
 
@@ -37,6 +57,10 @@ pub fn supported_glycan_databases() -> &'static [(&'static str, &'static str)] {
     &[
         ("nglyc309", "N-linked glycans (309 compositions)"),
         ("oglyc78", "O-linked glycans (78 compositions)"),
+        (
+            "msv000087442-sianaz",
+            "Xie 2021 PNT2 SiaNAz N-glycoforms (9 reported compositions)",
+        ),
     ]
 }
 
@@ -103,6 +127,12 @@ pub fn residue_targets(entry: &DatabaseEntry) -> Vec<String> {
     }
 }
 
+pub fn required_crosslinker(database_id: &str) -> Option<&'static str> {
+    resolve_database(database_id)
+        .ok()
+        .and_then(|entry| entry.required_crosslinker)
+}
+
 pub fn ensure_data_files(entry: &DatabaseEntry) -> Result<(), String> {
     for path in [
         glycan_data_dir().join(entry.filename),
@@ -128,6 +158,10 @@ mod tests {
         assert_eq!(resolve_database("nglyc309").unwrap().id, "nglyc309");
         assert_eq!(resolve_database("N-glycan").unwrap().id, "nglyc309");
         assert_eq!(resolve_database("oglyc78").unwrap().id, "oglyc78");
+        assert_eq!(
+            resolve_database("msv000087442-sianaz").unwrap().id,
+            "msv000087442-sianaz"
+        );
     }
 
     #[test]

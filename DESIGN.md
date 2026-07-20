@@ -61,7 +61,8 @@ Real GPx reference data are available. Xie et al. (*Chemical Science*, 2021,
 doi:10.1039/D1SC00814E) deposited the public `MSV000087442` dataset
 (doi:10.25345/C5VV5S). Its `nhs-cyclooctyne` model is encoded as an unlabeled
 `X:K` bridge of 205.085126607 Da relative to a NeuAc glycan library, and an
-executed four-spectrum proof of concept lives in `examples/MSV000087442/`.
+the full-spectrum search preset uses `data/MSV000087442/`,
+`configs/msv000087442-full.ini`, and the bundled `msv000087442-sianaz` library.
 Chen et al. (*Analytical Chemistry*, 2025, doi:10.1021/acs.analchem.4c04134)
 reported `MSV000093174` (doi:10.25345/C5416T929); the paper-derived post-release
 SSBXL and PCBXL models are bundled, although anonymous dataset access was private
@@ -174,7 +175,7 @@ The default job model is one glycan composition/loss variant per xQuest job. Gly
 
 Set `variable_mod` and `nvariable_mod` per job from the selected glycan and optional peptide modifications. The first pseudo-residue should be reserved for the glycan variant where possible, so output parsing can treat `X` as the glycan-bearing residue. `nvariable_mod` is an xQuest per-peptide maximum, not a GlycoQuest hit-level glycan-count rule, so GlycoQuest must post-filter result pairs for the intended V1 class. V1 defaults to peptide-glycopeptide crosslinks and should require exactly one configured glycan pseudo-residue across the matched peptide pair. Glycopeptide-glycopeptide crosslinks are a later requirement.
 
-Resource control is part of the contract. Before execution, dry-run and run mode should compute the number of generated xQuest jobs, retained spectra, and approximate job-spectrum comparisons. If those exceed `--max-jobs`, `--max-pruned-spectra`, or `--max-total-job-spectrum-comparisons`, GlycoQuest should fail before launching xQuest unless the user raises the limits.
+Resource control is part of the contract. Before execution, dry-run and run mode should compute the number of generated xQuest jobs, retained spectra, and exact spectrum-job assignments. If those exceed `--max-jobs`, `--max-pruned-spectra`, or `--max-total-job-spectrum-comparisons`, GlycoQuest should fail before launching xQuest unless the user raises the limits.
 
 ## 7. Testing Plan
 

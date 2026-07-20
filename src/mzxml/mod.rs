@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Narrow mzXML reader for MS2 scans used by GlycoQuest prefilters.
 
 mod write;

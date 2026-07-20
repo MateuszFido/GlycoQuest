@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Crosslinker preset construction and verification.
 
 mod preset;

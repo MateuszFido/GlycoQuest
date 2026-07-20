@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! GlycoQuest library: CLI parameter types, settings, and the entry-point runner.
 
 mod cli;
@@ -19,7 +21,8 @@ pub use crosslinker::CrosslinkerProfile;
 pub use fasta::{FastaDatabase, stage_fasta_for_project, validate_fasta};
 pub use glyco::{
     DiagnosticIon, GlycanEntry, GlycanLibrary, glycan_data_dir, load_glycan_database,
-    load_glycan_library_file, load_glycans, resolve_database, supported_glycan_databases,
+    load_glycan_library_file, load_glycans, required_crosslinker, resolve_database,
+    supported_glycan_databases,
 };
 pub use mzxml::{Ms2Scan, parse_scans, write_prefiltered_mzxml};
 pub use prefilter::{PrefilterResult, PrunedGlycan, run_prefilter, write_outputs};
@@ -228,7 +231,7 @@ fn run_search(
 
     let xquest_progress = progress.determinate(3, 4, "xQuest searches", artifacts.total_work);
     xquest_progress.set_message(format!(
-        "work · 0/{} jobs · 0 active · 0 failed",
+        "spectrum assignments · 0/{} jobs · 0 active · 0 failed",
         artifacts.job_work.len()
     ));
 
@@ -464,11 +467,11 @@ fn execute_pipeline(
     }
 
     prepare_progress.finish(format!(
-        "{} jobs · {} estimated comparisons",
+        "{} jobs · {} spectrum-job assignments",
         plan_doc.job_count, plan_doc.total_comparisons
     ));
     eprintln!(
-        "plan: {} jobs, {} estimated comparisons, isotope_prefilter={}",
+        "plan: {} jobs, {} spectrum-job assignments, isotope_prefilter={}",
         plan_doc.job_count, plan_doc.total_comparisons, plan_doc.isotope_prefilter_enabled
     );
 
@@ -544,6 +547,21 @@ fn assess_config(config: &RunConfig) -> ConfigAssessment {
         }
     };
 
+    if let Some(library) = &glycan_library {
+        match validate_glycan_crosslinker(library, &config.crosslinker) {
+            Ok(()) => checks.push(ReadinessCheck {
+                label: "Glycan/crosslinker chemistry",
+                ok: true,
+                error: None,
+            }),
+            Err(err) => checks.push(ReadinessCheck {
+                label: "Glycan/crosslinker chemistry",
+                ok: false,
+                error: Some(err),
+            }),
+        }
+    }
+
     let xquest = match resolve_runtime(&config.cli.xquest_root, &config.settings) {
         Ok(runtime) => {
             checks.push(ReadinessCheck {
@@ -586,6 +604,23 @@ fn assess_config(config: &RunConfig) -> ConfigAssessment {
         glycan_library,
         xquest,
         checks,
+    }
+}
+
+fn validate_glycan_crosslinker(
+    library: &GlycanLibrary,
+    crosslinker: &CrosslinkerProfile,
+) -> Result<(), String> {
+    let Some(required) = required_crosslinker(&library.database_id) else {
+        return Ok(());
+    };
+    if crosslinker.name.eq_ignore_ascii_case(required) {
+        Ok(())
+    } else {
+        Err(format!(
+            "glycan database {} requires crosslinker {required}, got {}",
+            library.database_id, crosslinker.name
+        ))
     }
 }
 
@@ -864,6 +899,17 @@ mod tests {
             settings: Settings::defaults(),
             crosslinker: CrosslinkerProfile::resolve(&Settings::defaults(), Some("dss")).unwrap(),
         }
+    }
+
+    #[test]
+    fn msv000087442_library_requires_nhs_cyclooctyne() {
+        let library = load_glycan_database("msv000087442-sianaz").unwrap();
+        let settings = Settings::defaults();
+        let wrong = CrosslinkerProfile::resolve(&settings, Some("dss")).unwrap();
+        let correct = CrosslinkerProfile::resolve(&settings, Some("nhs-cyclooctyne")).unwrap();
+
+        assert!(validate_glycan_crosslinker(&library, &wrong).is_err());
+        assert!(validate_glycan_crosslinker(&library, &correct).is_ok());
     }
 
     #[test]

@@ -79,23 +79,18 @@ mass is specifically for the post-TCEP/**IAA** material, not the intact enrichme
 reagent. Likewise, PCBXL uses the post-photorelease bridge shown in the synthetic
 scheme.
 
-### Executed MSV000087442 proof of concept
+### MSV000087442 search preset
 
-The repository includes reproducible commands and small reference files in
-`examples/MSV000087442/`. Four spectra
-were reconstructed by matching high-scoring Supplementary Table S1 rows to the
-in-situ MGF using precursor mass (within 10 ppm) plus both m/z 204.0867 and
-366.1395. GlycoQuest retained all four scans, all three xQuest jobs completed,
-and four hits were consolidated and passed the GlycoQuest post-filter. The
-generated xQuest definitions use `AArequired X:K`, ensuring that the glycan
+The repository includes the public dataset under `data/MSV000087442/`, the
+focused GPx FASTA, a dataset configuration, and the bundled
+`msv000087442-sianaz` library. The library contains the nine glycoforms reported
+in the study and produces 27 xQuest jobs including the two water-loss variants.
+The generated xQuest definitions use `AArequired X:K`, ensuring that the glycan
 pseudo-residue is also the crosslink site.
 
-This validates the raw-data conversion, linker mass/site definition, prefilter,
-xQuest launch, and result extraction on real GPx data. It does **not** establish
-search-engine concordance: the paper used MeroX with glycan-specific offset ions,
-and the two xQuest assignments differ from Supplementary Table S1. The paper also
-does not place scan identifiers beside those table rows, so the checked-in scan
-selection is explicitly a mass/fragment-ion reconstruction.
+The paper used MeroX with glycan-specific offset ions, so xQuest results should
+still be treated as an independent search rather than assumed to reproduce every
+published assignment.
 
 ## Related
 

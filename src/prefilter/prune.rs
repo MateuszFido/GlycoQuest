@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Spectrum-local glycan candidate pruning by matched diagnostic families.
 
 use crate::glyco::{Composition, GlycanLibrary, contains_family, parse_composition};

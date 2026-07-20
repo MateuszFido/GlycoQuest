@@ -25,7 +25,7 @@ For each MS2 scan, GlycoQuest matches peaks against the union of diagnostic targ
 | HexNAc | ~186.08 | −H₂O neutral loss |
 | NeuAc | ~292.10 | Sialic acid |
 
-See [Diagnostic ions](../science/diagnostic-ions.md) for the full catalog.
+See [Diagnostic ions](../theory/diagnostic-ions.md) for the full catalog.
 
 **Output:** `matched_families` and `matched_ions` recorded in `filtered_spectra.tsv`.
 

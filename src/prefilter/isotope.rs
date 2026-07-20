@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! DSS light/heavy isotope-pair matching for diagnostic-positive scans.
 
 use std::collections::{HashMap, HashSet};

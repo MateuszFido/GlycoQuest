@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Input path resolution: one xQuest-compatible mzXML file or a directory of them.
 
 use std::path::{Path, PathBuf};

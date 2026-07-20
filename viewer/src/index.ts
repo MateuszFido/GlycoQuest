@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import type { ViewerBundle } from './types';
 import { normalizeViewerBundle } from './data/normalize';
 import { SelectionStore } from './store/selection';

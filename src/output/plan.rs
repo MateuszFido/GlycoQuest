@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Write `plan.json` summarizing a GlycoQuest run.
 
 use std::fs::File;

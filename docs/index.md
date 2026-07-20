@@ -47,10 +47,10 @@
 - [Using the viewer](viewer/using-the-viewer.md) — launch, panels, filters
 - [Scientific interpretation](viewer/scientific-interpretation.md) — what the viewer shows and does not claim
 
-### Background
+### Theory
 
-- [Glycopeptide crosslinking](science/glycopeptide-crosslinking.md) — biology and MS context
-- [Diagnostic ions](science/diagnostic-ions.md) — oxonium ions and neutral losses
+- [Glycopeptide crosslinking](theory/glycopeptide-crosslinking.md) — biology and MS context
+- [Diagnostic ions](theory/diagnostic-ions.md) — oxonium ions and neutral losses
 
 ## Building this documentation site
 

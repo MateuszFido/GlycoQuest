@@ -64,11 +64,13 @@ unchanged with a library whose glycan masses already contain SiaNAz. For SSBXL,
 ```bash
 glycoquest run.mzXML --database proteins.fasta \
   --crosslinker nhs-cyclooctyne \
-  --glycans examples/MSV000087442/glycans.csv
+  --glycans msv000087442-sianaz
 ```
 
-See the executed repository example at `examples/MSV000087442/README.md` and
-[the chemistry derivation](../science/glycopeptide-crosslinking.md#paper-derived-search-masses).
+`msv000087442-sianaz` is chemistry-locked to `nhs-cyclooctyne`; readiness
+validation rejects a different linker so ordinary-NeuAc glycan masses cannot
+silently be combined with the wrong bridge mass. See
+[the chemistry derivation](../theory/glycopeptide-crosslinking.md#paper-derived-search-masses).
 
 ## Labeling modes (`[crosslinker] label`)
 
@@ -114,7 +116,7 @@ Peptide A ——[DSS]—— Peptide B
           of Peptide A)
 ```
 
-See [Glycopeptide crosslinking](../science/glycopeptide-crosslinking.md).
+See [Glycopeptide crosslinking](../theory/glycopeptide-crosslinking.md).
 
 ## Related
 

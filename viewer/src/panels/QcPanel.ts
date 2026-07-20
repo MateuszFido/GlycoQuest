@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import type { SelectionStore } from '../store/selection';
 import type { NamedCount, Histogram } from '../types';
 

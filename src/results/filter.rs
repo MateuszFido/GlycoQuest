@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! GlycoQuest post-filters and glycan annotation for xQuest hits.
 
 use std::path::PathBuf;

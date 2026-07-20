@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Bundled glycan database loading and conversion.
 
 mod catalog;
@@ -5,7 +7,9 @@ mod composition;
 mod diagnostic;
 mod library;
 
-pub use catalog::{glycan_data_dir, resolve_database, supported_glycan_databases};
+pub use catalog::{
+    glycan_data_dir, required_crosslinker, resolve_database, supported_glycan_databases,
+};
 pub use composition::{
     Composition, composition_mass, contains_family, load_masses, parse_composition,
     read_compositions,
@@ -35,7 +39,7 @@ pub struct GlycanLibrary {
 ///
 /// If `spec` points to an existing file, it is parsed as an explicit CSV/TSV
 /// glycan library; otherwise it is treated as a bundled database id such as
-/// `nglyc309` or `oglyc78`.
+/// `nglyc309`, `oglyc78`, or `msv000087442-sianaz`.
 pub fn load_glycans(spec: &str) -> Result<GlycanLibrary, String> {
     let path = std::path::Path::new(spec);
     if path.is_file() {
@@ -45,7 +49,8 @@ pub fn load_glycans(spec: &str) -> Result<GlycanLibrary, String> {
     }
 }
 
-/// Load a bundled glycan database by catalog id (e.g. `nglyc309`, `oglyc78`).
+/// Load a bundled glycan database by catalog id (for example `nglyc309`,
+/// `oglyc78`, or `msv000087442-sianaz`).
 pub fn load_glycan_database(database_id: &str) -> Result<GlycanLibrary, String> {
     let entry = resolve_catalog_entry(database_id)?;
     ensure_data_files(entry)?;
@@ -60,7 +65,14 @@ pub fn load_glycan_database(database_id: &str) -> Result<GlycanLibrary, String> 
     for composition_str in compositions {
         let composition = parse_composition(&composition_str)?;
         let monoisotopic_mass = round_mass(composition_mass(&composition, &masses)?);
-        let diagnostic_ions = expand_diagnostic_ions(&composition, &diagnostic_catalog);
+        let mut diagnostic_ions = expand_diagnostic_ions(&composition, &diagnostic_catalog);
+        diagnostic_ions.extend(entry.additional_diagnostic_ions.iter().map(|(family, mz)| {
+            DiagnosticIon {
+                family: (*family).to_string(),
+                mz: *mz,
+                loss_label: String::new(),
+            }
+        }));
 
         if diagnostic_ions.is_empty() {
             return Err(format!(
@@ -125,6 +137,25 @@ mod tests {
                 .iter()
                 .all(|entry| entry.residue_targets == vec!["S".to_string(), "T".to_string()])
         );
+    }
+
+    #[test]
+    fn loads_msv000087442_sianaz_glycoforms_and_diagnostic() {
+        let _lock = env_test_lock();
+        let library = load_glycan_database("msv000087442-sianaz")
+            .expect("bundled MSV000087442 SiaNAz library");
+
+        assert_eq!(library.database_id, "msv000087442-sianaz");
+        assert_eq!(library.entries.len(), 9);
+        assert!(library.entries.iter().all(|entry| {
+            let composition = parse_composition(&entry.composition).unwrap();
+            contains_family(&composition, "NeuAc")
+                && entry.diagnostic_ions.iter().any(|ion| {
+                    ion.family == "SiaNAz"
+                        && ion.loss_label.is_empty()
+                        && (ion.mz - 333.1040).abs() < 1e-6
+                })
+        }));
     }
 
     #[test]

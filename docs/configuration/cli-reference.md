@@ -15,7 +15,7 @@ glycoquest [OPTIONS] <INPUT>
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
 | `--database` | | *(required)* | Protein sequence database (FASTA) |
-| `--glycans` | | `nglyc309` | Bundled glycan id (`nglyc309`, `oglyc78`) or path to custom CSV/TSV |
+| `--glycans` | | `nglyc309` | Bundled glycan id (`nglyc309`, `oglyc78`, `msv000087442-sianaz`) or path to custom CSV/TSV |
 | `--xquest-root` | | `.` | xQuest installation root (contains `bin/xquest.pl`) |
 | `--crosslinker` | | from settings | Crosslinker preset name (`dss`, `dmtmm`, `nhs-cyclooctyne`, `ssbxl`, `pcbxl`) |
 | `--ppm-tolerance` | | from settings | Diagnostic-ion matching tolerance (ppm); overrides `settings.ini` |
@@ -88,7 +88,7 @@ glycoquest run.mzXML --database proteins.fasta --glycans oglyc78
 ```bash
 glycoquest run.mzXML \
   --database proteins.fasta \
-  --glycans examples/MSV000087442/glycans.csv \
+  --glycans msv000087442-sianaz \
   --crosslinker nhs-cyclooctyne
 ```
 

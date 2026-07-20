@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Diagnostic-ion matching against expanded glycan library targets.
 
 use std::collections::BTreeSet;

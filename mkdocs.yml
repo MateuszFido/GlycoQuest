@@ -73,9 +73,9 @@ nav:
   - Viewer:
       - Using the viewer: viewer/using-the-viewer.md
       - Scientific interpretation: viewer/scientific-interpretation.md
-  - Science:
-      - Glycopeptide crosslinking: science/glycopeptide-crosslinking.md
-      - Diagnostic ions: science/diagnostic-ions.md
+  - Theory:
+      - Glycopeptide crosslinking: theory/glycopeptide-crosslinking.md
+      - Diagnostic ions: theory/diagnostic-ions.md
 
 extra:
   social: []

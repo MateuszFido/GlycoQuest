@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! xQuest definition file generation.
 
 use std::fs;
@@ -393,5 +395,45 @@ mod tests {
         .unwrap();
 
         assert!(defs.xquest_def.contains("nvariable_mod 4"));
+    }
+
+    #[test]
+    fn vendored_xquest_ion_indexes_use_large_hash_pages() {
+        let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let xquest_root = manifest.join("V2.1.7/xquest");
+        let index_module = xquest_root.join("modules/Index.pm");
+        let source = fs::read_to_string(index_module).expect("vendored xQuest Index.pm");
+
+        assert!(source.contains("sub ion_hash_options"));
+        assert!(source.contains("bsize'} = 32768"));
+        assert_eq!(source.matches("ion_hash_options()").count(), 4);
+
+        let db_path = std::env::temp_dir().join(format!(
+            "glycoquest_dbfile_page_test_{}.db",
+            std::process::id()
+        ));
+        let perl5lib = format!(
+            "{}:{}:{}",
+            xquest_root.join("1209/lib/perl5").display(),
+            xquest_root.join("1209/share/perl5").display(),
+            xquest_root.join("modules").display()
+        );
+        let status = std::process::Command::new("perl")
+            .args([
+                "-MMLDBM=DB_File,Storable",
+                "-MDB_File",
+                "-MFcntl=O_CREAT,O_RDWR",
+                "-e",
+                r#"my $path=shift; my $h=DB_File::HASHINFO->new(); $h->{'bsize'}=32768; my %db; tie(%db,'MLDBM',$path,O_CREAT|O_RDWR,0666,$h) or die "tie: $!"; $db{'ion'}=['peptide']; die 'roundtrip' unless @{$db{'ion'}} == 1; untie %db;"#,
+            ])
+            .arg(&db_path)
+            .env("PERL5LIB", perl5lib)
+            .status()
+            .expect("Perl is required by xQuest");
+        let _ = fs::remove_file(db_path);
+        assert!(
+            status.success(),
+            "32 KiB MLDBM hash pages must be supported"
+        );
     }
 }

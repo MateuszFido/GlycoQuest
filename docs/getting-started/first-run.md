@@ -24,7 +24,7 @@ Dry-run validates and writes the prefilter outputs and xQuest job folders **with
   --dry-run
 ```
 
-The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For published GPx experiments and their public data, see [Published reference datasets](../science/glycopeptide-crosslinking.md#published-reference-datasets).
+The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For published GPx experiments and their public data, see [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets).
 
 ### What to check
 
@@ -53,7 +53,7 @@ prefilter: rejected=0
 **Terminal — job plan**
 
 ```
-plan: 864 jobs, 3456 estimated comparisons, isotope_prefilter=true
+plan: 864 jobs, 3456 spectrum-job assignments, isotope_prefilter=true
 dry-run: job folders and plan.json written (xQuest not executed)
 ```
 
@@ -61,7 +61,7 @@ dry-run: job folders and plan.json written (xQuest not executed)
 
 | File / folder | Purpose |
 |---------------|---------|
-| `plan.json` | Full run plan: jobs, comparisons, options |
+| `plan.json` | Full run plan: jobs, spectrum-job assignments, options |
 | `filtered_spectra.tsv` | Spectra that passed all prefilters |
 | `rejected_spectra.tsv` | Spectra rejected (with reason) |
 | `isotope_pairs.tsv` | DSS light/heavy pairs (empty if isotope prefilter off) |

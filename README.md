@@ -45,11 +45,13 @@ A bundled publicly available dataset (MassIVE DOI: 10.25345/C5VV5S, MSV000087442
 Citation: Xie, *et al.* Glycan–protein cross-linking mass spectrometry reveals sialic acid-mediated protein networks on cell surfaces. Chem. Sci. 2021; 12 (25): 8767–8777.
 
 ```bash
-./target/release/glycoquest experiment.mzXML \
-  --database proteins.fasta \
-  --glycans glycans.csv \
+./target/release/glycoquest data/MSV000087442/PNT2-crosslink-in-situ.mzXML \
+  --database data/MSV000087442/PNT2-GPx-focused-xquest.fasta \
+  --glycans msv000087442-sianaz \
   --crosslinker nhs-cyclooctyne \
-  --xquest-root /path/to/xQuest/V2.1.7/xquest
+  --config configs/msv000087442-full.ini \
+  --xquest-root V2.1.7/xquest \
+  --out out
 ```
 
 Its search encoding uses `X:K`: xQuest rewrites the glycan-bearing Asn to its first variable-modification pseudo-residue, `X`, so the glycan and crosslink occupy the same residue. The bond runs through SiaNAz on that N-glycan to a peptide Lys. The glycan library contains ordinary NeuAc, so the preset crosslink mass (205.085126607 Da) includes both the NHS–cyclooctyne residue and the SiaNAz-for-NeuAc mass difference.
@@ -68,10 +70,13 @@ Interactive runs show phase-aware progress and timing estimates for spectrum fil
   --jobs 8
 ```
 
-Each job builds its own database index in its result directory.
+Each job builds its own database index in its result directory. Starting a new
+search in an existing project output clears stopped-run job folders first, so
+stale jobs cannot leak into the new output.
 
 
-Glycan libraries via `--glycans`: a bundled id (`nglyc309` default, `oglyc78`) or a
+Glycan libraries via `--glycans`: a bundled id (`nglyc309` default, `oglyc78`,
+`msv000087442-sianaz`) or a
 path to a custom CSV/TSV file with columns
 `name,composition,monoisotopic_mass,diagnostic_ions,residue_targets`
 (`diagnostic_ions` is a `;`-separated list of `family@mz` with optional `[-loss]`;

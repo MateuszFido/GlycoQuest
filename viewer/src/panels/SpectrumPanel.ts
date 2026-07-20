@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 

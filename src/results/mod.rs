@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Consolidated GlycoQuest xQuest result handling.
 
 mod extract;

@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! FASTA database validation for compatibility with xQuest.
 
 use std::path::{Path, PathBuf};

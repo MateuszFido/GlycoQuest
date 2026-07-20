@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! xQuest runtime discovery, job generation, and definitions.
 
 mod defs;

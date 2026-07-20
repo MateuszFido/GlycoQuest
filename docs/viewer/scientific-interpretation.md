@@ -80,5 +80,5 @@ A passing hit means: diagnostic evidence existed, xQuest found a crosslink consi
 
 ## Related
 
-- [Glycopeptide crosslinking](../science/glycopeptide-crosslinking.md)
+- [Glycopeptide crosslinking](../theory/glycopeptide-crosslinking.md)
 - [Post-filter](../workflow/postfilter.md)

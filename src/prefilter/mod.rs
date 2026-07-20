@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Spectrum prefilter orchestration and TSV output writers.
 
 mod diagnostic;

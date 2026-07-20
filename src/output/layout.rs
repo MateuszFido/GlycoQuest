@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Project output directory layout under a single `out/` base.
 
 use std::path::{Path, PathBuf};

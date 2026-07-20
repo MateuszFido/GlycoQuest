@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Execute xQuest job scripts, continuing past individual failures.
 //!
 //! Jobs are independent (each runs in its own directory with a private result
@@ -291,7 +293,12 @@ impl JobProgressTracker {
     fn finish_job(&self, name: &str, success: bool) {
         let mut state = self.state.lock().expect("job progress lock");
         if let Some(active) = state.active.remove(name) {
-            state.completed_work = state.completed_work.saturating_add(active.work);
+            let completed = if success {
+                active.work
+            } else {
+                active.partial_work
+            };
+            state.completed_work = state.completed_work.saturating_add(completed);
         }
         state.completed_jobs += 1;
         if !success {
@@ -348,7 +355,7 @@ impl JobProgressTracker {
             .min(self.total_work);
         self.phase.set_position(position);
         self.phase.set_message(format!(
-            "work · {}/{} jobs · {} active · {} failed",
+            "spectrum assignments · {}/{} jobs · {} active · {} failed",
             state.completed_jobs,
             self.total_jobs,
             state.active.len(),
@@ -503,6 +510,31 @@ mod tests {
         );
         assert_eq!(parse_xquest_progress(""), None);
         assert_eq!(parse_xquest_progress("Searching spectrum 1 of 0"), None);
+    }
+
+    #[test]
+    fn failed_job_keeps_only_observed_partial_progress() {
+        let root = temp_dir("failed_progress");
+        let progress_path = root.join("results.progress");
+        fs::create_dir_all(&root).unwrap();
+        fs::write(&progress_path, "Searching spectrum 6 of 20").unwrap();
+
+        let phase = crate::progress::ProgressReporter::new(crate::ProgressMode::Never).determinate(
+            3,
+            4,
+            "xQuest searches",
+            100,
+        );
+        let tracker = JobProgressTracker::new(phase.clone(), 1, 100);
+        tracker.start_job("failed", progress_path, 100);
+        tracker.refresh_and_render();
+        tracker.finish_job("failed", false);
+
+        let (position, message) = phase.test_snapshot();
+        assert_eq!(position, 25);
+        assert!(message.contains("1 failed"));
+
+        let _ = fs::remove_dir_all(root);
     }
 
     #[test]

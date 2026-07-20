@@ -1,0 +1,14 @@
+# N-glycan compositions reported for the PNT2 SiaNAz GPx experiment in
+# Xie et al., Chemical Science 2021, DOI 10.1039/D1SC00814E.
+#
+# Sia is represented as ordinary NeuAc. Use with the nhs-cyclooctyne preset,
+# whose 205.085126607 Da bridge includes the SiaNAz-for-NeuAc mass difference.
+Hex(5)HexNAc(3)NeuAc(1)
+Hex(5)HexNAc(4)Fuc(1)NeuAc(1)
+Hex(5)HexNAc(4)Fuc(2)NeuAc(1)
+Hex(5)HexNAc(4)Fuc(3)NeuAc(1)
+Hex(5)HexNAc(4)NeuAc(1)
+Hex(5)HexNAc(4)NeuAc(2)
+Hex(5)HexNAc(5)Fuc(1)NeuAc(1)
+Hex(6)HexNAc(3)NeuAc(1)
+Hex(6)HexNAc(5)Fuc(1)NeuAc(1)

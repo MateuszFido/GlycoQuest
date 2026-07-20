@@ -19,7 +19,7 @@ GlycoQuest prints a **readiness** report before running. Any `✗ FAILED` line s
 
 ### Glycan library failed
 
-- Bundled ids: `nglyc309`, `oglyc78` (and aliases `nglyc`, `oglyc`).
+- Bundled ids: `nglyc309`, `oglyc78`, and `msv000087442-sianaz` (plus aliases).
 - Custom files must be CSV/TSV with columns: `name`, `composition`, `monoisotopic_mass`, `diagnostic_ions`, `residue_targets`.
 - See [Glycan libraries](../configuration/glycan-libraries.md).
 
@@ -47,7 +47,8 @@ All MS2 scans were rejected by the prefilter.
 
 2. **Many `no_diagnostic`**
    - Loosen `--ppm-tolerance` or `[tolerances] diagnostic_tolerance_ppm`.
-   - Confirm the sample contains glycopeptides and the correct glycan library (`nglyc309` vs `oglyc78`).
+   - Confirm the sample contains glycopeptides and the glycan library matches both
+     glycosylation type and crosslinker chemistry.
    - Inspect a few MS/MS scans in an external viewer for oxonium ions (e.g. HexNAc ~204 m/z).
 
 3. **Many `no_isotope_pair`**

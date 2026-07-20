@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Shared FASTA / peptide position mapping for network CSV export and the interactive viewer.
 
 use std::collections::HashMap;

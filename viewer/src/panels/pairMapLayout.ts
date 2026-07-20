@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 import type { ViewerCrosslink, ViewerProtein } from '../types';
 
 export interface ProteinLabel {

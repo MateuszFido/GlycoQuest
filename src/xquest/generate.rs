@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Write xQuest job directories under `jobs/`.
 
 use std::fs;
@@ -48,6 +50,7 @@ pub fn generate_jobs(
     runtime: &XQuestRuntime,
     progress: Option<&PhaseProgress>,
 ) -> Result<GeneratedJobs, String> {
+    reset_job_workspace(layout)?;
     let jobs_root = layout.jobs_dir();
     fs::create_dir_all(&jobs_root).map_err(|err| err.to_string())?;
     fs::create_dir_all(layout.logs_dir()).map_err(|err| err.to_string())?;
@@ -96,6 +99,20 @@ pub fn generate_jobs(
         jobs: generated,
         manifest: JobManifest { entries },
     })
+}
+
+fn reset_job_workspace(layout: &crate::output::ProjectLayout) -> Result<(), String> {
+    let tmp = layout.tmp_dir();
+    if tmp.is_dir() {
+        fs::remove_dir_all(&tmp).map_err(|err| {
+            format!(
+                "cannot clear stale xQuest workspace {}: {err}",
+                tmp.display()
+            )
+        })?;
+    }
+    fs::create_dir_all(&tmp)
+        .map_err(|err| format!("cannot create xQuest workspace {}: {err}", tmp.display()))
 }
 
 fn write_job(
@@ -235,6 +252,36 @@ fn symlink_or_copy(source: &Path, dest: &Path) -> Result<(), String> {
             .map(|_| ())
             .map_err(|err| err.to_string())
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn reset_job_workspace_removes_stopped_run_jobs_and_logs() {
+        let root = std::env::temp_dir().join(format!(
+            "glycoquest_generate_reset_{}_{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        let layout = crate::output::ProjectLayout::new(root.clone());
+        let stale_job = layout.jobs_dir().join("stale-job");
+        fs::create_dir_all(&stale_job).unwrap();
+        fs::write(stale_job.join("run.sh"), "stale").unwrap();
+        fs::create_dir_all(layout.logs_dir()).unwrap();
+        fs::write(layout.logs_dir().join("stale.log"), "stale").unwrap();
+
+        reset_job_workspace(&layout).unwrap();
+
+        assert!(layout.tmp_dir().is_dir());
+        assert!(!layout.jobs_dir().exists());
+        assert!(!layout.logs_dir().exists());
+        let _ = fs::remove_dir_all(root);
+    }
 }
 
 #[cfg(not(unix))]

@@ -17,9 +17,10 @@ DESIGN.md
 /xQuest/
 /glycan_databases/
 
+.cursor
+/docs/superpowers
 
 # Added by cargo
-
 /target
 
 # Viewer package
@@ -29,3 +30,7 @@ DESIGN.md
 /site/
 .DS_Store
 src/.DS_Store
+
+# Old xQuest versions 
+V2.1.5/
+V2.1.53/

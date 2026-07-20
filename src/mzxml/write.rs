@@ -1,3 +1,5 @@
+// Copyright (c) ETH Zurich, Mateusz Fido
+
 //! Write reduced mzXML files containing only retained scans.
 
 use std::collections::HashSet;
