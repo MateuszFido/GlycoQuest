@@ -41,13 +41,13 @@
 # Euler notes:
 #   - perl/5.38.0 needs stack/2024-04 + gcc/8.5.0 (`module spider perl/5.38.0`).
 #   - Spack Perl is incomplete for xQuest. Install XS deps once on a login node:
-#       scripts/bootstrap-euler-perl.sh
-#     (DB_File, XML::Parser, and GD if the bundled 1209/lib64 GD.so won't load).
+#       scripts/bootstrap-euler-perl.sh   # DB_File + XML::Parser → $HOME/perl5
 #   - Verify before submitting (same check this wrapper runs under Slurm):
 #       scripts/check-xquest-perl.pl
-#   - Job PERL5LIB includes 1209/lib64/perl5 (legacy GD) plus lib/ + share/.
-#   - berkeley-db / libexpat / libgd are often hierarchy-hidden. This script
-#     globs the stack Spack tree and prepends matching lib dirs to LD_LIBRARY_PATH.
+#   - NEVER put 1209/lib64 on PERL5LIB/PERL5OPT (legacy XS ABI; crashes perl 5.38).
+#   - GD is optional (GlycoQuest sets drawspectra 0; LinkObj soft-loads GD).
+#   - berkeley-db / libexpat are often hierarchy-hidden; this script globs the
+#     stack Spack tree and prepends matching lib dirs to LD_LIBRARY_PATH.
 #   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
 #     install via PERL5OPT=-I... (not PERL5LIB alone).
 
@@ -103,7 +103,7 @@ run_perl_preflight() {
 }
 
 # Prepend -Idir to PERL5OPT once. Job scripts overwrite PERL5LIB, so -I is how
-# bundled 1209/lib64 (GD) and $HOME/perl5 stay visible to xquest.pl.
+# $HOME/perl5 and 1209/{lib,share} stay visible to xquest.pl.
 prepend_perl5opt_include() {
   local dir=$1
   [[ -d "$dir" ]] || return 0
@@ -113,10 +113,26 @@ prepend_perl5opt_include() {
   esac
 }
 
-# Expose the full xQuest 1209 tree via PERL5OPT (survives job PERL5LIB overwrite).
+# Expose safe 1209 paths via PERL5OPT (survives job PERL5LIB overwrite).
+# Never include 1209/lib64 (wrong Perl ABI).
 expose_xquest_perl_paths() {
   local xquest_root=$1
-  prepend_perl5opt_include "${xquest_root}/1209/lib64/perl5"
+  if [[ -n "${PERL5OPT:-}" ]]; then
+    PERL5OPT=$(echo "$PERL5OPT" | sed -E 's#(^| )-I[^ ]*/1209/lib64[^ ]*##g; s/^ +//; s/ +$//')
+    export PERL5OPT
+    [[ -n "$PERL5OPT" ]] || unset PERL5OPT
+  fi
+  if [[ -n "${PERL5LIB:-}" ]]; then
+    local cleaned="" part
+    local -a _parts
+    IFS=':' read -r -a _parts <<< "$PERL5LIB"
+    for part in "${_parts[@]}"; do
+      [[ -n "$part" ]] || continue
+      [[ "$part" == *"/1209/lib64"* ]] && continue
+      cleaned="${cleaned:+$cleaned:}$part"
+    done
+    if [[ -n "$cleaned" ]]; then export PERL5LIB="$cleaned"; else unset PERL5LIB; fi
+  fi
   prepend_perl5opt_include "${xquest_root}/1209/lib/perl5"
   prepend_perl5opt_include "${xquest_root}/1209/share/perl5"
   prepend_perl5opt_include "${xquest_root}/modules"
@@ -285,15 +301,6 @@ ensure_xs_runtime_libs() {
     fi
   fi
 
-  # Always try to expose libgd: bundled 1209/lib64 GD.so often needs it at runtime.
-  if libdir=$(first_matching_libdir \
-    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so \
-    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so.* \
-    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/gd-"*/lib/libgd.so \
-    "${stack_root}/spack/opt/spack/"*"/libgd-"*/lib/libgd.so
-  ); then
-    prepend_ld_library_path "$libdir" "libgd"
-  fi
 }
 
 args_contain() {
@@ -570,7 +577,7 @@ if root_arg=$(extract_xquest_root_arg "$@"); then
   xquest_root_for_check=$root_arg
 fi
 
-# Keep 1209/lib64 (GD) visible even when job run.sh overwrites PERL5LIB.
+# Keep 1209/{lib,share} visible even when job run.sh overwrites PERL5LIB.
 expose_xquest_perl_paths "$xquest_root_for_check"
 if [[ -n "${PERL5OPT:-}" ]]; then
   echo "  PERL5OPT=${PERL5OPT}"

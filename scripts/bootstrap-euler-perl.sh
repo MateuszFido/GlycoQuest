@@ -6,8 +6,11 @@
 #   scripts/bootstrap-euler-perl.sh && scripts/check-xquest-perl.pl
 #
 # Installs into $HOME/perl5 (override with GLYCOQUEST_PERL5):
-#   DB_File, XML::Parser, and GD/GD::Graph when the bundled 1209/lib64 GD.so
-#   cannot load against the loaded module perl.
+#   DB_File, XML::Parser
+#
+# Do NOT use V2.1.7/xquest/1209/lib64 — those .so files are for an old Perl ABI
+# and crash module perl 5.38 (Perl_Gthr_key_ptr). GD is optional for GlycoQuest
+# (drawspectra 0); LinkObj/specplot soft-load it.
 
 set -euo pipefail
 
@@ -30,10 +33,6 @@ if module spider berkeley-db >/dev/null 2>&1; then
   module load "${GLYCOQUEST_BERKELEY_DB:-berkeley-db}" 2>/dev/null \
     || echo "note: could not module-load berkeley-db; continuing" >&2
 fi
-# Soft-load gd/libgd when visible (needed to build/run GD.pm).
-for gdmod in gd libgd; do
-  module load "$gdmod" 2>/dev/null && break || true
-done
 module load "$PERL_MOD"
 
 if ! command -v cpanm >/dev/null 2>&1; then
@@ -42,18 +41,43 @@ if ! command -v cpanm >/dev/null 2>&1; then
   exit 1
 fi
 
+# Scrub any poisoned lib64 paths from the environment before cpanm.
+scrub_lib64() {
+  local var=$1
+  local val=${!var-}
+  [[ -n "$val" ]] || return 0
+  local cleaned=""
+  local part
+  IFS=':' read -r -a parts <<< "$val"
+  for part in "${parts[@]}"; do
+    [[ -n "$part" ]] || continue
+    [[ "$part" == *"/1209/lib64"* ]] && continue
+    cleaned="${cleaned:+$cleaned:}$part"
+  done
+  if [[ -n "$cleaned" ]]; then
+    export "$var=$cleaned"
+  else
+    unset "$var"
+  fi
+}
+scrub_lib64 PERL5LIB
+if [[ -n "${PERL5OPT:-}" ]]; then
+  # shellcheck disable=SC2001
+  export PERL5OPT
+  PERL5OPT=$(echo "$PERL5OPT" | sed -E 's#(^| )-I[^ ]*/1209/lib64[^ ]*##g; s/^ +//; s/ +$//')
+  [[ -n "$PERL5OPT" ]] || unset PERL5OPT
+fi
+
 export PERL5OPT="-I${PERL5_ROOT}/lib/perl5${PERL5OPT:+ ${PERL5OPT}}"
-# Prefer bundled 1209 paths (including lib64 where legacy GD lives).
-export PERL5LIB="${XQUEST_ROOT}/1209/lib64/perl5:${XQUEST_ROOT}/1209/lib/perl5:${XQUEST_ROOT}/1209/share/perl5:${XQUEST_ROOT}/modules${PERL5LIB:+:$PERL5LIB}"
+# Safe bundle paths only (no lib64).
+export PERL5LIB="${XQUEST_ROOT}/1209/lib/perl5:${XQUEST_ROOT}/1209/share/perl5:${XQUEST_ROOT}/modules${PERL5LIB:+:$PERL5LIB}"
 
 stack_name=${STACK#stack/}
 gcc_ver=${COMPILER#gcc/}
 shopt -s nullglob
 for so in \
   "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb-18.1.so \
-  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so* \
-  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libgd-"*/lib/libgd.so* \
-  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/gd-"*/lib/libgd.so*
+  "/cluster/software/stacks/${stack_name}/spack/opt/spack/"*"/gcc-${gcc_ver}/libexpat-"*/lib/libexpat.so*
 do
   [[ -f "$so" ]] || continue
   libdir=$(dirname "$so")
@@ -64,17 +88,11 @@ do
 done
 shopt -u nullglob
 
-pkgs=(DB_File XML::Parser)
-# Rebuild GD when bundled lib64 GD.so is missing or ABI-incompatible with this perl.
-if ! perl -MGD -e 1 2>/dev/null; then
-  echo "note: bundled/system GD not loadable; will cpanm GD GD::Graph"
-  pkgs+=(GD GD::Graph)
-fi
-
-echo "Installing into ${PERL5_ROOT}: ${pkgs[*]}"
-cpanm --local-lib="$PERL5_ROOT" "${pkgs[@]}"
+echo "Installing into ${PERL5_ROOT}: DB_File XML::Parser"
+cpanm --local-lib="$PERL5_ROOT" DB_File XML::Parser
 
 echo "Verifying..."
-perl -MDB_File -MXML::Parser -MGD -e 'print "DB_File + XML::Parser + GD OK\n"'
+perl -MDB_File -MXML::Parser -e 'print "DB_File + XML::Parser OK\n"'
 "$REPO_ROOT/scripts/check-xquest-perl.pl" --xquest-root "$XQUEST_ROOT"
 echo "Done. Slurm jobs pick up \$HOME/perl5 via scripts/run.sh (PERL5OPT)."
+echo "Note: GD is optional for GlycoQuest (drawspectra 0); do not use 1209/lib64."

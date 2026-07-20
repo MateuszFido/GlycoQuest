@@ -21,11 +21,32 @@ use strict;
 #use lib '/cluster/apps/perl_modules/1209/lib64/perl5/';
 use FindBin;
 #use lib "$FindBin::Bin/../../perl5";
-use GD;
-use GD::Graph::linespoints;
-use GD::Graph::bars;
-use GD::Graph::mixed;
-use GD::Graph::colour;
+# GD is optional for batch search (GlycoQuest sets drawspectra 0). Do not put
+# legacy 1209/lib64 on @INC — those .so files are ABI-incompatible with modern Perl.
+our $HAS_GD = 0;
+BEGIN {
+	if (
+		eval {
+			require GD;
+			GD->import();    # gdSmallFont / gdLargeFont constants
+			require GD::Graph::linespoints;
+			require GD::Graph::bars;
+			require GD::Graph::mixed;
+			require GD::Graph::colour;
+			require GD::Graph::lines;
+			1;
+		}
+	  )
+	{
+		$HAS_GD = 1;
+	}
+	else {
+		# Stubs so LinkObj plot helpers compile under `strict` without GD.
+		no warnings 'redefine';
+		*gdSmallFont = sub () { 0 };
+		*gdLargeFont = sub () { 0 };
+	}
+}
 use File::Spec;
 use File::Basename;
 use Statistics;
@@ -373,6 +394,7 @@ sub drawpepstructure
 	my $filelabel = shift;
 	my $logscale  = shift;
 	my $lossions  = shift;
+	return 0 unless $HAS_GD;
 	my $gd        = shift;
 	my $xlinktype = $self->getxlinktype;
 	if ( $xlinktype eq "xlink" )
@@ -862,6 +884,7 @@ sub drawxlinkspec_alpha_beta
 	my $labelpeaks    = shift;
 	my $showstructure = shift;
 	my $printtextfile = shift;
+	return 0 unless $HAS_GD;
 	return 0 unless $self->xlinktype eq "xlink";
 	my $spectrum = $self->getSpecObj;
 	my $PARAMS   = $self->getParams;
@@ -4545,6 +4568,7 @@ sub drawxlinkspec
 	my $labelpeaks    = shift;
 	my $showstructure = shift;
 	my $printtextfile = shift;
+	return 0 unless $HAS_GD;
 	my $spectrum      = $self->getSpecObj;
 	my $PARAMS        = $self->getParams;
 	if ( !defined($min) )
@@ -4911,6 +4935,7 @@ sub drawxcorrgraph
 	my $precision = shift;
 	my $filelabel = shift;
 	my $title     = shift;
+	return 0 unless $HAS_GD;
 	if ( defined($dat) )
 	{
 		my ( @x, @y );

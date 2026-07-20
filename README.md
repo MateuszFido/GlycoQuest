@@ -10,7 +10,7 @@ Full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, r
 
 - Rust toolchain (edition 2024)
 - xQuest V2.1.7 at `xQuest/V2.1.7/xquest` (or `--xquest-root`)
-- Perl for xQuest: `DB_File`, `XML::Parser`, and `GD` (XS), plus bundled libs under `V2.1.7/xquest/1209/` including `lib64/perl5` (set via `PERL5LIB` / `PERL5OPT` in `scripts/run.sh`). Verify with `scripts/check-xquest-perl.pl`; on ETH Euler run `scripts/bootstrap-euler-perl.sh` once.
+- Perl for xQuest: `DB_File` and `XML::Parser` (XS), plus bundled libs under `V2.1.7/xquest/1209/{lib,share}/perl5` (set via `PERL5LIB` / `PERL5OPT` in `scripts/run.sh`). Do **not** use `1209/lib64` (wrong Perl ABI). Verify with `scripts/check-xquest-perl.pl`; on ETH Euler run `scripts/bootstrap-euler-perl.sh` once.
 - mzXML MS/MS input (convert raw vendor files with msconvert first)
 
 Default xQuest binary in [`settings.ini`](settings.ini): `xquest_bin = bin/xquest.pl` (resolved relative to `--xquest-root`).

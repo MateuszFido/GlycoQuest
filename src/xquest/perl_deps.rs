@@ -7,6 +7,9 @@ use std::process::Command;
 
 /// Modules that must load for GlycoQuest's compare_peaks3 → xquest.pl path.
 /// Keep in sync with `scripts/check-xquest-perl.pl`.
+///
+/// GD is intentionally omitted: LinkObj/specplot soft-load it, and GlycoQuest
+/// sets `drawspectra 0`. Never put legacy `1209/lib64` on @INC (wrong Perl ABI).
 const CRITICAL_MODULES: &[&str] = &[
     "DB_File",
     "MLDBM",
@@ -18,14 +21,13 @@ const CRITICAL_MODULES: &[&str] = &[
     "HTML::Entities",
     "MIME::Base64",
     "Storable",
-    "GD",
-    "GD::Graph::linespoints",
     "Statistics::Descriptive",
 ];
 
 /// `PERL5LIB` used by generated job `run.sh` and readiness checks.
 ///
-/// Includes `1209/lib64/perl5` (legacy CentOS-style layout where GD lives).
+/// Do **not** include `1209/lib64/perl5`: those XS builds target an ancient
+/// Perl and crash modern interpreters (`Perl_Gthr_key_ptr` / similar).
 pub fn xquest_perl5lib(xquest_root: &Path) -> String {
     xquest_perl5lib_dirs(xquest_root)
         .into_iter()
@@ -36,7 +38,6 @@ pub fn xquest_perl5lib(xquest_root: &Path) -> String {
 
 fn xquest_perl5lib_dirs(xquest_root: &Path) -> Vec<PathBuf> {
     [
-        xquest_root.join("1209/lib64/perl5"),
         xquest_root.join("1209/lib/perl5"),
         xquest_root.join("1209/share/perl5"),
         xquest_root.join("modules"),
@@ -138,7 +139,8 @@ fn format_perl_deps_error(
          PERL5LIB={perl5lib}\n\
          {detail}\n\
          Fix on ETH Euler: scripts/bootstrap-euler-perl.sh\n\
-         then: scripts/check-xquest-perl.pl --xquest-root {}",
+         then: scripts/check-xquest-perl.pl --xquest-root {}\n\
+         Do not add V2.1.7/xquest/1209/lib64 to PERL5LIB (wrong Perl ABI).",
         xquest_root.display(),
         xquest_root.display()
     )
@@ -171,12 +173,12 @@ mod tests {
     }
 
     #[test]
-    fn perl5lib_includes_lib64_when_present() {
+    fn perl5lib_excludes_lib64() {
         let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("V2.1.7/xquest");
         let lib = xquest_perl5lib(&root);
         assert!(
-            lib.contains("1209/lib64/perl5"),
-            "expected lib64 in PERL5LIB, got {lib}"
+            !lib.contains("1209/lib64"),
+            "lib64 must not be on PERL5LIB, got {lib}"
         );
         assert!(lib.contains("1209/lib/perl5"));
         assert!(lib.contains("modules"));
@@ -195,7 +197,6 @@ mod tests {
                 assert!(
                     lower.contains("db_file")
                         || lower.contains("xml::parser")
-                        || lower.contains("can't locate gd")
                         || lower.contains("cannot run perl"),
                     "unexpected error: {err}"
                 );

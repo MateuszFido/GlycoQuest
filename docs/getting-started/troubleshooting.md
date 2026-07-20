@@ -29,18 +29,21 @@ GlycoQuest prints a **readiness** report before running. Any `✗ FAILED` line s
 
 ### xQuest Perl modules failed
 
-GlycoQuest readiness and `scripts/run.sh` compile-check the search path (`compare_peaks3.pl`, `xquest.pl`) before launching jobs. Typical gaps on HPC (Euler): **`DB_File`** (`libdb`), **`XML::Parser`** (`libexpat`), **`GD`** (`libgd`; also under `1209/lib64/perl5`). Most pure-Perl libs ship under `V2.1.7/xquest/1209/`.
+GlycoQuest readiness and `scripts/run.sh` compile-check the search path (`compare_peaks3.pl`, `xquest.pl`) before launching jobs. Typical gaps on HPC (Euler): **`DB_File`** (`libdb`) and **`XML::Parser`** (`libexpat`). Most pure-Perl libs ship under `V2.1.7/xquest/1209/{lib,share}/perl5`.
+
+**Do not** add `1209/lib64` to `PERL5LIB` — those `.so` files target an old Perl and crash 5.38 (`Perl_Gthr_key_ptr`). GD is optional for GlycoQuest (`drawspectra 0`).
 
 ```bash
 # ETH Euler (once, login node):
+unset PERL5LIB   # if you previously exported lib64 paths
 scripts/bootstrap-euler-perl.sh
 scripts/check-xquest-perl.pl
 
-# Fedora/RHEL:  sudo dnf install perl-DB_File perl-XML-Parser perl-GD perl-GD-Graph
-# Debian/Ubuntu: sudo apt install libdb-file-perl libxml-parser-perl libgd-gd2-perl libgd-graph-perl
+# Fedora/RHEL:  sudo dnf install perl-DB_File perl-XML-Parser
+# Debian/Ubuntu: sudo apt install libdb-file-perl libxml-parser-perl
 ```
 
-If a module is installed but `.so` load fails (`libdb` / `libexpat` / `libgd`), the Slurm wrapper adds matching Spack lib dirs to `LD_LIBRARY_PATH`.
+If a module is installed but `.so` load fails (`libdb` / `libexpat`), the Slurm wrapper adds matching Spack lib dirs to `LD_LIBRARY_PATH`.
 
 ### Output directory failed
 

@@ -17,7 +17,21 @@ use strict;
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #---------------------------------------------------------------------------
-use GD;
+# Soft-load GD so xQuest compiles without libgd (batch search uses drawspectra 0).
+our $HAS_GD;
+BEGIN {
+	$HAS_GD = eval { require GD; GD->import(); 1 };
+	# Bareword fonts (gdSmallFont, …) come from `use GD`. Stubs keep `strict` happy.
+	unless ($HAS_GD) {
+		no warnings 'redefine';
+		*gdSmallFont      = sub () { 0 };
+		*gdLargeFont      = sub () { 0 };
+		*gdTinyFont       = sub () { 0 };
+		*gdMediumBoldFont = sub () { 0 };
+		*gdGiantFont      = sub () { 0 };
+	}
+}
+
 sub new {
 	my $class      = shift();
 	my $self       = {};
@@ -32,6 +46,19 @@ sub new {
 	}
 	$xdimension = $self->{'xsize'} = $xdimension;
 	$ydimension = $self->{'ysize'} = $ydimension;
+
+	unless ($HAS_GD) {
+		$self->{'nogd'}       = 1;
+		$self->{'image'}      = undef;
+		$self->{'colorhash'}  = {};
+		$self->{'colorarray'} = [
+			"green", "red",   "lightblue", "darkblue",
+			"black", "black", "black",     "black",
+			"black", "black", "black",     "black"
+		];
+		$self->{'plottypes'} = $self->_defineplotfunctions;
+		return $self;
+	}
 
 	# create a new image
 	my $im = $self->{'image'} = new GD::Image( $xdimension, $ydimension );
@@ -137,6 +164,7 @@ sub drawlegend {
 	my $yposition      = shift;
 	my $labelcolorhash = shift;
 	my $sortlist       = shift;
+	return 0 if $self->{'nogd'} || !$self->{'image'};
 
 	my $gd = $self->img;
 	my $i  = 0;
@@ -161,6 +189,7 @@ sub plotdata {
 	my $min  = shift;
 	my $max  = shift;
 	my $colorvector=shift||$self->getcolorvector;
+	return 0 if $self->{'nogd'} || !$self->{'image'};
 
 	my @data        = @_;
 	my $img         = $self->img;
@@ -242,6 +271,7 @@ sub labelpeaks {
 	my $plottypes   = shift;
 	my $colorvector = shift;
 	my $data        = shift;
+	return 0 if $self->{'nogd'} || !$self->{'image'};
 	my $img         = $self->img;
 	unless ($colorvector) {
 		$colorvector = $self->getcolorvector;
@@ -589,6 +619,7 @@ sub _define_colorhash {
 sub printimage {
 	my $self     = shift;
 	my $filename = shift;
+	return 0 if $self->{'nogd'} || !$self->{'image'};
 	open( IMG, ">$filename" ) or die "cannot write $filename $!";
 	binmode IMG;
 	print IMG $self->img->png;
