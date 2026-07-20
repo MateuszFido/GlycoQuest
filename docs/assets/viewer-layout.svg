@@ -10,25 +10,25 @@
   </defs>
   <text x="16" y="22" class="title">GlycoQuest viewer layout</text>
   <rect class="hdr" x="16" y="32" width="608" height="28" rx="4"/>
-  <text x="24" y="50" class="hdr-t">Header · project · crosslinker · glycans · hit counts</text>
+  <text x="24" y="50" class="hdr-t">Header Â· project Â· crosslinker Â· glycans Â· hit counts</text>
   <rect class="hdr" x="16" y="64" width="608" height="22" rx="2"/>
-  <text x="24" y="79" class="hdr-t">Toolbar · protein filter · show failed · min score</text>
+  <text x="24" y="79" class="hdr-t">Toolbar Â· protein filter Â· show failed Â· min score</text>
   <rect class="panel" x="16" y="94" width="300" height="120"/>
   <text x="24" y="112" class="lbl" font-weight="600">QC panel</text>
-  <text x="24" y="128" class="lbl">Prefilter funnel · outcomes</text>
-  <text x="24" y="144" class="lbl">Glycan / site charts · histograms</text>
+  <text x="24" y="128" class="lbl">Prefilter funnel Â· outcomes</text>
+  <text x="24" y="144" class="lbl">Glycan / site charts Â· histograms</text>
   <rect class="panel" x="324" y="94" width="300" height="120"/>
   <text x="332" y="112" class="lbl" font-weight="600">Crosslink network</text>
-  <text x="332" y="128" class="lbl">Protein bars · residue edges</text>
+  <text x="332" y="128" class="lbl">Protein bars Â· residue edges</text>
   <line x1="360" y1="150" x2="520" y2="150" stroke="#cbd5e1" stroke-width="8" stroke-linecap="round"/>
   <line x1="400" y1="130" x2="480" y2="170" stroke="#2563eb" stroke-width="2"/>
   <rect class="panel" x="16" y="222" width="608" height="56"/>
   <text x="24" y="240" class="lbl" font-weight="600">Hits table</text>
-  <text x="24" y="256" class="lbl">Click row to select · syncs all panels below</text>
+  <text x="24" y="256" class="lbl">Click row to select Â· syncs all panels below</text>
   <rect class="panel" x="16" y="286" width="296" height="68"/>
   <text x="24" y="304" class="lbl" font-weight="600">Sequence map</text>
   <text x="24" y="320" class="lbl">Crosslink + glycan site highlights</text>
   <rect class="panel" x="328" y="286" width="296" height="68"/>
   <text x="336" y="304" class="lbl" font-weight="600">Spectrum panel</text>
-  <text x="336" y="320" class="lbl">MS/MS mirror · approx b/y ions</text>
+  <text x="336" y="320" class="lbl">MS/MS mirror Â· approx b/y ions</text>
 </svg>

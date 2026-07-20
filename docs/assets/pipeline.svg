@@ -23,7 +23,7 @@
   <text x="150" y="100" class="label">Diagnostic ions</text>
   <text x="150" y="116" class="label">Isotope pairs</text>
   <text x="150" y="132" class="label">Glycan pruning</text>
-  <text x="150" y="148" class="label">’ spectra/</text>
+  <text x="150" y="148" class="label">â€™ spectra/</text>
   <!-- Jobs -->
   <rect class="gq" x="290" y="72" width="110" height="76" rx="6"/>
   <text x="305" y="94" class="label" font-weight="600">Job gen</text>
@@ -36,7 +36,7 @@
   <text x="445" y="100" class="label">Index DB</text>
   <text x="445" y="116" class="label">compare_peaks</text>
   <text x="445" y="132" class="label">xquest.pl</text>
-  <text x="445" y="148" class="label">’ xquest.xml</text>
+  <text x="445" y="148" class="label">â€™ xquest.xml</text>
   <!-- Consolidate -->
   <rect class="gq" x="580" y="60" width="120" height="100" rx="6"/>
   <text x="595" y="82" class="label" font-weight="600">Consolidate</text>

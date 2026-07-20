@@ -11,7 +11,7 @@
   <text x="20" y="24" class="title">DSS light/heavy isotope pairing (MS1)</text>
   <!-- m/z axis -->
   <line class="axis" x1="40" y1="150" x2="480" y2="150"/>
-  <text x="250" y="180" class="label" text-anchor="middle">precursor m/z í</text>
+  <text x="250" y="180" class="label" text-anchor="middle">precursor m/z ‚Äô</text>
   <!-- Light peak -->
   <rect class="light" x="120" y="70" width="8" height="80" opacity="0.85"/>
   <text x="124" y="60" class="label" text-anchor="middle" fill="#2563eb">Light</text>
@@ -23,6 +23,6 @@
   <!-- Shift arrow -->
   <line x1="132" y1="40" x2="276" y2="40" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr)"/>
   <defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill="#64748b"/></marker></defs>
-  <text x="204" y="32" class="label" text-anchor="middle">î = shift_da (12.075 Da)</text>
-  <text x="20" y="100" class="label" fill="#64748b">Partners must match within MS1 ppm + RT window (default ±2 min)</text>
+  <text x="204" y="32" class="label" text-anchor="middle">‚Äù = shift_da (12.075 Da)</text>
+  <text x="20" y="100" class="label" fill="#64748b">Partners must match within MS1 ppm + RT window (default ¬±2 min)</text>
 </svg>
