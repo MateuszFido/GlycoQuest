@@ -39,7 +39,17 @@ case "$TARGET" in
     cp "$BIN_PATH" "$STAGE/glycoquest.exe"
     ARCHIVE="$ROOT/dist/glycoquest-${VERSION}-${TARGET}.zip"
     rm -f "$ARCHIVE"
-    (cd "$STAGE" && zip -q "$ARCHIVE" glycoquest.exe)
+    if command -v zip >/dev/null 2>&1; then
+      (cd "$STAGE" && zip -q "$ARCHIVE" glycoquest.exe)
+    else
+      # GitHub windows-latest has no zip(1); use Python (always present).
+      python - "$STAGE/glycoquest.exe" "$ARCHIVE" <<'PY'
+import sys, zipfile
+src, dest = sys.argv[1], sys.argv[2]
+with zipfile.ZipFile(dest, "w", compression=zipfile.ZIP_DEFLATED) as zf:
+    zf.write(src, arcname="glycoquest.exe")
+PY
+    fi
     ;;
   *)
     cp "$BIN_PATH" "$STAGE/glycoquest"
