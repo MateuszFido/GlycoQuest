@@ -27,6 +27,9 @@ data/MSV000087442/*.mzTab
 # Added by cargo
 /target
 
+# CI release packaging output
+/dist/
+
 # Viewer package
 /viewer/node_modules/
 

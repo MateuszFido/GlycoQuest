@@ -1,0 +1,235 @@
+# GlycoQuest GitLab CI — test, multi-platform release builds, tag releases.
+#
+# Linux x86_64 artifacts are the ones needed on ETH Euler.
+# Create a release by pushing a tag, e.g.:
+#   git tag v0.1.0 && git push origin v0.1.0
+#
+# macOS builds need a macOS runner: set CI/CD variable BUILD_MACOS=1
+# and ensure runners provide tag "macos".
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+stages:
+  - test
+  - build
+  - release
+
+variables:
+  CARGO_TERM_COLOR: always
+  CARGO_HOME: ${CI_PROJECT_DIR}/.cargo
+  RUST_VERSION: "1.85.0"
+  FF_USE_FASTZIP: "true"
+
+default:
+  interruptible: true
+
+# ---------------------------------------------------------------------------
+# Templates
+# ---------------------------------------------------------------------------
+
+.rust_linux:
+  image: rust:${RUST_VERSION}-bookworm
+  cache:
+    key:
+      files:
+        - Cargo.lock
+    paths:
+      - .cargo/registry/index/
+      - .cargo/registry/cache/
+      - .cargo/git/
+      - target/
+  before_script:
+    - rustc --version && cargo --version
+    - chmod +x scripts/ci/package.sh
+
+# ---------------------------------------------------------------------------
+# Test
+# ---------------------------------------------------------------------------
+
+test:
+  extends: .rust_linux
+  stage: test
+  before_script:
+    - rustc --version && cargo --version
+    - rustup component add rustfmt clippy
+  script:
+    - cargo fmt --all -- --check
+    # Soft clippy for now (many pre-existing lints); tighten to -D warnings later.
+    - cargo clippy --all-targets --locked
+    - cargo test --locked
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_COMMIT_TAG
+    - if: $CI_PIPELINE_SOURCE == "web"
+
+# ---------------------------------------------------------------------------
+# Build
+# ---------------------------------------------------------------------------
+
+build:linux:
+  extends: .rust_linux
+  stage: build
+  needs:
+    - job: test
+      optional: true
+  script:
+    - cargo build --release --locked
+    - file target/release/glycoquest
+    - ./scripts/ci/package.sh x86_64-unknown-linux-gnu target/release/glycoquest
+    - ls -la dist/
+  artifacts:
+    name: "glycoquest-linux-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - dist/
+    # Keep tag builds indefinitely so Release asset links keep working.
+    expire_in: 1 year
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+      when: manual
+      allow_failure: true
+
+# Windows MSVC via cargo-xwin (matches install docs: *-x86_64-pc-windows-msvc.zip)
+build:windows:
+  extends: .rust_linux
+  stage: build
+  needs:
+    - job: test
+      optional: true
+  variables:
+    XWIN_CACHE_DIR: ${CI_PROJECT_DIR}/.xwin-cache
+  cache:
+    key:
+      files:
+        - Cargo.lock
+    paths:
+      - .cargo/registry/index/
+      - .cargo/registry/cache/
+      - .cargo/git/
+      - target/
+      - .xwin-cache/
+  before_script:
+    - rustc --version && cargo --version
+    - apt-get update -qq
+    - apt-get install -y -qq clang lld llvm zip ca-certificates
+    - rustup target add x86_64-pc-windows-msvc
+    - cargo install cargo-xwin --locked --version 0.18.4
+    - chmod +x scripts/ci/package.sh
+  script:
+    - cargo xwin build --release --locked --target x86_64-pc-windows-msvc
+    - ./scripts/ci/package.sh x86_64-pc-windows-msvc target/x86_64-pc-windows-msvc/release/glycoquest.exe
+    - ls -la dist/
+  artifacts:
+    name: "glycoquest-windows-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - dist/
+    expire_in: 1 year
+  rules:
+    - if: $CI_COMMIT_TAG
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+      allow_failure: true
+    - if: $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+  allow_failure: true
+
+# Optional macOS (needs runner tag "macos" + BUILD_MACOS=1)
+.build_macos:
+  stage: build
+  tags:
+    - macos
+  before_script:
+    - |
+      if ! command -v rustc >/dev/null 2>&1; then
+        curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain "${RUST_VERSION}"
+      fi
+      # shellcheck disable=SC1091
+      source "$HOME/.cargo/env" 2>/dev/null || true
+      rustup default "${RUST_VERSION}"
+      rustup target add "${TARGET}"
+      chmod +x scripts/ci/package.sh
+  script:
+    - cargo build --release --locked --target "${TARGET}"
+    - ./scripts/ci/package.sh "${TARGET}" "target/${TARGET}/release/glycoquest"
+    - ls -la dist/
+  artifacts:
+    name: "glycoquest-macos-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - dist/
+    expire_in: 1 year
+
+build:macos:aarch64:
+  extends: .build_macos
+  variables:
+    TARGET: aarch64-apple-darwin
+  rules:
+    - if: $BUILD_MACOS == "1" && $CI_COMMIT_TAG
+    - if: $BUILD_MACOS == "1" && $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+
+build:macos:x86_64:
+  extends: .build_macos
+  variables:
+    TARGET: x86_64-apple-darwin
+  rules:
+    - if: $BUILD_MACOS == "1" && $CI_COMMIT_TAG
+    - if: $BUILD_MACOS == "1" && $CI_PIPELINE_SOURCE == "web"
+      when: manual
+      allow_failure: true
+
+# ---------------------------------------------------------------------------
+# Release (git tags only)
+# ---------------------------------------------------------------------------
+# Asset URLs use the permanent job-artifacts form:
+#   /-/jobs/artifacts/<tag>/raw/dist/<file>?job=<job_name>
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli:latest
+  needs:
+    - job: build:linux
+      artifacts: false
+    - job: build:windows
+      artifacts: false
+      optional: true
+    - job: build:macos:aarch64
+      artifacts: false
+      optional: true
+    - job: build:macos:x86_64
+      artifacts: false
+      optional: true
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - echo "Publishing GitLab Release ${CI_COMMIT_TAG}"
+  release:
+    name: "GlycoQuest $CI_COMMIT_TAG"
+    tag_name: "$CI_COMMIT_TAG"
+    description: |
+      Pre-built GlycoQuest binaries for `$CI_COMMIT_TAG`.
+
+      ### Linux x86_64 (Euler)
+      ```bash
+      tar xzf glycoquest-$CI_COMMIT_TAG-x86_64-unknown-linux-gnu.tar.gz
+      ./glycoquest --help
+      ```
+
+      See [installation docs]($CI_PROJECT_URL/-/blob/$CI_COMMIT_TAG/docs/getting-started/installation.md).
+    assets:
+      links:
+        - name: "glycoquest-$CI_COMMIT_TAG-x86_64-unknown-linux-gnu.tar.gz"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/dist/glycoquest-$CI_COMMIT_TAG-x86_64-unknown-linux-gnu.tar.gz?job=build:linux"
+          link_type: package
+        - name: "glycoquest-$CI_COMMIT_TAG-x86_64-pc-windows-msvc.zip"
+          url: "$CI_PROJECT_URL/-/jobs/artifacts/$CI_COMMIT_TAG/raw/dist/glycoquest-$CI_COMMIT_TAG-x86_64-pc-windows-msvc.zip?job=build:windows"
+          link_type: package
