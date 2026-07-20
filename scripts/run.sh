@@ -44,8 +44,10 @@
 #     load one if visible; if not, continues (OK when DB_File already has RPATH).
 #   - Spack Perl has no DB_File; install once against module perl + berkeley-db:
 #       module load stack/2024-04 gcc/8.5.0 perl/5.38.0 eth_proxy
-#       module load $(module -t avail berkeley-db 2>&1 | grep '^berkeley-db/' | head -1)
 #       cpanm --local-lib=$HOME/perl5 DB_File
+#   - DB_File.so needs libdb-18.1.so at runtime. If the berkeley-db module is not
+#     visible, this script globs the stack's Spack tree and prepends the lib dir
+#     to LD_LIBRARY_PATH.
 #   - xQuest job scripts overwrite PERL5LIB, so this wrapper exposes a local
 #     install via PERL5OPT=-I... (not PERL5LIB alone).
 
@@ -175,6 +177,51 @@ load_berkeley_db() {
   echo "$err" >&2
   echo "  Run: module spider berkeley-db" >&2
   return 1
+}
+
+# If DB_File.so was built against Spack berkeley-db, ensure libdb-*.so is findable.
+# Sets LD_LIBRARY_PATH when a matching lib is found under the active stack.
+ensure_libdb_runtime_path() {
+  # Already resolvable?
+  if perl -MDB_File -e 1 2>/dev/null; then
+    return 0
+  fi
+
+  local stack_name=${STACK#stack/}
+  local stack_root="/cluster/software/stacks/${stack_name}"
+  local lib=""
+  local candidate
+
+  # Prefer the compiler directory that matches the loaded gcc module.
+  local gcc_ver=${COMPILER#gcc/}
+  shopt -s nullglob
+  local globs=(
+    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb-18.1.so
+    "${stack_root}/spack/opt/spack/"*"/gcc-${gcc_ver}/berkeley-db-"*/lib/libdb.so
+    "${stack_root}/spack/opt/spack/"*"/berkeley-db-"*/lib/libdb-18.1.so
+  )
+  for candidate in "${globs[@]}"; do
+    if [[ -f "$candidate" ]]; then
+      lib=$candidate
+      break
+    fi
+  done
+  shopt -u nullglob
+
+  if [[ -z "$lib" ]]; then
+    return 1
+  fi
+
+  local libdir
+  libdir=$(dirname "$lib")
+  case ":${LD_LIBRARY_PATH:-}:" in
+    *":${libdir}:"*) ;;
+    *)
+      export LD_LIBRARY_PATH="${libdir}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+      echo "note: added berkeley-db libs to LD_LIBRARY_PATH: ${libdir}" >&2
+      ;;
+  esac
+  return 0
 }
 
 args_contain() {
@@ -378,9 +425,9 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
     if [[ -n "$COMPILER" ]]; then
       module load "$COMPILER"
     fi
-    module load "$PERL_MOD"
-    # Optional for runtime libdb; soft-fail in auto mode if not in this hierarchy.
+    # Load berkeley-db before Perl so LD_LIBRARY_PATH is set for DB_File.so.
     load_berkeley_db "$BERKELEY_DB_REQUEST"
+    module load "$PERL_MOD"
   else
     echo "warning: module command not found; using whatever perl is on PATH" >&2
   fi
@@ -403,23 +450,32 @@ if [[ -n "${SLURM_JOB_ID:-}" ]]; then
     esac
   fi
 
+  # Module may be invisible in this hierarchy; still need libdb for the XS .so.
+  ensure_libdb_runtime_path || true
+
   if ! perl -MDB_File -e 1 2>/dev/null; then
+    db_err=$(perl -MDB_File -e 1 2>&1 || true)
     echo "error: Perl DB_File is not available (required by xQuest indexing)." >&2
     echo "  Loaded: ${STACK} ${COMPILER} ${PERL_MOD} berkeley-db=${BERKELEY_DB:-none}" >&2
-    echo "  PERL5OPT=${PERL5OPT:-<unset>}  PERL5_ROOT=${PERL5_ROOT:-<none>}" >&2
-    echo "  Install once on a login node (same modules), then resubmit:" >&2
+    echo "  PERL5OPT=${PERL5OPT:-<unset>}  LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-<unset>}" >&2
+    echo "  perl said: ${db_err}" >&2
+    echo "  If the module is installed but libdb is missing:" >&2
+    echo "    ls /cluster/software/stacks/${STACK#stack/}/spack/opt/spack/*/gcc-*/berkeley-db-*/lib/libdb-18.1.so" >&2
+    echo "    export LD_LIBRARY_PATH=<that-lib-dir>:\$LD_LIBRARY_PATH" >&2
+    echo "  Or install once (with berkeley-db / libdb available), then resubmit:" >&2
     echo "    module load ${STACK} ${COMPILER} ${PERL_MOD} eth_proxy" >&2
     echo "    cpanm --local-lib=\$HOME/perl5 DB_File" >&2
-    echo "    PERL5OPT=-I\$HOME/perl5/lib/perl5 perl -MDB_File -e 'print \"OK\\n\"'" >&2
-    echo "  If the error mentions libdb, also load berkeley-db (module spider berkeley-db)." >&2
     exit 1
   fi
 
   export OMP_NUM_THREADS=1
   echo "GlycoQuest Slurm job ${SLURM_JOB_ID} on $(hostname)"
-  echo "  modules: ${STACK} ${COMPILER} ${BERKELEY_DB} ${PERL_MOD}"
+  echo "  modules: ${STACK} ${COMPILER} ${BERKELEY_DB:-none} ${PERL_MOD}"
   if [[ -n "${PERL5_ROOT:-}" ]]; then
     echo "  perl5 local: ${PERL5_ROOT} (PERL5OPT=${PERL5OPT:-})"
+  fi
+  if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
+    echo "  LD_LIBRARY_PATH includes berkeley-db (len=${#LD_LIBRARY_PATH})"
   fi
   echo "  cpus=${SLURM_CPUS_PER_TASK:-?}  tmpdir=${TMPDIR:-n/a}"
 fi
