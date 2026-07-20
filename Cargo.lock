@@ -222,7 +222,7 @@ dependencies = [
 
 [[package]]
 name = "glycoquest"
-version = "1.0.3"
+version = "1.0.4"
 dependencies = [
  "base64",
  "clap",

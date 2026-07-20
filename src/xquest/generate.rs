@@ -193,7 +193,7 @@ fn write_job(
         xquest_root.display()
     );
     let script = format!(
-        "#!/bin/sh\nset -euo pipefail\nexport XQUEST_DIR=\"{xquest_root}\"\nexport PERL5LIB=\"{perl5lib}\"\n\
+        "#!/bin/bash\nset -euo pipefail\nexport XQUEST_DIR=\"{xquest_root}\"\nexport PERL5LIB=\"{perl5lib}\"\n\
          \"{compare_peaks}\" -match glycoquest_matched.txt -def xquest.def -dir . -resultdir results -genxml \"{mzxml}\" -cpforce\n\
          if [ ! -s glycoquest_matched_isotopepairs.txt ]; then echo \"compare_peaks produced no spectra\" >&2; exit 1; fi\n\
          if [ ! -d results/db ]; then NIDX=-nidx; else NIDX=; fi\n\

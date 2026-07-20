@@ -218,7 +218,8 @@ fn run_command_to_log(job_dir: &Path, log_path: &Path) -> Result<std::process::E
         .try_clone()
         .map_err(|err| format!("cannot clone log handle {}: {err}", log_path.display()))?;
 
-    Command::new("sh")
+    // Use bash: generated run.sh needs `pipefail`, which dash (/bin/sh on Ubuntu) lacks.
+    Command::new("bash")
         .arg("run.sh")
         .current_dir(job_dir)
         .stdout(Stdio::from(stdout))
@@ -460,9 +461,9 @@ mod tests {
         let root = temp_dir("continue");
         let jobs_root = root.join("jobs");
         let logs_dir = root.join("logs");
-        write_run_sh(&jobs_root.join("job_ok"), "#!/bin/sh\nexit 0\n");
-        write_run_sh(&jobs_root.join("job_fail"), "#!/bin/sh\nexit 1\n");
-        write_run_sh(&jobs_root.join("job_ok2"), "#!/bin/sh\nexit 0\n");
+        write_run_sh(&jobs_root.join("job_ok"), "#!/bin/bash\nexit 0\n");
+        write_run_sh(&jobs_root.join("job_fail"), "#!/bin/bash\nexit 1\n");
+        write_run_sh(&jobs_root.join("job_ok2"), "#!/bin/bash\nexit 0\n");
 
         let records = execute_jobs(&jobs_root, &logs_dir, 2).unwrap();
         assert_eq!(records.len(), 3);
@@ -544,7 +545,7 @@ mod tests {
         let logs_dir = root.join("logs");
         write_run_sh(
             &jobs_root.join("job_output"),
-            "#!/bin/sh\necho standard-output\necho standard-error >&2\n",
+            "#!/bin/bash\necho standard-output\necho standard-error >&2\n",
         );
 
         let records = execute_jobs(&jobs_root, &logs_dir, 1).unwrap();
