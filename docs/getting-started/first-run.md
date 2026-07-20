@@ -24,7 +24,7 @@ Dry-run validates and writes the prefilter outputs and xQuest job folders **with
   --dry-run
 ```
 
-The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For published GPx experiments and their public data, see [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets).
+The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For a representative full test run, download the Xie et al. spectra from [MassIVE MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442) into `data/MSV000087442/` (not shipped in the repo). See [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets) for citations and the search preset.
 
 ### What to check
 

@@ -81,11 +81,15 @@ scheme.
 
 ### MSV000087442 search preset
 
-The repository includes the public dataset under `data/MSV000087442/`, the
-focused GPx FASTA, a dataset configuration, and the bundled
-`msv000087442-sianaz` library. The library contains the nine glycoforms reported
-in the study and produces 27 xQuest jobs including the two water-loss variants.
-The generated xQuest definitions use `AArequired X:K`, ensuring that the glycan
+The representative full test spectra must be downloaded from MassIVE
+([MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442),
+[doi:10.25345/C5VV5S](https://doi.org/10.25345/C5VV5S)) and placed under
+`data/MSV000087442/` — they are not shipped in the repository. The repo does
+include the focused GPx FASTA, a dataset configuration
+(`configs/msv000087442-full.ini`), and the bundled `msv000087442-sianaz`
+library. The library contains the nine glycoforms reported in the study and
+produces 27 xQuest jobs including the two water-loss variants. The generated
+xQuest definitions use `AArequired X:K`, ensuring that the glycan
 pseudo-residue is also the crosslink site.
 
 The paper used MeroX with glycan-specific offset ions, so xQuest results should

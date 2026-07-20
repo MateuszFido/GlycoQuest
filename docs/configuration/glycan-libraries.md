@@ -20,7 +20,9 @@ glycoquest run.mzXML --database proteins.fasta --glycans nglyc309
 glycoquest run.mzXML --database proteins.fasta --glycans oglyc78
 ```
 
-For the MSV000087442 PNT2 experiment, select both the dataset library and its
+For the MSV000087442 PNT2 experiment, download the spectra from
+[MassIVE MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442)
+into `data/MSV000087442/`, then select both the dataset library and its
 required linker chemistry:
 
 ```bash

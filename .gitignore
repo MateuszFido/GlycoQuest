@@ -1,12 +1,15 @@
 /out/
-/data/
+/data/*
 /glycoquest_*_out/
 /glycoquest_*_input/
 DESIGN.md
 /scripts/__pycache__/
 
-# Include the MassIVE dataset
+# Keep small MSV000087442 helpers (FASTAs); spectra must be downloaded from MassIVE
 !data/MSV000087442/
+data/MSV000087442/*.mgf
+data/MSV000087442/*.mzid
+data/MSV000087442/*.mzTab
 
 *.mzXML
 *.mzxml
@@ -15,6 +18,7 @@ DESIGN.md
 *.mzML
 *.mzml
 *.raw
+*.mgf
 /*.pdf
 /RNxQuest/
 /xQuest/

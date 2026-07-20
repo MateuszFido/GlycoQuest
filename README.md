@@ -39,9 +39,10 @@ cargo build --release
 
 Advanced options (tolerances, crosslinker chemistry, job limits, modifications) live in [`settings.ini`](settings.ini). Copy it to your working directory or pass `--config`.
 
-### Example
+### Example (full test dataset)
 
-A bundled publicly available dataset (MassIVE DOI: 10.25345/C5VV5S, MSV000087442) is available for testing.
+The representative full test dataset is **not** shipped in this repository (spectra are ~1 GB). Download it from MassIVE ([MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442), [doi:10.25345/C5VV5S](https://doi.org/10.25345/C5VV5S)) and place the files under `data/MSV000087442/`. Focused FASTAs and the search config are included in the repo.
+
 Citation: Xie, *et al.* Glycan–protein cross-linking mass spectrometry reveals sialic acid-mediated protein networks on cell surfaces. Chem. Sci. 2021; 12 (25): 8767–8777.
 
 ```bash
