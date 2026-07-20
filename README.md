@@ -2,7 +2,9 @@
 
 GlycoQuest is a Rust CLI wrapper around xQuest for glycopeptide–peptide searches. It supports DSS, DMTMM, and published glycan-to-peptide crosslinkers; prefilters mzXML spectra using glycan diagnostic ions; optionally requires light/heavy isotope pairs; prunes glycan candidates; generates xQuest job folders; and consolidates results.
 
-**Documentation:** full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, results, viewer). A searchable site can be built with `pip install -r docs/requirements.txt && mkdocs serve`.
+**Documentation:** https://mateuszfido.github.io/GlycoQuest/
+
+Full user guide in [`docs/`](docs/index.md) (installation, workflow, settings, results, viewer). A searchable site can be built with `pip install -r docs/requirements.txt && mkdocs serve`.
 
 ## Requirements
 
