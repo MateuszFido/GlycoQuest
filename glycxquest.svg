@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 512 512"
+   version="1.1"
+   id="svg1"
+   inkscape:export-filename="glycxquest_192x192.png"
+   inkscape:export-xdpi="36"
+   inkscape:export-ydpi="36"
+   inkscape:version="1.4.3 (0d15f75, 2025-12-25)"
+   sodipodi:docname="glycxquest.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#ffffff"
+     bordercolor="#cccccc"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="1"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:document-units="px"
+     inkscape:zoom="1.1490485"
+     inkscape:cx="252.81787"
+     inkscape:cy="221.05246"
+     inkscape:window-width="1557"
+     inkscape:window-height="1391"
+     inkscape:window-x="10"
+     inkscape:window-y="10"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1" />
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <text
+       xml:space="preserve"
+       style="font-size:189.538px;font-family:inter;-inkscape-font-specification:inter;letter-spacing:-4.3px;word-spacing:0px;writing-mode:lr-tb;direction:ltr;opacity:1;fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:3.15897;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:2.1;stroke-dasharray:none;stroke-opacity:1;paint-order:fill markers stroke"
+       x="38.042862"
+       y="197.81081"
+       id="text1"><tspan
+         sodipodi:role="line"
+         x="38.042862"
+         y="197.81081"
+         id="tspan2"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;font-family:Impact;-inkscape-font-specification:'Impact Condensed';letter-spacing:-4.3px;fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:3.15897;stroke-dasharray:none;stroke-opacity:1"
+         dx="10.53">Glycx</tspan><tspan
+         sodipodi:role="line"
+         x="38.042862"
+         y="449.0314"
+         id="tspan3"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:condensed;font-family:Impact;-inkscape-font-specification:'Impact Condensed';letter-spacing:-4.3px;fill:#ff9900;fill-opacity:1;stroke:none;stroke-width:3.15897;stroke-dasharray:none;stroke-opacity:1">Quest</tspan></text>
+  </g>
+</svg>
