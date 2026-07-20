@@ -5,6 +5,9 @@
 DESIGN.md
 /scripts/__pycache__/
 
+# Include the MassIVE dataset
+!data/MSV000087442/
+
 *.mzXML
 *.mzxml
 !tests/fixtures/mzxml/*.mzXML
@@ -16,9 +19,6 @@ DESIGN.md
 /RNxQuest/
 /xQuest/
 /glycan_databases/
-
-.cursor
-/docs/superpowers
 
 # Added by cargo
 /target
@@ -34,3 +34,7 @@ src/.DS_Store
 # Old xQuest versions 
 V2.1.5/
 V2.1.53/
+
+# AI stuff
+.cursor
+/docs/superpowers
