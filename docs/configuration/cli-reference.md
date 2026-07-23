@@ -1,7 +1,7 @@
 # CLI reference
 
 ```bash
-glycoquest [OPTIONS] <INPUT>
+glycoquest [OPTIONS] <INPUT> --database <FASTA> --xquest-root <PATH> --out <OUTPUT>
 ```
 
 ## Positional arguments
@@ -14,18 +14,18 @@ glycoquest [OPTIONS] <INPUT>
 
 | Option | Short | Default | Description |
 |--------|-------|---------|-------------|
-| `--database` | | *(required)* | Protein sequence database (FASTA) |
-| `--glycans` | | `nglyc309` | Bundled glycan id (`nglyc309`, `oglyc78`, `msv000087442-sianaz`) or path to custom CSV/TSV |
-| `--xquest-root` | | `.` | xQuest installation root (contains `bin/xquest.pl`) |
-| `--crosslinker` | | from settings | Crosslinker preset name (`dss`, `dmtmm`, `nhs-cyclooctyne`, `ssbxl`, `pcbxl`) |
-| `--ppm-tolerance` | | from settings | Diagnostic-ion matching tolerance (ppm); overrides `settings.ini` |
+| `--database` | - | - | *(required)* Protein sequence database (FASTA) |
+| `--glycans` | - | `nglyc309` | Bundled glycan id (`nglyc309`, `oglyc78`, `msv000087442-sianaz`) or path to custom CSV/TSV |
+| `--xquest-root` | - | `.` (current directory) | xQuest installation root (contains `bin/xquest.pl`) |
+| `--crosslinker` | - | from settings | Crosslinker preset name (`dss`, `dmtmm`, `nhs-cyclooctyne`, `ssbxl`, `pcbxl`) |
+| `--ppm-tolerance` | - | from settings | Diagnostic-ion matching tolerance (ppm); overrides `settings.ini` |
 | `--jobs` | `-j` | from settings | Concurrent xQuest jobs; `0` = one per CPU core |
-| `--out` | | `out` | Output base; default creates `out/<project>/` from input filename |
-| `--config` | | `settings.ini` | Path to settings file |
-| `--progress` | | `auto` | Live progress: `auto`, `always`, or `never` |
+| `--out` | - | `out` | Output base; default creates `out/<project>/` from input filename |
+| `--config` | - | `settings.ini` | Path to settings file |
+| `--progress` | - | `auto` | Live progress: `auto`, `always`, or `never` |
 | `--dry-run` | | off | Validate and write job plan without executing xQuest |
-| `--help` | `-h` | | Print help |
-| `--version` | `-V` | | Print version |
+| `--help` | `-h` | - | Print help |
+| `--version` | `-V` | - | Print version |
 
 ## Execution modes
 

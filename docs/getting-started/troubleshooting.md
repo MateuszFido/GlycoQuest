@@ -1,16 +1,16 @@
 # Troubleshooting
 
-Decision guide for common GlycoQuest failures and empty results.
+Decision guide for common GlycoQuest errors and empty results.
 
 ## Readiness check failures
 
-GlycoQuest prints a **readiness** report before running. Any `✗ FAILED` line stops execution (exit code **1**).
+GlycoQuest performs a **readiness** check before running. Any `✗ FAILED` line stops execution (exit code **1**).
 
 ### MS input failed
 
 - Confirm the path exists and is `.mzXML` (case-sensitive on Linux).
 - Directories must contain at least one mzXML file.
-- Vendor raw formats (`.raw`, `.wiff`, etc.) are rejected — convert with msconvert.
+- Vendor raw formats (`.raw`, `.wiff`, etc.) are explicitly rejected by GlycoQuest.
 
 ### FASTA database failed
 
@@ -21,34 +21,22 @@ GlycoQuest prints a **readiness** report before running. Any `✗ FAILED` line s
 
 - Bundled ids: `nglyc309`, `oglyc78`, and `msv000087442-sianaz` (plus aliases).
 - Custom files must be CSV/TSV with columns: `name`, `composition`, `monoisotopic_mass`, `diagnostic_ions`, `residue_targets`.
-- See [Glycan libraries](../configuration/glycan-libraries.md).
+- See [Glycan libraries](../configuration/glycan-libraries.md) for details.
 
 ### xQuest runtime failed
 
-- `--xquest-root` must point to a directory containing the executable from `settings.ini` (`bin/xquest.pl` by default).
+- `--xquest-root` must point to a directory containing the `xquest.pl` executable from `settings.ini` (`bin/xquest.pl` by default).
 
 ### xQuest Perl modules failed
 
-GlycoQuest readiness and `scripts/run.sh` compile-check the search path (`compare_peaks3.pl`, `xquest.pl`) before launching jobs. Typical gaps on HPC (Euler): **`DB_File`** (`libdb`) and **`XML::Parser`** (`libexpat`). Most pure-Perl libs ship under `V2.1.7/xquest/1209/{lib,share}/perl5`.
-
-**Do not** add `1209/lib64` to `PERL5LIB` — those `.so` files target an old Perl and crash 5.38 (`Perl_Gthr_key_ptr`). GD is optional for GlycoQuest (`drawspectra 0`).
-
-```bash
-# ETH Euler (once, login node):
-unset PERL5LIB   # if you previously exported lib64 paths
-scripts/bootstrap-euler-perl.sh
-scripts/check-xquest-perl.pl
-
-# Fedora/RHEL:  sudo dnf install perl-DB_File perl-XML-Parser
-# Debian/Ubuntu: sudo apt install libdb-file-perl libxml-parser-perl
-```
-
-If a module is installed but `.so` load fails (`libdb` / `libexpat`), the Slurm wrapper adds matching Spack lib dirs to `LD_LIBRARY_PATH`.
+Perl modules are required for xQuest indexing and XML parsing. If a module is missing, the error message will indicate the specific module name.
 
 ### Output directory failed
 
 - Parent path must be writable.
-- Explicit `--out` is used as the project root; default `out` creates `out/<project_slug>/`.
+- Explicit `--out` is used as the project root; default `out` creates `out/<project_name>/`.
+
+The project name is inferred from the first mzXML file in the input directory.
 
 ## Exit code 2 — no spectra retained
 
@@ -59,18 +47,15 @@ All MS2 scans were rejected by the prefilter.
    | `reason` | Meaning |
    |----------|---------|
    | `no_diagnostic` | No glycan diagnostic ion matched within ppm tolerance |
-   | `no_isotope_pair` | Diagnostic-positive but no DSS light/heavy partner (DSS only) |
+   | `no_isotope_pair` (labelled crosslinkers only) | Diagnostic-positive but no light/heavy partner |
 
 2. **Many `no_diagnostic`**
    - Loosen `--ppm-tolerance` or `[tolerances] diagnostic_tolerance_ppm`.
-   - Confirm the sample contains glycopeptides and the glycan library matches both
-     glycosylation type and crosslinker chemistry.
-   - Inspect a few MS/MS scans in an external viewer for oxonium ions (e.g. HexNAc ~204 m/z).
+   - Confirm the glycan library matches both the glycosylation type and crosslinker chemistry.
 
 3. **Many `no_isotope_pair`**
-   - Confirm the experiment used DSS light/heavy duplex labeling.
+   - For unlabeled crosslinkers, use `[crosslinker] label = none`.
    - Widen `[tolerances] isotope_pair_ms1_tolerance_ppm` or `isotope_pair_rt_tolerance_min`.
-   - For unlabeled crosslinkers, use `--crosslinker dmtmm` or `[crosslinker] label = none`.
 
 4. Compare `prefilter: scans=` vs `diagnostic_positive=` in terminal output.
 
@@ -81,7 +66,7 @@ GlycoQuest can succeed with zero rows in `glycoquest_xquest.csv`.
 | Situation | What to check |
 |-----------|---------------|
 | All jobs failed | `results/failed_jobs.tsv`, logs under `tmp/logs/` (set `GLYCOQUEST_KEEP_TMP=1`) |
-| Jobs succeeded, no XML hits | Normal for stringent data; lower `min_score` or review prefilter retention |
+| Jobs succeeded, no XML hits | Check prefiltering and/or lower `[preferences] min_score` |
 | Hits in XML but empty CSV | Post-filter removed all hits; open viewer with **Show failed hits** or inspect `hard_status` column |
 
 ### Debugging failed xQuest jobs
@@ -106,7 +91,7 @@ xQuest produced XML that GlycoQuest could not parse, or viewer asset install fai
 
 ### "Failed to load viewer" / blank page
 
-**Cause:** Opening `index.html` via `file://`. Browsers block loading `viewer.json`.
+**Cause:** Opening `index.html` manually. Browsers block loading `viewer.json`.
 
 **Fix:** Serve over HTTP:
 

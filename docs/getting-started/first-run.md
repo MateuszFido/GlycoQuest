@@ -1,6 +1,6 @@
 # First run
 
-This guide walks through a complete GlycoQuest workflow: validate configuration, execute the search, and open the interactive viewer.
+This guide walks through a complete GlycoQuest workflow: validate configuration, execute the search, and view the results.
 
 ## 1. Prepare inputs
 
@@ -8,23 +8,23 @@ You need:
 
 1. **mzXML** — MS/MS data in xQuest-compatible mzXML format
 2. **FASTA** — protein sequences (**IMPORTANT:** no literal `X`, `U`, `B`, or `J` in sequences; those letters are reserved for xQuest variable modifications)
-3. **xQuest root** — path to `xQuest/V2.1.7/xquest` (or your installation)
+3. **xQuest root** — path to `xQuest/V2.1.7/xquest` (or your installation, see [Installation](installation.md))
 
-Optional: copy `settings.ini` from the repository root to your working directory and edit tolerances, crosslinker chemistry, ppm tolerances, etc.
+Optional: edit `settings.ini` in the repository root or your working directory to adjust tolerances, crosslinker chemistry, ppm tolerances, etc. See [Settings reference](../configuration/settings-reference.md) for details.
 
 ## 2. Dry-run (recommended)
 
 Dry-run validates and writes the prefilter outputs and xQuest job folders **without** actually running xQuest:
 
 ```bash
-./target/release/glycoquest tests/fixtures/mzxml/dss_pair.mzXML \
-  --database data/target_proteins_asf.fasta \
+./target/release/glycoquest /path/to/data.mzXML \
+  --database /path/to/proteins.fasta \
   --xquest-root xQuest/V2.1.7/xquest \
-  --out glycoquest_fixture_out \
+  --out /path/to/output \
   --dry-run
 ```
 
-The two-scan fixture is a synthetic plumbing check, not a scientific benchmark. For a representative full test run, download the Xie et al. spectra from [MassIVE MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442) into `data/MSV000087442/` (not shipped in the repo). See [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets) for citations and the search preset.
+For a representative full test run, check the Xie et al. dataset from [MassIVE MSV000087442](https://massive.ucsd.edu/ProteoSAFe/dataset.jsp?accession=MSV000087442) into your working directory. See [Published reference datasets](../theory/glycopeptide-crosslinking.md#published-reference-datasets).
 
 ### What to check
 
@@ -69,14 +69,14 @@ dry-run: job folders and plan.json written (xQuest not executed)
 | `spectra/` | Reduced mzXML (retained MS2 scans only) |
 | `tmp/jobs/` | Generated xQuest job folders (see [xQuest jobs](../workflow/xquest-jobs.md)) |
 
-If `filtered_scans=0`, the run exits with code **2**. Inspect `rejected_spectra.tsv` — see [Troubleshooting](troubleshooting.md).
+If `filtered_scans=0`, the run exits with code **2**. Inspect `rejected_spectra.tsv` to identify the reason for rejection.
 
 ## 3. Full run
 
-Use your converted experimental data and matching FASTA, then omit `--dry-run` to execute xQuest on all generated jobs:
+Use your converted experimental data and matching FASTA without `--dry-run` to execute xQuest on all generated jobs:
 
 ```bash
-./target/release/glycoquest /path/to/experiment.mzXML \
+./target/release/glycoquest /path/to/data.mzXML \
   --database /path/to/proteins.fasta \
   --xquest-root xQuest/V2.1.7/xquest \
   --out glycoquest_out \
@@ -141,11 +141,11 @@ Open [http://localhost:8080](http://localhost:8080). See [Using the viewer](../v
 
 Individual xQuest job failures are logged as warnings and listed in `results/failed_jobs.tsv`; they do **not** change GlycoQuest's exit code.
 
-## Example: DMTMM (no isotope prefilter)
+## Example: DMTMM (zero-length crosslinker, no isotope prefilter)
 
 ```bash
 ./target/release/glycoquest tests/fixtures/mzxml/hexnac_positive.mzXML \
-  --database data/target_proteins_asf.fasta \
+  --database data/proteins.fasta \
   --crosslinker dmtmm \
   --xquest-root xQuest/V2.1.7/xquest \
   --out glycoquest_dmtmm_out \

@@ -1,18 +1,18 @@
 # Installation
 
-GlycoQuest is a Rust CLI using a local **xQuest V2.1.7** installation. You also need **mzXML** MS/MS input (convert vendor raw files separately) and a protein **FASTA** database.
+GlycoQuest is a Rust CLI using a local **xQuest V2.1.7** installation. Input requires also **mzXML** MS/MS to search and a reference protein **FASTA** database.
 
 ## Download pre-built binaries
 
 Pre-built `glycoquest` binaries are published as release artifacts for **Windows**, **macOS**, and **Linux**. This is the recommended install path.
 
-1. Open the [GlycoQuest releases](https://git.proxiomics.com/matt/GlycoQuest/-/releases) page.
+1. Open the [GlycoQuest releases](https://github.com/MateuszFido/GlycoQuest/releases) page.
 2. Download the archive for your platform from the latest release.
-3. Extract it and add the `glycoquest` binary to your `PATH`, or invoke it by full path.
+3. Extract, then add the `glycoquest` binary to your `PATH` to use `glycoquest` command from anywhere, or call the full path, e.g. `C:\Users\<username>\Downloads\glycoquest.exe`.
 
 ### Linux
 
-Release binaries are built on **Ubuntu 22.04** (glibc 2.35) so they run on ETH Euler and other 22.04-based systems. Binaries from newer distros (e.g. Ubuntu 24.04 / glibc 2.39) will fail with `GLIBC_2.39 not found`.
+Release binaries are built on **Ubuntu 22.04** (glibc 2.35) so they run on Ubuntu 22.04-based systems (e.g. ETH Euler). Binaries from newer distros (e.g. Ubuntu 24.04 / glibc 2.39) will fail with `GLIBC_2.39 not found`.
 
 ```bash
 tar xzf glycoquest-*-x86_64-unknown-linux-gnu.tar.gz
@@ -22,30 +22,27 @@ tar xzf glycoquest-*-x86_64-unknown-linux-gnu.tar.gz
 ### macOS
 
 ```bash
-tar xzf glycoquest-*-aarch64-apple-darwin.tar.gz   # Apple Silicon (CI builds)
+tar xzf glycoquest-*-aarch64-apple-darwin.tar.gz
 ./glycoquest --help
 ```
 
-Intel Macs: run the aarch64 binary under Rosetta, or build locally with `cargo build --release` (GitHub Actions no longer provides macOS x86_64 runners).
+Intel Macs: run the aarch64 binary under Rosetta, or build locally with `cargo build --release`.
 
 ### Windows
 
-Extract `glycoquest-*-x86_64-pc-windows-msvc.zip` and run from PowerShell or Command Prompt:
+Extract `glycoquest-*-x86_64-pc-windows-msvc.zip` and run from PowerShell or Command Prompt, e.g. `C:\Users\<username>\Downloads\glycoquest.exe --help`.
 
 ```powershell
 .\glycoquest.exe --help
 ```
 
-After installation, run `glycoquest --help` from any directory (if on `PATH`) or from the extract folder.
-
 ## Requirements
 
 | Component | Purpose | Notes |
 |-----------|---------|-------|
-| **Rust toolchain** (edition 2024) | Build `glycoquest` | [rustup.rs](https://rustup.rs) |
 | **xQuest V2.1.7+** | Crosslink search engine | Path passed as `--xquest-root`, available on [Gitlab](https://gitlab.ethz.ch/leitner_lab/xquest_xprophet) |
-| **Perl + DB_File + XML::Parser** | xQuest indexing and mzXML/XML parsing | Package managers, CPAN, or conda. On ETH Euler: `scripts/bootstrap-euler-perl.sh` then `scripts/check-xquest-perl.pl` |
-| **ProteoWizard msconvert** | Raw → mzXML (optional) | GlycoQuest does **not** convert vendor formats |
+| **Perl + DB_File + XML::Parser** | xQuest indexing and mzXML/XML parsing | Package managers, CPAN, or conda. On Ubuntu: `sudo apt install perl-base libdb-file-perl libxml-parser-perl` |
+| **ProteoWizard msconvert** (optional) | Raw → mzXML conversion | GlycoQuest does **not** convert vendor formats [ProteoWizard](https://proteowizard.sourceforge.io/download.html)|
 
 ### xQuest layout
 
@@ -56,7 +53,6 @@ xQuest/V2.1.7/xquest/
 ├── bin/xquest.pl
 ├── 1209/lib/perl5/     # bundled Perl modules (on PERL5LIB)
 ├── 1209/share/perl5/   # bundled pure-Perl modules
-├── 1209/lib64/perl5/   # legacy XS — do NOT put on @INC (wrong Perl ABI)
 └── ...
 ```
 
@@ -64,34 +60,17 @@ The default in `settings.ini` at the repository root is `xquest_bin = bin/xquest
 
 ## Build from source
 
-If you'd like to build from source, 
-
-### Requirements
-
-| Component | Purpose | Notes |
-|-----------|---------|-------|
-| **Rust toolchain** (edition 2024) | Build `glycoquest` | [rustup.rs](https://rustup.rs) |
-
-### Build GlycoQuest
+If you'd like to build from source, you need the **Rust toolchain** (edition 2024), available at [rustup.rs](https://rustup.rs). 
+Then clone the repository and build:
 
 ```bash
-git clone <repository-url> GlycoQuest
+git clone https://github.com/MateuszFido/GlycoQuest.git
 cd GlycoQuest
 cargo build --release
 ./target/release/glycoquest --help
 ```
 
 The binary is `./target/release/glycoquest`. If you add it to `PATH`, you can just call it as `glycoquest --options`, otherwise by full path `/your/path/here/target/release/glycoquest --options`.
-
-### Build the viewer (optional)
-
-GlycoQuest copies prebuilt viewer assets into `results/viewer/` after each run. Rebuild only when developing the viewer:
-
-```bash
-cd viewer
-npm install
-npm run build
-```
 
 ## Input formats
 
@@ -118,10 +97,7 @@ glycoquest tests/fixtures/mzxml/dss_pair.mzXML \
   --out /tmp/glycoquest_test \
   --dry-run
 ```
-
-If you built from source and have not added the binary to `PATH`, use `./target/release/glycoquest` instead of `glycoquest`.
-
-A successful run prints a **readiness** block with green `✓ PASS` for MS input, FASTA, glycan library, xQuest runtime, and output directory. See [First run](first-run.md) for the full workflow.
+A successful run prints a block with green `✓ PASS` or red `✗ FAIL` for the required components. See [First run](first-run.md) for the full workflow.
 
 ## Environment variables
 
@@ -133,5 +109,5 @@ A successful run prints a **readiness** block with green `✓ PASS` for MS input
 
 ## Next steps
 
-- [First run](first-run.md) — dry-run, full search, open results
+- [First run](first-run.md) — dry-run, full search, view results
 - [Settings reference](../configuration/settings-reference.md) — `settings.ini`
